@@ -13,7 +13,15 @@ const OG_IMAGE_TIMEOUT_MS = 8000;
  */
 const MAX_HTML_SCAN_BYTES = 200_000;
 
+/** Priority order when a page declares more than one of these - `og:image:secure_url` first (explicitly HTTPS), then plain `og:image`, then Twitter Card's `twitter:image` as the final fallback. */
 const IMAGE_META_PROPERTIES = ["og:image:secure_url", "og:image", "twitter:image"];
+
+/** Paired width meta tag for each image property above, when the page declares one - lets the caller compare this image's declared quality against other candidates (RSS feed image, provider image) without downloading anything. `og:image:secure_url` and `og:image` share the same `og:image:width` tag per the OpenGraph spec (there's no separate `og:image:secure_url:width`). */
+const IMAGE_WIDTH_META_PROPERTIES: Record<string, string> = {
+  "og:image:secure_url": "og:image:width",
+  "og:image": "og:image:width",
+  "twitter:image": "twitter:image:width",
+};
 
 /** Reads at most `maxBytes` of a response body as text, then releases the connection - avoids downloading (and holding open a connection for) the rest of a large page once enough has been read. Falls back to the full `response.text()` if the runtime doesn't expose a streaming body reader (defensive - `fetch` in this app's Node runtime always does). */
 async function readCappedText(response: Response, maxBytes: number): Promise<string> {
@@ -40,18 +48,24 @@ async function readCappedText(response: Response, maxBytes: number): Promise<str
   return text;
 }
 
-/** Matches `<meta property="X" content="Y">` in either attribute order (some sites emit `content` before `property`/`name`). */
-function extractMetaContent(html: string, propertyNames: string[]): string | undefined {
-  for (const name of propertyNames) {
-    const propertyFirst = html.match(
-      new RegExp(`<meta[^>]+(?:property|name)=["']${name}["'][^>]+content=["']([^"']+)["']`, "i")
-    );
-    if (propertyFirst?.[1]) return propertyFirst[1];
+/** Matches `<meta property="X" content="Y">` in either attribute order (some sites emit `content` before `property`/`name`), for one specific property name. */
+function extractMetaContentFor(html: string, name: string): string | undefined {
+  const propertyFirst = html.match(
+    new RegExp(`<meta[^>]+(?:property|name)=["']${name}["'][^>]+content=["']([^"']+)["']`, "i")
+  );
+  if (propertyFirst?.[1]) return propertyFirst[1];
 
-    const contentFirst = html.match(
-      new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${name}["']`, "i")
-    );
-    if (contentFirst?.[1]) return contentFirst[1];
+  const contentFirst = html.match(
+    new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${name}["']`, "i")
+  );
+  return contentFirst?.[1];
+}
+
+/** Tries every property name in priority order, returning both the matched content AND which property matched (so the caller can look up that property's paired width tag, e.g. `og:image` -> `og:image:width`). */
+function extractMetaImage(html: string, propertyNames: string[]): { content: string; property: string } | undefined {
+  for (const name of propertyNames) {
+    const content = extractMetaContentFor(html, name);
+    if (content) return { content, property: name };
   }
   return undefined;
 }
@@ -65,12 +79,28 @@ function resolveAbsoluteUrl(candidate: string, pageUrl: string): string | undefi
   }
 }
 
+/** Parses a meta tag's raw width content ("1200") into a positive integer, or `undefined` for anything blank/non-numeric/zero-or-negative. */
+function parseDeclaredWidth(raw: string | undefined): number | undefined {
+  if (!raw) return undefined;
+  const width = Number.parseInt(raw, 10);
+  return Number.isFinite(width) && width > 0 ? width : undefined;
+}
+
+export type OgImageResult = {
+  url: string;
+  /** Declared pixel width from the page's own `og:image:width`/`twitter:image:width` meta tag, when present - used for the same cross-source quality comparison as `ParsedFeedItem.imageWidth` (see `lib/news/image-fallback.ts`'s `pickBestImageUrl`). Most pages don't declare this; `undefined` is the common case, not an error. */
+  width?: number;
+};
+
 /**
  * Fetches `pageUrl` and extracts its OpenGraph (falling back to Twitter
- * Card) preview image - used for sources whose own data never includes
- * an image field (Hacker News API items only ever give a title + a
- * destination URL) and as a last-resort fallback for RSS items whose
- * feed XML has no `<media:content>`/`<media:thumbnail>`/`<enclosure>`.
+ * Card) preview image, plus its declared width when the page provides
+ * one - used for sources whose own data never includes an image field
+ * (Hacker News API items only ever give a title + a destination URL)
+ * and, for RSS, compared against the feed's own image so the higher-
+ * quality one wins instead of always trusting whichever the feed
+ * happened to supply (see `RSSProvider`'s `enrichImages` for that
+ * comparison).
  *
  * Never throws - resolves to `undefined` for any failure (timeout,
  * non-2xx response, no matching tag, an unparseable URL), matching
@@ -81,7 +111,7 @@ function resolveAbsoluteUrl(candidate: string, pageUrl: string): string | undefi
  * extra HTTP requests. See the Performance section of the Image
  * Enrichment phase report for the full reasoning.
  */
-export async function fetchOgImage(pageUrl: string): Promise<string | undefined> {
+export async function fetchOgImage(pageUrl: string): Promise<OgImageResult | undefined> {
   try {
     const response = await fetchWithTimeout(
       pageUrl,
@@ -91,10 +121,16 @@ export async function fetchOgImage(pageUrl: string): Promise<string | undefined>
     if (!response.ok) return undefined;
 
     const html = await readCappedText(response, MAX_HTML_SCAN_BYTES);
-    const raw = extractMetaContent(html, IMAGE_META_PROPERTIES);
-    if (!raw) return undefined;
+    const match = extractMetaImage(html, IMAGE_META_PROPERTIES);
+    if (!match) return undefined;
 
-    return resolveAbsoluteUrl(raw, pageUrl);
+    const url = resolveAbsoluteUrl(match.content, pageUrl);
+    if (!url) return undefined;
+
+    const widthProperty = IMAGE_WIDTH_META_PROPERTIES[match.property];
+    const width = widthProperty ? parseDeclaredWidth(extractMetaContentFor(html, widthProperty)) : undefined;
+
+    return { url, width };
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     console.error(`[fetchOgImage] Failed to extract og:image from ${pageUrl}: ${reason}`);

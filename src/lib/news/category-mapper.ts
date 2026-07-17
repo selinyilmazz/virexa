@@ -111,3 +111,29 @@ export function inferCategoryFromTitle(title: string): Category | undefined {
   }
   return undefined;
 }
+
+/**
+ * Canonical slug <-> real-database-category mapping - the single source
+ * of truth for every place that needs to turn a URL-friendly slug into
+ * one of the 8 actual `Category` values `articles.category` can hold
+ * (or vice versa). Search fix: the public `/search` page's category
+ * filter used to source its slug list from `src/data/categories.ts`
+ * (mock/legacy data for the `/category/[slug]` browsing pages, which
+ * has 11 entries including ones that were never real DB categories -
+ * "Robotics", "Mobile", "Programming", "Space" - plus a "Startups"
+ * (plural) entry that never matched the real, singular "Startup" stored
+ * on `articles.category`). Any UI that needs to filter/count the
+ * `articles` table by category should import this list instead of
+ * reaching into the mock category-page data - see `SearchFilters.tsx`
+ * and `app/search/page.tsx`.
+ */
+export const SEARCH_CATEGORY_SLUGS: { slug: string; name: Category }[] = [
+  { slug: "technology", name: "Technology" },
+  { slug: "business", name: "Business" },
+  { slug: "ai", name: "AI" },
+  { slug: "games", name: "Games" },
+  { slug: "world", name: "World" },
+  { slug: "science", name: "Science" },
+  { slug: "security", name: "Security" },
+  { slug: "startup", name: "Startup" },
+];

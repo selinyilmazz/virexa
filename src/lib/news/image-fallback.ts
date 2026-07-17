@@ -45,3 +45,57 @@ export function resolveFallbackImageForCategory(category: string | undefined): s
   }
   return CATEGORY_FALLBACK_IMAGES.Technology;
 }
+
+/**
+ * One real-image option under consideration for an article: a URL plus
+ * its declared pixel width, when known. "Declared" - not measured by
+ * downloading the image itself (see `pickBestImageUrl` below for why).
+ */
+export type ImageCandidate = {
+  url: string;
+  /** Declared width in pixels, from `media:content`/`media:thumbnail`'s `width` attribute (RSS) or `og:image:width`/`twitter:image:width` (OpenGraph/Twitter Card meta tags). `undefined` when the source gave no size hint at all (a bare `<enclosure>`, an inline `<img>`, or a page whose meta tags omit the width variant). */
+  width?: number;
+};
+
+/**
+ * Picks the best real image among every candidate source Virexa can
+ * find for one article: RSS `media:content`/`media:thumbnail`/
+ * `enclosure`/inline `<img>` (`xml-feed-parser.ts`), a provider's own
+ * image field (NewsAPI `urlToImage`, GNews `image`), and the article
+ * page's own `og:image`/`twitter:image` (`og-image.ts`) - "og:image,
+ * twitter:image, RSS enclosure ve provider image arasında en kaliteli
+ * görseli seçsin."
+ *
+ * Deliberately compares DECLARED pixel width (an attribute already
+ * present in the RSS XML or the page's own `<head>` meta tags), never
+ * downloads any candidate image just to measure it - that would turn
+ * one lightweight enrichment step into N full image downloads per
+ * article, working directly against the OG-lookup budget/latency work
+ * already done (`MAX_OG_LOOKUPS_PER_FEED`, `OG_IMAGE_TIMEOUT_MS`).
+ * Declared width is exactly what a browser itself uses to pick a
+ * `srcset` candidate before downloading anything, so this is a
+ * standard, legitimate quality signal, not a rough guess.
+ *
+ * Resolution order:
+ *   1. Among every candidate with a known `width`, the largest wins.
+ *   2. If none has a known width, the FIRST candidate in `candidates`
+ *      wins - callers order their array by source priority for exactly
+ *      this case (e.g. "prefer the page's real og:image over a bare
+ *      RSS `<enclosure>` when neither declares a size").
+ *
+ * Returns `undefined` only when `candidates` is empty or every entry's
+ * `url` is blank - callers fall through to `resolveArticleImage`'s
+ * category placeholder in that case, never before.
+ */
+export function pickBestImageUrl(candidates: ImageCandidate[]): string | undefined {
+  const usable = candidates.filter((candidate) => candidate.url.trim().length > 0);
+  if (usable.length === 0) return undefined;
+
+  const withKnownWidth = usable.filter((candidate) => typeof candidate.width === "number" && candidate.width > 0);
+  if (withKnownWidth.length > 0) {
+    return withKnownWidth.reduce((best, candidate) => ((candidate.width ?? 0) > (best.width ?? 0) ? candidate : best))
+      .url;
+  }
+
+  return usable[0].url;
+}

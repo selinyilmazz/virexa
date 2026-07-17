@@ -242,7 +242,7 @@ export async function getRecentArticlesForCategory(categoryName: string, limit =
 }
 
 export type SearchQueryParams = Partial<
-  Pick<FullTextSearchParams, "sourceId" | "category" | "language" | "country" | "tag" | "dateFrom" | "dateTo">
+  Pick<FullTextSearchParams, "sourceId" | "category" | "categories" | "language" | "country" | "tag" | "dateFrom" | "dateTo">
 > & {
   /** Free-text query, searched across title/description/content/tags/author/category/AI summary/TLDR/source name - see `ArticleRepository.fullTextSearch()`. Was called `title` before this became real full-text search; renamed since it's no longer a title-only filter. */
   query?: string;
@@ -275,10 +275,12 @@ function emptySearchPage(page: number, pageSize: number): SearchArticlesPage {
  * article, matching the existing search page's "type something to see
  * results" behavior - unchanged from before this became real FTS.
  *
- * Source/category/language/country/tag/date filters are passed straight
- * through to the SQL function, ANDed with the text match, exactly like
- * they were ANDed onto `ArticleRepository.search()`'s ILIKE filter
- * before.
+ * Source/category(ies)/language/country/tag/date filters are passed
+ * straight through to the SQL function, ANDed with the text match,
+ * exactly like they were ANDed onto `ArticleRepository.search()`'s
+ * ILIKE filter before. `categories` (plural) is what the search page's
+ * multi-select Category checkboxes use - every checked category is
+ * honored, not just the first (see `0007_search_multi_category.sql`).
  */
 export async function searchArticlesReal(params: SearchQueryParams): Promise<SearchArticlesPage> {
   const page = params.page ?? 1;
@@ -294,6 +296,7 @@ export async function searchArticlesReal(params: SearchQueryParams): Promise<Sea
       query: params.query,
       sourceId: params.sourceId,
       category: params.category,
+      categories: params.categories,
       language: params.language,
       country: params.country,
       tag: params.tag,

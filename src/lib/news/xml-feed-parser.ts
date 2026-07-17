@@ -20,6 +20,8 @@ export type ParsedFeedItem = {
   description?: string;
   content?: string;
   imageUrl?: string;
+  /** Declared pixel width of `imageUrl`, when the feed provided one (`media:content`/`media:thumbnail`'s `width` attribute). `undefined` for `<enclosure>`/inline-`<img>` images, which carry no size metadata - used by `RSSProvider`'s image-quality comparison against the article page's own og:image (see `lib/news/image-fallback.ts`'s `pickBestImageUrl`). */
+  imageWidth?: number;
   /** ISO 8601 timestamp. Falls back to "now" when the feed's date can't be parsed. */
   publishedAt: string;
 };
@@ -64,14 +66,18 @@ function extractLink(block: string): string | undefined {
   return textLink;
 }
 
+type MediaCandidate = { url: string; width?: number };
+
 /**
  * Some feeds list several `<media:content>`/`<media:thumbnail>` sizes
  * as sibling tags for the same item ("Aynı haber için birden fazla
  * görsel bulunursa en kaliteli olan seçilsin") - picks the one with the
  * largest `width` attribute, falling back to the first match when no
- * tag declares a width.
+ * tag declares a width. Returns the winning `width` alongside the URL
+ * (when any tag declared one) so the caller can compare it against
+ * other image sources (og:image, twitter:image) later.
  */
-function pickLargestMediaUrl(block: string, tagName: string): string | undefined {
+function pickLargestMediaUrl(block: string, tagName: string): MediaCandidate | undefined {
   const regex = new RegExp(`<${tagName}\\b[^>]*\\/?>`, "gi");
   let best: { url: string; width: number } | undefined;
 
@@ -88,17 +94,20 @@ function pickLargestMediaUrl(block: string, tagName: string): string | undefined
     }
   }
 
-  return best?.url;
+  if (!best) return undefined;
+  return { url: best.url, width: best.width > 0 ? best.width : undefined };
 }
 
 /**
  * Image priority: `media:content` > `media:thumbnail` > `enclosure` >
- * an inline `<img>` in the body. `RSSProvider` adds a final OpenGraph
- * fallback (`fetchOgImage`) on top of this when none of these are
- * present - that step needs a real HTTP request, so it deliberately
- * lives outside this pure, network-free parser.
+ * an inline `<img>` in the body. `RSSProvider` adds a final OpenGraph/
+ * Twitter Card quality comparison on top of this (`fetchOgImage` +
+ * `pickBestImageUrl`) - that step needs a real HTTP request, so it
+ * deliberately lives outside this pure, network-free parser. Only
+ * `media:content`/`media:thumbnail` ever carry a declared `width` here;
+ * `enclosure`/inline-`<img>` have no size metadata in RSS/Atom itself.
  */
-function extractImage(block: string): string | undefined {
+function extractImage(block: string): MediaCandidate | undefined {
   const mediaContent = pickLargestMediaUrl(block, "media:content");
   if (mediaContent) return mediaContent;
 
@@ -109,12 +118,12 @@ function extractImage(block: string): string | undefined {
   if (enclosure) {
     const type = extractAttribute(enclosure[0], "type");
     const url = extractAttribute(enclosure[0], "url");
-    if (url && (!type || type.startsWith("image/"))) return url;
+    if (url && (!type || type.startsWith("image/"))) return { url };
   }
 
   const html = extractTagText(block, "content:encoded") ?? extractTagText(block, "description") ?? "";
   const imgMatch = html.match(/<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/i);
-  return imgMatch?.[1];
+  return imgMatch?.[1] ? { url: imgMatch[1] } : undefined;
 }
 
 function parseDate(raw: string | undefined): string {
@@ -148,13 +157,15 @@ function parseBlock(block: string): ParsedFeedItem | undefined {
     extractTagText(block, "published") ??
     extractTagText(block, "updated") ??
     extractTagText(block, "dc:date");
+  const image = extractImage(block);
 
   return {
     title: stripHtml(title),
     link,
     description: rawDescription ? stripHtml(rawDescription) : undefined,
     content: rawContent ? stripHtml(rawContent) : undefined,
-    imageUrl: extractImage(block),
+    imageUrl: image?.url,
+    imageWidth: image?.width,
     publishedAt: parseDate(publishedAtRaw),
   };
 }

@@ -103,11 +103,19 @@ export type ArticleSearchParams = z.infer<typeof articleSearchParamsSchema>;
  * exactly as-is for every other existing caller (admin search, etc.).
  * `query` supports both word and phrase search (`websearch_to_tsquery`
  * on the database side handles quoting/operators).
+ *
+ * `category` (single) and `categories` (array) both map onto
+ * `search_articles_fts`'s `filter_category`/`filter_categories`
+ * parameters (see `supabase/migrations/0007_search_multi_category.sql`)
+ * - `categories` is what the public search page's multi-select
+ * Category checkboxes actually use; `category` stays for any other
+ * caller that only ever needs a single exact category.
  */
 export const fullTextSearchParamsSchema = z.object({
   query: z.string().trim().min(1, "A search query is required."),
   sourceId: z.string().trim().min(1).optional(),
   category: z.string().trim().min(1).optional(),
+  categories: z.array(z.string().trim().min(1)).min(1).optional(),
   language: z.string().trim().min(1).optional(),
   country: z.string().trim().min(1).optional(),
   tag: z.string().trim().min(1).optional(),

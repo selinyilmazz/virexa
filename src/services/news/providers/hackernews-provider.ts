@@ -166,7 +166,7 @@ async function fetchOgImagesById(items: HackerNewsItem[]): Promise<Map<number, s
   const imageById = new Map<number, string>();
   results.forEach((result, index) => {
     if (result.status === "fulfilled" && result.value) {
-      imageById.set(candidates[index].id, result.value);
+      imageById.set(candidates[index].id, result.value.url);
     }
   });
   return imageById;

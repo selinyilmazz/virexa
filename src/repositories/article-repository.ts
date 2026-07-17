@@ -280,6 +280,12 @@ export function createArticleRepository(supabase: SupabaseClient<Database>) {
      * itself (no post-fetch slicing) - `total` comes from the
      * function's own window-function `total_count` column, read off the
      * first returned row (identical on every row of one call).
+     *
+     * `filter_categories` (added in `0007_search_multi_category.sql`)
+     * is what the public search page's multi-select Category checkboxes
+     * actually use - selecting more than one category used to silently
+     * apply only the first (see `params.category`, still supported for
+     * single-value callers).
      */
     async fullTextSearch(rawParams: FullTextSearchParams): Promise<FullTextSearchResult> {
       const params = fullTextSearchParamsSchema.parse(rawParams);
@@ -288,6 +294,7 @@ export function createArticleRepository(supabase: SupabaseClient<Database>) {
         search_query: params.query,
         filter_source_id: params.sourceId ?? null,
         filter_category: params.category ?? null,
+        filter_categories: params.categories ?? null,
         filter_language: params.language ?? null,
         filter_country: params.country ?? null,
         filter_tag: params.tag ?? null,

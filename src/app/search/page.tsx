@@ -4,7 +4,7 @@ import { SearchFilters } from "@/components/search/SearchFilters";
 import { SearchResults } from "@/components/search/SearchResults";
 import { SearchSidebar } from "@/components/search/SearchSidebar";
 import { Pagination } from "@/components/category/Pagination";
-import { categories } from "@/data/categories";
+import { SEARCH_CATEGORY_SLUGS } from "@/lib/news";
 import { searchArticlesReal } from "@/services/articles/article-read-service";
 
 const PAGE_SIZE = 10;
@@ -46,15 +46,17 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
 
-  // The checkbox filter UI allows selecting several categories at once,
-  // but ArticleRepository.search() filters on a single category value -
-  // real search here applies the first selected category (documented
-  // gap: multi-category real filtering isn't supported this turn).
+  // Resolves EVERY checked category slug to its real DB category name
+  // via `SEARCH_CATEGORY_SLUGS` (the canonical, 8-category list also
+  // used by `SearchFilters`'s checkboxes/counts) - previously only the
+  // first selected category was ever applied (`search_articles_fts`
+  // only accepted one), silently dropping the rest of a multi-select.
+  // `0007_search_multi_category.sql` added real array support, so every
+  // checked box is now honored.
   const categorySlugs = params.categories ? params.categories.split(",").filter(Boolean) : [];
-  const categoryName =
-    categorySlugs.length > 0
-      ? categories.find((category) => category.slug === categorySlugs[0])?.name
-      : undefined;
+  const categoryNames = categorySlugs
+    .map((slug) => SEARCH_CATEGORY_SLUGS.find((definition) => definition.slug === slug)?.name)
+    .filter((name): name is (typeof SEARCH_CATEGORY_SLUGS)[number]["name"] => Boolean(name));
 
   const dateFrom = resolveDateFrom(params.dateFrom, params.time);
 
@@ -63,13 +65,14 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   // Real, full-text-search-backed search - query (required to run a
   // search, matching the existing "type something to see results"
-  // behavior), plus category/tag/source/language/country/date passed
-  // through from the URL (tag/dateTo have no dedicated visible filter
-  // widget yet, but are honored if present in the URL; source/language/
-  // country now have widgets - see AdvancedFilterCard).
+  // behavior), plus category(ies)/tag/source/language/country/date
+  // passed through from the URL (tag/dateTo have no dedicated visible
+  // filter widget yet, but are honored if present in the URL; source/
+  // language/country/category now have widgets - see
+  // AdvancedFilterCard/CategoryFilterCard).
   const results = await searchArticlesReal({
     query: query || undefined,
-    category: categoryName,
+    categories: categoryNames.length > 0 ? categoryNames : undefined,
     tag: params.tag,
     sourceId: params.source,
     language: params.language,

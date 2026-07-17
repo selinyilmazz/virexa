@@ -1,5 +1,7 @@
-import { classifyHttpStatus, fetchOgImage, fetchWithTimeout } from "@/lib/news";
+import { classifyHttpStatus, fetchOgImage, fetchWithTimeout, pickBestImageUrl } from "@/lib/news";
+import type { ImageCandidate } from "@/lib/news";
 import { parseFeed } from "@/lib/news/xml-feed-parser";
+import type { ParsedFeedItem } from "@/lib/news/xml-feed-parser";
 import { FEED_SOURCES, type FeedSourceConfig } from "@/lib/news/feed-sources";
 import type { NewsProviderId, ProviderNewsItem } from "@/types/news";
 import type { NewsProvider } from "@/services/news/providers/news-provider.interface";
@@ -8,50 +10,86 @@ import type { NewsProvider } from "@/services/news/providers/news-provider.inter
 const FEED_TIMEOUT_MS = 8000;
 
 /**
- * Cap on how many items per feed get an OpenGraph image lookup when the
- * feed's own XML supplies none (no `media:content`/`media:thumbnail`/
- * `enclosure`/inline `<img>` - see `xml-feed-parser.ts`). Each lookup is
- * its own HTTP request to the article's own page, so this bounds a
- * single feed's og:image cost to a fixed, predictable number of extra
- * requests per sync run instead of scraping every article a large feed
- * might list.
- *
- * Raised from 10 to 20: with `FEED_SOURCES` currently at 10 enabled
- * feeds, a feed listing more than 10 image-less items per sync (common
- * for feeds whose RSS/Atom XML doesn't carry `media:*`/`enclosure`
- * tags at all) previously left every item past the cap on the generic
- * category placeholder even though a real og:image lookup was never
- * attempted for them. Doubling the cap doubles the worst-case og:image
- * requests for one feed (10 -> 20, run in parallel via
- * `Promise.allSettled` either way, so this doesn't add latency - only
- * request count) while staying a fixed, predictable bound rather than
- * scraping an entire feed.
+ * Shared budget for how many items per feed get an OpenGraph image
+ * lookup (`resolveBestImages` below) - each lookup is its own HTTP
+ * request to the article's own page, so this bounds a single feed's
+ * og:image cost to a fixed, predictable number of extra requests per
+ * sync run instead of scraping every article a large feed might list.
+ * Split across two priority tiers inside `resolveBestImages` (items
+ * with no feed image at all, then items whose feed image has no
+ * declared size) rather than one flat cutoff - see that function's doc
+ * comment.
  */
 const MAX_OG_LOOKUPS_PER_FEED = 20;
 
 /**
- * Fills in `image` for items the feed's XML didn't supply one for, via
- * `fetchOgImage` (last-resort OpenGraph fallback - Image Enrichment
- * phase, requirement 1). Bounded to `MAX_OG_LOOKUPS_PER_FEED` items and
- * run in parallel via `Promise.allSettled`, so one slow/broken article
- * page never delays the rest of the feed and a feed with many
- * image-less items never balloons into dozens of extra requests.
+ * Picks the best real image for every item in one feed, comparing the
+ * feed's own image (`media:content`/`media:thumbnail`/`enclosure`/
+ * inline `<img>` - see `xml-feed-parser.ts`) against the article page's
+ * own og:image/twitter:image (`fetchOgImage`) instead of treating
+ * og:image as a fallback used only when the feed gave nothing at all
+ * ("og:image, twitter:image, RSS enclosure ve provider image arasında
+ * en kaliteli görseli seçsin"). `pickBestImageUrl`
+ * (`lib/news/image-fallback.ts`) makes the actual quality comparison
+ * once both candidates (and their declared widths, when known) are in
+ * hand.
+ *
+ * `MAX_OG_LOOKUPS_PER_FEED` is spent across two priority tiers so the
+ * total og:image request cost per feed sync stays exactly as bounded
+ * as before, just spent more usefully:
+ *   1. Required - items with NO feed-supplied image at all. Without an
+ *      og:image lookup these fall straight to the generic category
+ *      placeholder, so they're served first out of the shared budget.
+ *   2. Quality upgrade - items that DO have a feed image but with no
+ *      declared width (a bare `<enclosure>` or inline `<img>` - real
+ *      quality unknown), given a lookup with whatever budget tier 1
+ *      didn't use, so a genuinely bigger og:image can still win.
+ * Items whose feed image already declares a width (`media:content`/
+ * `media:thumbnail`) skip the lookup entirely - a size-declared feed
+ * image is trusted outright, the same way a browser trusts a `srcset`
+ * candidate's declared width without downloading it first. Every
+ * lookup in both tiers runs in parallel via `Promise.allSettled`, so
+ * one slow/broken article page never delays the rest of the feed.
+ *
+ * Returns a `Map` keyed by `ParsedFeedItem.link` (a feed's items are
+ * always distinct URLs) containing only the items an og:image lookup
+ * actually improved on - callers fall back to the feed's own
+ * `imageUrl` for every key not present in the returned map (including
+ * every size-declared item, which never entered the lookup at all).
  */
-async function enrichMissingImages(items: ProviderNewsItem[]): Promise<ProviderNewsItem[]> {
-  const candidates = items.filter((item) => !item.image).slice(0, MAX_OG_LOOKUPS_PER_FEED);
-  if (candidates.length === 0) return items;
+async function resolveBestImages(items: ParsedFeedItem[]): Promise<Map<string, string>> {
+  const withoutImage = items.filter((item) => !item.imageUrl);
+  const withUnsizedImage = items.filter((item) => item.imageUrl && item.imageWidth === undefined);
 
-  const results = await Promise.allSettled(candidates.map((item) => fetchOgImage(item.url)));
+  const required = withoutImage.slice(0, MAX_OG_LOOKUPS_PER_FEED);
+  const remainingBudget = Math.max(0, MAX_OG_LOOKUPS_PER_FEED - required.length);
+  const qualityUpgrade = withUnsizedImage.slice(0, remainingBudget);
 
-  const imageByUrl = new Map<string, string>();
-  results.forEach((result, index) => {
-    if (result.status === "fulfilled" && result.value) {
-      imageByUrl.set(candidates[index].url, result.value);
-    }
+  const ogTargets = [...required, ...qualityUpgrade];
+  const results = new Map<string, string>();
+  if (ogTargets.length === 0) return results;
+
+  const ogResults = await Promise.allSettled(ogTargets.map((item) => fetchOgImage(item.link)));
+
+  ogTargets.forEach((item, index) => {
+    const outcome = ogResults[index];
+    const og = outcome.status === "fulfilled" ? outcome.value : undefined;
+
+    // Order matters here only when NEITHER candidate declares a width
+    // (pickBestImageUrl's tie-break is "first candidate wins" in that
+    // case) - og:image is listed first so it wins over an unsized
+    // RSS <enclosure>/inline <img> when quality is otherwise unknown,
+    // matching how xml-feed-parser.ts already ranks enclosure/inline
+    // <img> as its own lowest-confidence sources.
+    const candidates: ImageCandidate[] = [];
+    if (og) candidates.push({ url: og.url, width: og.width });
+    if (item.imageUrl) candidates.push({ url: item.imageUrl, width: item.imageWidth });
+
+    const best = pickBestImageUrl(candidates);
+    if (best) results.set(item.link, best);
   });
-  if (imageByUrl.size === 0) return items;
 
-  return items.map((item) => (item.image ? item : { ...item, image: imageByUrl.get(item.url) }));
+  return results;
 }
 
 async function fetchFeed(config: FeedSourceConfig): Promise<ProviderNewsItem[]> {
@@ -78,18 +116,18 @@ async function fetchFeed(config: FeedSourceConfig): Promise<ProviderNewsItem[]> 
       console.warn(`[RSSProvider] "${config.label}" returned no parseable items (invalid or empty feed).`);
     }
 
-    const rawItems: ProviderNewsItem[] = items.map((item) => ({
+    const bestImages = await resolveBestImages(items);
+
+    return items.map((item) => ({
       title: item.title,
       summary: item.description ?? item.content ?? "",
       content: item.content,
       url: item.link,
-      image: item.imageUrl,
+      image: bestImages.get(item.link) ?? item.imageUrl,
       category: config.category,
       sourceId: config.sourceId,
       publishedAt: item.publishedAt,
     }));
-
-    return await enrichMissingImages(rawItems);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     // Expected, recoverable failure modes: DNS/network unavailable or a
