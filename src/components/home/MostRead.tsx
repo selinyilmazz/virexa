@@ -1,12 +1,17 @@
 import Link from "next/link";
-import { getMostReadArticles } from "@/services/articles/article-read-service";
+import { getFeaturedArticle, getMostReadArticles } from "@/services/articles/article-read-service";
 
 function formatMeta(item: { source: string; viewCount: number }): string {
   return item.viewCount > 0 ? `${item.viewCount.toLocaleString("en-US")} views` : item.source;
 }
 
 export async function MostRead() {
-  const mostReadItems = await getMostReadArticles(5);
+  // Excludes the current Hero/Featured article (product polishing
+  // phase, area 5) - `getFeaturedArticle` is request-cached, so this
+  // doesn't add a second DB round trip beyond what HeroSection already
+  // pays for the same data.
+  const featured = await getFeaturedArticle();
+  const mostReadItems = await getMostReadArticles(5, featured?.slug);
 
   return (
     <section

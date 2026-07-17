@@ -234,7 +234,14 @@ export function createArticleRepository(supabase: SupabaseClient<Database>) {
       if (params.title) query = query.ilike("title", `%${params.title}%`);
       if (params.tag) query = query.contains("tags", [params.tag]);
       if (params.sourceId) query = query.eq("source_id", params.sourceId);
-      if (params.category) query = query.eq("category", params.category);
+      // `categories` (multi-select, added for the /search page's
+      // filter-only browse path) takes priority over the single-value
+      // `category` when both are somehow present.
+      if (params.categories && params.categories.length > 0) {
+        query = query.in("category", params.categories);
+      } else if (params.category) {
+        query = query.eq("category", params.category);
+      }
       if (params.language) query = query.eq("language", params.language);
       if (params.country) query = query.eq("country", params.country);
       if (params.dateFrom) query = query.gte("published_at", params.dateFrom);
@@ -259,7 +266,7 @@ export function createArticleRepository(supabase: SupabaseClient<Database>) {
       const from = (params.page - 1) * params.pageSize;
       const to = from + params.pageSize - 1;
 
-      const { data, error, count } = await query.order(params.sortBy, { ascending: false }).range(from, to);
+      const { data, error, count } = await query.order(params.sortBy, { ascending: params.sortAscending }).range(from, to);
       if (error) throw error;
 
       return { items: data ?? [], total: count ?? 0, page: params.page, pageSize: params.pageSize };
@@ -302,6 +309,7 @@ export function createArticleRepository(supabase: SupabaseClient<Database>) {
         filter_date_to: params.dateTo ?? null,
         result_limit: params.pageSize,
         result_offset: (params.page - 1) * params.pageSize,
+        sort_by: params.sortBy,
       });
       if (error) throw error;
 

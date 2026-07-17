@@ -50,6 +50,10 @@ const VALID_CATEGORIES = new Set<NewsCategory>([
   "Science",
   "Security",
   "Startup",
+  "Programming",
+  "Mobile",
+  "Robotics",
+  "Space",
 ]);
 
 function resolveDisplayImage(row: Pick<ArticleRow, "image_url" | "category">): string {
@@ -90,12 +94,25 @@ function emptyPage(page: number, pageSize: number): ArticlesPage {
   return { items: [], total: 0, totalPages: 1, page, pageSize };
 }
 
-/** Latest articles, most recently published first - backs Home's "Latest News" section. */
-export async function getLatestArticles(limit = 8): Promise<CategoryNewsItem[]> {
+/**
+ * Latest articles, most recently published first - backs Home's "Latest
+ * News" section. `excludeSlug` (product polishing phase, area 5 -
+ * "Avoid repeating the same articles everywhere") lets the caller drop
+ * the Hero/Featured article from this list, since the single newest
+ * article is very often also the current highest-trending one and
+ * would otherwise show up twice on the homepage. Matched on `slug`
+ * (not `id`) since that's what `FeaturedArticle`/`CategoryNewsItem`
+ * actually carries - both are unique per article. Over-fetches by one
+ * extra row specifically to absorb that exclusion without silently
+ * returning fewer than `limit` items on the common case where the
+ * excluded article really was in the newest page.
+ */
+export async function getLatestArticles(limit = 8, excludeSlug?: string): Promise<CategoryNewsItem[]> {
   try {
     const { articles } = await getRepositories();
-    const result = await articles.search({ page: 1, pageSize: limit });
-    return result.items.map(toCategoryNewsItem);
+    const result = await articles.search({ page: 1, pageSize: excludeSlug ? limit + 1 : limit });
+    const items = excludeSlug ? result.items.filter((row) => row.slug !== excludeSlug) : result.items;
+    return items.slice(0, limit).map(toCategoryNewsItem);
   } catch (error) {
     console.error("[article-read-service] getLatestArticles failed:", error);
     return [];
@@ -111,8 +128,15 @@ export type FeaturedArticle = CategoryNewsItem & { hasAIInsights: boolean };
  * "AI Recommended" instead of just "Trending" when true, folding the
  * "Featured" and "AI Recommended" homepage requirements into the one
  * existing hero slot rather than adding a new section.
+ *
+ * Wrapped in React's `cache()` (product polishing phase, area 5) so
+ * `HeroSection`, `LatestNews`, and `MostRead` - three independent
+ * Server Components that each need to know which article is currently
+ * featured, in order to exclude it from their own lists - share a
+ * single request-scoped call instead of tripling this query per
+ * homepage render.
  */
-export async function getFeaturedArticle(): Promise<FeaturedArticle | null> {
+export const getFeaturedArticle = cache(async (): Promise<FeaturedArticle | null> => {
   try {
     const { articles, ai } = await getRepositories();
     const [top] = await articles.listTopByTrending(1);
@@ -123,20 +147,24 @@ export async function getFeaturedArticle(): Promise<FeaturedArticle | null> {
     console.error("[article-read-service] getFeaturedArticle failed:", error);
     return null;
   }
-}
+});
 
 /**
  * Ranks a trending-score candidate pool by real `view_count` (falling
  * back to `trending_score` for articles with no views yet, which is
  * every article until real traffic accrues) - backs Home's "Most Read"
- * widget.
+ * widget. `excludeSlug` (product polishing phase, area 5) drops the
+ * Hero/Featured article from consideration - it's drawn from the same
+ * trending-score pool as this widget, so without exclusion it would
+ * routinely also land in the Most Read top 5.
  */
 export type MostReadArticle = CategoryNewsItem & { viewCount: number };
 
-export async function getMostReadArticles(limit = 5): Promise<MostReadArticle[]> {
+export async function getMostReadArticles(limit = 5, excludeSlug?: string): Promise<MostReadArticle[]> {
   try {
     const { articles, metrics } = await getRepositories();
-    const pool = await articles.listTopByTrending(Math.max(limit * 4, 20));
+    const rawPool = await articles.listTopByTrending(Math.max(limit * 4, 20) + (excludeSlug ? 1 : 0));
+    const pool = excludeSlug ? rawPool.filter((row) => row.slug !== excludeSlug) : rawPool;
     if (pool.length === 0) return [];
 
     const metricsRows = await metrics.getManyByArticleIds(pool.map((row) => row.id));
@@ -241,17 +269,21 @@ export async function getRecentArticlesForCategory(categoryName: string, limit =
   }
 }
 
+export type SearchSortOrder = "relevance" | "newest" | "oldest";
+
 export type SearchQueryParams = Partial<
   Pick<FullTextSearchParams, "sourceId" | "category" | "categories" | "language" | "country" | "tag" | "dateFrom" | "dateTo">
 > & {
   /** Free-text query, searched across title/description/content/tags/author/category/AI summary/TLDR/source name - see `ArticleRepository.fullTextSearch()`. Was called `title` before this became real full-text search; renamed since it's no longer a title-only filter. */
   query?: string;
+  /** Result order - defaults to 'relevance' when a text query is present, 'newest' otherwise (relevance ranking has no meaning without a query). */
+  sort?: SearchSortOrder;
   page?: number;
   pageSize?: number;
 };
 
-/** A search result item, same shape every other listing already renders (`NewsCard`, etc.) plus which field the query actually matched - powers the "Matched in X" badge on the search results page. */
-export type SearchResultItem = CategoryNewsItem & { matchedIn: string };
+/** A search result item, same shape every other listing already renders (`NewsCard`, etc.) plus which field the query actually matched - powers the "Matched in X" badge on the search results page. Optional: the filter-only browse path (no text query - see `searchArticlesReal`) has no match field to report, since nothing was text-matched. */
+export type SearchResultItem = CategoryNewsItem & { matchedIn?: string };
 
 export type SearchArticlesPage = {
   items: SearchResultItem[];
@@ -265,48 +297,99 @@ function emptySearchPage(page: number, pageSize: number): SearchArticlesPage {
   return { items: [], total: 0, totalPages: 1, page, pageSize };
 }
 
+function hasAnyFilter(params: SearchQueryParams): boolean {
+  return Boolean(
+    (params.categories && params.categories.length > 0) ||
+      params.category ||
+      params.dateFrom ||
+      params.dateTo ||
+      params.tag ||
+      params.sourceId ||
+      params.language ||
+      params.country
+  );
+}
+
 /**
- * Real, full-text-search-backed search for the public `/search` page -
- * title/description/content/tags/author/category (on `articles`
- * itself) plus AI summary/TLDR and source name, ranked by relevance via
- * `ArticleRepository.fullTextSearch()` (see
- * `supabase/migrations/0004_full_text_search.sql`). An empty/
- * whitespace-only `query` returns an empty page rather than every
- * article, matching the existing search page's "type something to see
- * results" behavior - unchanged from before this became real FTS.
+ * Real search for the public `/search` page, with two paths:
  *
- * Source/category(ies)/language/country/tag/date filters are passed
- * straight through to the SQL function, ANDed with the text match,
- * exactly like they were ANDed onto `ArticleRepository.search()`'s
- * ILIKE filter before. `categories` (plural) is what the search page's
- * multi-select Category checkboxes use - every checked category is
- * honored, not just the first (see `0007_search_multi_category.sql`).
+ *  - Text query present: relevance-ranked full-text search via
+ *    `ArticleRepository.fullTextSearch()` (title/description/content/
+ *    tags/author/category on `articles` itself, plus AI summary/TLDR
+ *    and source name - see `supabase/migrations/0004_full_text_search.sql`
+ *    and `0008_search_sort_and_title_boost.sql`). `sort` maps onto the
+ *    SQL function's `sort_by` ('relevance'/'newest'/'oldest').
+ *  - No text query, but at least one filter (time/category/etc.) is
+ *    set: a plain filtered browse listing via `ArticleRepository.search()`
+ *    (no relevance ranking to speak of - sorted by publish date,
+ *    'oldest' reversing the direction). This is what makes "Time
+ *    filters must actually filter results" / "Category filters must
+ *    work correctly together" true even when the user hasn't typed a
+ *    keyword - previously this function short-circuited to an empty
+ *    page whenever `query` was blank, silently ignoring every filter.
+ *  - Neither a query nor any filter: empty page (the search page's
+ *    "Enter a keyword or choose a filter to get started" landing
+ *    state), matching the original "type something to see results"
+ *    behavior for a genuinely empty search.
+ *
+ * Source/category(ies)/language/country/tag/date filters are ANDed
+ * with the text match (or with each other, in the filter-only path).
+ * `categories` (plural) is what the search page's multi-select
+ * Category checkboxes use - every checked category is honored, not
+ * just the first (see `0007_search_multi_category.sql`).
  */
 export async function searchArticlesReal(params: SearchQueryParams): Promise<SearchArticlesPage> {
   const page = params.page ?? 1;
   const pageSize = params.pageSize ?? 10;
+  const hasQuery = Boolean(params.query && params.query.trim().length > 0);
 
-  if (!params.query || params.query.trim().length === 0) {
+  if (!hasQuery && !hasAnyFilter(params)) {
     return emptySearchPage(page, pageSize);
   }
 
   try {
     const { articles } = await getRepositories();
-    const result = await articles.fullTextSearch({
-      query: params.query,
-      sourceId: params.sourceId,
+
+    if (hasQuery) {
+      const result = await articles.fullTextSearch({
+        query: params.query as string,
+        sourceId: params.sourceId,
+        category: params.category,
+        categories: params.categories,
+        language: params.language,
+        country: params.country,
+        tag: params.tag,
+        dateFrom: params.dateFrom,
+        dateTo: params.dateTo,
+        sortBy: params.sort ?? "relevance",
+        page,
+        pageSize,
+      });
+      return {
+        items: result.items.map((row) => ({ ...toCategoryNewsItem(row), matchedIn: row.matched_in })),
+        total: result.total,
+        totalPages: Math.max(1, Math.ceil(result.total / pageSize)),
+        page: result.page,
+        pageSize: result.pageSize,
+      };
+    }
+
+    const result = await articles.search({
       category: params.category,
       categories: params.categories,
+      tag: params.tag,
+      sourceId: params.sourceId,
       language: params.language,
       country: params.country,
-      tag: params.tag,
       dateFrom: params.dateFrom,
       dateTo: params.dateTo,
+      sortBy: "published_at",
+      sortAscending: params.sort === "oldest",
       page,
       pageSize,
     });
     return {
-      items: result.items.map((row) => ({ ...toCategoryNewsItem(row), matchedIn: row.matched_in })),
+      items: result.items.map((row) => toCategoryNewsItem(row)),
       total: result.total,
       totalPages: Math.max(1, Math.ceil(result.total / pageSize)),
       page: result.page,
@@ -351,20 +434,6 @@ export async function getTimeFilterCounts(options: { id: string; maxDays: number
   } catch (error) {
     console.error("[article-read-service] getTimeFilterCounts failed:", error);
     return {};
-  }
-}
-
-export type SourceFilterOption = { id: string; name: string };
-
-/** Active sources, alphabetically ordered, for the search page's Source filter dropdown - public read, mirrors the pattern of `getCategoryFilterCounts`/`getTimeFilterCounts` above (small, server-side, never throws). Inactive sources are excluded - matches the spirit of them being hidden from public listings elsewhere. */
-export async function getAvailableSourcesForFilter(): Promise<SourceFilterOption[]> {
-  try {
-    const { sources } = await getRepositories();
-    const rows = await sources.list();
-    return rows.filter((row) => row.active).map((row) => ({ id: row.id, name: row.name }));
-  } catch (error) {
-    console.error("[article-read-service] getAvailableSourcesForFilter failed:", error);
-    return [];
   }
 }
 

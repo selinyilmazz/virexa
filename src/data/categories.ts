@@ -379,8 +379,16 @@ export const categories: Category[] = [
     ]),
   },
   {
+    // `name` is "Startup" (singular) - not "Startups" - because it's
+    // used directly as the real DB category filter value
+    // (`searchCategoryArticles(category.name, ...)`), and the real,
+    // canonical `Category` value stored on `articles.category` /
+    // `SEARCH_CATEGORY_SLUGS` has always been the singular "Startup".
+    // The plural only ever lived here, in the display-only mock
+    // taxonomy - so this page's DB query never matched a single real
+    // row before this fix, no matter how many startup articles existed.
     slug: "startups",
-    name: "Startups",
+    name: "Startup",
     icon: "🚀",
     description: "Funding rounds, founders, and the early-stage companies betting on what comes next.",
     breadcrumb: [

@@ -1,12 +1,6 @@
-import { TimeFilterCard } from "@/components/search/TimeFilterCard";
-import { CategoryFilterCard } from "@/components/search/CategoryFilterCard";
-import { AdvancedFilterCard } from "@/components/search/AdvancedFilterCard";
+import { SearchFiltersPanel } from "@/components/search/SearchFiltersPanel";
 import { SEARCH_CATEGORY_SLUGS } from "@/lib/news";
-import {
-  getAvailableSourcesForFilter,
-  getCategoryFilterCounts,
-  getTimeFilterCounts,
-} from "@/services/articles/article-read-service";
+import { getCategoryFilterCounts, getTimeFilterCounts } from "@/services/articles/article-read-service";
 
 const TIME_FILTER_DEFINITIONS: { id: string; label: string; maxDays: number }[] = [
   { id: "today", label: "Today", maxDays: 1 },
@@ -16,25 +10,27 @@ const TIME_FILTER_DEFINITIONS: { id: string; label: string; maxDays: number }[] 
   { id: "1y", label: "Last Year", maxDays: 365 },
 ];
 
-// Mirrors the language/country codes actually used by the source
-// registry (`lib/news/sources.ts`) and stored on `articles.language`/
-// `articles.country` - a small, hardcoded option list (matching how
-// `SEARCH_CATEGORY_SLUGS` is already hardcoded) rather than a DISTINCT
-// query, since the shimmed query builder has no DISTINCT support and
-// the real value space here is small and stable.
-const LANGUAGE_FILTER_DEFINITIONS: { value: string; label: string }[] = [{ value: "en", label: "English" }];
+type SearchFiltersProps = {
+  /** Current `time`/`categories` URL params, passed down by `app/search/page.tsx` - both the source of the staged panel's initial state AND its remount key (see `SearchFiltersPanel`'s doc comment). */
+  time?: string;
+  categories?: string;
+};
 
-const COUNTRY_FILTER_DEFINITIONS: { value: string; label: string }[] = [
-  { value: "US", label: "United States" },
-  { value: "GB", label: "United Kingdom" },
-];
-
-/** Real filter counts from the Article Storage tables, fetched server-side so the client filter cards (`TimeFilterCard`, `CategoryFilterCard`, `AdvancedFilterCard`) only need to render props - no client-side data fetching or mock counts. */
-export async function SearchFilters() {
-  const [categoryCounts, timeCounts, sources] = await Promise.all([
+/**
+ * Simplified search sidebar (product polishing phase, area 1): only
+ * Time, Category, and one Apply button - the Source/Language/Country
+ * filter (`AdvancedFilterCard`) has been removed entirely, per "Those
+ * filters currently provide little value and unnecessarily complicate
+ * the interface."
+ *
+ * Real filter counts from the Article Storage tables, fetched
+ * server-side so the client filter cards only need to render props - no
+ * client-side data fetching or mock counts.
+ */
+export async function SearchFilters({ time, categories }: SearchFiltersProps) {
+  const [categoryCounts, timeCounts] = await Promise.all([
     getCategoryFilterCounts(SEARCH_CATEGORY_SLUGS),
     getTimeFilterCounts(TIME_FILTER_DEFINITIONS),
-    getAvailableSourcesForFilter(),
   ]);
 
   const timeOptions = TIME_FILTER_DEFINITIONS.map((definition) => ({
@@ -49,16 +45,18 @@ export async function SearchFilters() {
     count: categoryCounts[definition.slug] ?? 0,
   }));
 
-  const sourceOptions = sources.map((source) => ({ value: source.id, label: source.name }));
+  const initialTime = time ?? null;
+  const initialCategories = categories ? categories.split(",").filter(Boolean) : [];
+  const panelKey = `${initialTime ?? ""}|${initialCategories.join(",")}`;
 
   return (
-    <div className="space-y-6 xl:sticky xl:top-28">
-      <TimeFilterCard options={timeOptions} />
-      <CategoryFilterCard options={categoryOptions} />
-      <AdvancedFilterCard
-        sourceOptions={sourceOptions}
-        languageOptions={LANGUAGE_FILTER_DEFINITIONS}
-        countryOptions={COUNTRY_FILTER_DEFINITIONS}
+    <div className="xl:sticky xl:top-28">
+      <SearchFiltersPanel
+        key={panelKey}
+        timeOptions={timeOptions}
+        categoryOptions={categoryOptions}
+        initialTime={initialTime}
+        initialCategories={initialCategories}
       />
     </div>
   );

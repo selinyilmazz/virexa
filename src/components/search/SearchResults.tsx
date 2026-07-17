@@ -5,6 +5,7 @@ import type { SearchResultItem } from "@/services/articles/article-read-service"
 type SearchResultsProps = {
   query: string;
   items: SearchResultItem[];
+  hasFilters: boolean;
 };
 
 // Maps `search_articles_fts()`'s `matched_in` value (see
@@ -29,22 +30,26 @@ function matchLabel(matchedIn: string): string {
 /**
  * Wraps each `NewsCard` with a small "Matched in X" badge instead of
  * modifying `NewsCard` itself - `NewsCard` is shared across Home,
- * Category, and Search, and only Search results carry a `matchedIn`
- * value, so the badge lives here as a sibling element around the
- * unmodified card.
+ * Category, and Search, and only text-query search results carry a
+ * `matchedIn` value. Filter-only browse results (no text query - see
+ * `searchArticlesReal`'s dual path) have no `matchedIn` at all, so the
+ * badge is simply omitted for those cards rather than showing a
+ * meaningless "Matched in Content" on every result.
  */
-export function SearchResults({ query, items }: SearchResultsProps) {
+export function SearchResults({ query, items, hasFilters }: SearchResultsProps) {
   if (items.length === 0) {
-    return <EmptySearchState query={query} />;
+    return <EmptySearchState query={query} hasFilters={hasFilters} />;
   }
 
   return (
     <div className="space-y-6">
       {items.map((item) => (
         <div key={item.slug} className="space-y-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">
-            Matched in {matchLabel(item.matchedIn)}
-          </span>
+          {item.matchedIn && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">
+              Matched in {matchLabel(item.matchedIn)}
+            </span>
+          )}
           <NewsCard {...item} />
         </div>
       ))}

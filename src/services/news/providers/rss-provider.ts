@@ -1,4 +1,4 @@
-import { classifyHttpStatus, fetchOgImage, fetchWithTimeout, pickBestImageUrl } from "@/lib/news";
+import { classifyHttpStatus, fetchOgImage, fetchWithTimeout, isAcceptableImageUrl, pickBestImageUrl } from "@/lib/news";
 import type { ImageCandidate } from "@/lib/news";
 import { parseFeed } from "@/lib/news/xml-feed-parser";
 import type { ParsedFeedItem } from "@/lib/news/xml-feed-parser";
@@ -123,7 +123,14 @@ async function fetchFeed(config: FeedSourceConfig): Promise<ProviderNewsItem[]> 
       summary: item.description ?? item.content ?? "",
       content: item.content,
       url: item.link,
-      image: bestImages.get(item.link) ?? item.imageUrl,
+      // The size-declared fast path (`resolveBestImages` skips the
+      // og:image lookup entirely for a `media:content`/`media:thumbnail`
+      // that already declares a width) still needs its own acceptance
+      // check here - "trusted outright" only ever meant "worth skipping
+      // the extra HTTP request for", never "exempt from the favicon/
+      // logo/placeholder/too-small rejection" (product polishing phase,
+      // area 3).
+      image: bestImages.get(item.link) ?? (isAcceptableImageUrl(item.imageUrl, item.imageWidth) ? item.imageUrl : undefined),
       category: config.category,
       sourceId: config.sourceId,
       publishedAt: item.publishedAt,

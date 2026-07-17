@@ -24,11 +24,17 @@ const CATEGORY_ALIASES: Record<Category, string[]> = {
     "llm",
     "deep learning",
   ],
-  Games: ["games", "gaming", "esports", "video games"],
+  Games: ["games", "gaming", "esports", "video games", "video game"],
   World: ["world", "global", "international", "world news"],
-  Science: ["science", "research", "space"],
-  Security: ["security", "cybersecurity", "infosec", "cyber security"],
-  Startup: ["startup", "startups", "venture capital", "funding", "vc"],
+  // "space" moved to its own Space category below - it used to live here
+  // and made every space-exploration story land in Science instead.
+  Science: ["science", "research", "biology", "physics", "chemistry", "genetics", "climate research"],
+  Security: ["security", "cybersecurity", "infosec", "cyber security", "data breach", "ransomware", "malware", "hacker", "vulnerability"],
+  Startup: ["startup", "startups", "venture capital", "funding round", "seed funding", "vc"],
+  Programming: ["programming", "developer", "coding", "software engineering", "open source", "github", "framework", "programming language"],
+  Mobile: ["mobile", "smartphone", "android", "ios", "iphone", "app store"],
+  Robotics: ["robotics", "robot", "humanoid robot", "automation", "drone", "autonomous vehicle"],
+  Space: ["space", "nasa", "spacex", "rocket", "satellite", "astronaut", "mars", "orbit", "exoplanet"],
 };
 
 /** Fallback category for labels that don't match any known alias. */
@@ -61,7 +67,20 @@ export function normalizeCategory(rawCategory: string): Category {
  * distribution realistic ("Mevcut mimariyi bozma" - no schema/provider
  * change, just a smarter category choice from data already on hand).
  */
-const CATEGORY_PRIORITY: Category[] = ["Security", "Games", "Business", "Startup", "World", "Science", "AI", "Technology"];
+const CATEGORY_PRIORITY: Category[] = [
+  "Security",
+  "Robotics",
+  "Space",
+  "Games",
+  "Mobile",
+  "Programming",
+  "Business",
+  "Startup",
+  "World",
+  "Science",
+  "AI",
+  "Technology",
+];
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -115,17 +134,27 @@ export function inferCategoryFromTitle(title: string): Category | undefined {
 /**
  * Canonical slug <-> real-database-category mapping - the single source
  * of truth for every place that needs to turn a URL-friendly slug into
- * one of the 8 actual `Category` values `articles.category` can hold
- * (or vice versa). Search fix: the public `/search` page's category
- * filter used to source its slug list from `src/data/categories.ts`
- * (mock/legacy data for the `/category/[slug]` browsing pages, which
- * has 11 entries including ones that were never real DB categories -
- * "Robotics", "Mobile", "Programming", "Space" - plus a "Startups"
- * (plural) entry that never matched the real, singular "Startup" stored
- * on `articles.category`). Any UI that needs to filter/count the
- * `articles` table by category should import this list instead of
- * reaching into the mock category-page data - see `SearchFilters.tsx`
- * and `app/search/page.tsx`.
+ * one of the 12 actual `Category` values `articles.category` can hold
+ * (or vice versa).
+ *
+ * Product polishing phase, area 2: this used to be an 8-value list.
+ * `src/data/categories.ts` (the taxonomy/breadcrumb/tag data for the
+ * `/category/[slug]` browsing pages) already had 12 entries - including
+ * "Robotics", "Mobile", "Programming", "Space" - each one already wired
+ * to a real, paginated `searchCategoryArticles(category.name, ...)` DB
+ * query (see `app/category/[slug]/page.tsx`), but the `Category` union
+ * only had 8 values, so those 4 pages could structurally never show a
+ * real article - `normalizeCategory`/`inferCategoryFromTitle` had
+ * nowhere to route them. The `Category` union (`types/news.ts`) now
+ * covers all 12, matching `src/data/categories.ts` exactly, so RSS
+ * coverage for these categories (`feed-sources.ts`) actually reaches
+ * the database. The former "Startups" (plural) entry in
+ * `src/data/categories.ts` has also been fixed to the real, singular
+ * "Startup" - it never matched any stored row before.
+ *
+ * Any UI that needs to filter/count the `articles` table by category
+ * should import this list instead of reaching into the mock
+ * category-page data - see `SearchFilters.tsx` and `app/search/page.tsx`.
  */
 export const SEARCH_CATEGORY_SLUGS: { slug: string; name: Category }[] = [
   { slug: "technology", name: "Technology" },
@@ -136,4 +165,8 @@ export const SEARCH_CATEGORY_SLUGS: { slug: string; name: Category }[] = [
   { slug: "science", name: "Science" },
   { slug: "security", name: "Security" },
   { slug: "startup", name: "Startup" },
+  { slug: "programming", name: "Programming" },
+  { slug: "mobile", name: "Mobile" },
+  { slug: "robotics", name: "Robotics" },
+  { slug: "space", name: "Space" },
 ];

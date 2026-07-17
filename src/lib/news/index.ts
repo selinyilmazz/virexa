@@ -4,7 +4,7 @@ export type { DuplicateStrategy } from "@/lib/news/duplicate-detector";
 export { SOURCES, getSourceById, findSourceIdByName } from "@/lib/news/sources";
 export { slugify, buildArticleId, makeUniqueSlug } from "@/lib/news/slug";
 export { TTLCache } from "@/lib/news/ttl-cache";
-export { resolveArticleImage, pickBestImageUrl } from "@/lib/news/image-fallback";
+export { resolveArticleImage, pickBestImageUrl, isAcceptableImageUrl } from "@/lib/news/image-fallback";
 export type { ImageCandidate } from "@/lib/news/image-fallback";
 export { getSourceLogo, DEFAULT_SOURCE_LOGO } from "@/lib/news/source-logos";
 export { formatPublishedDate } from "@/lib/news/date-format";

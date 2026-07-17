@@ -64,12 +64,16 @@ export const articleSearchParamsSchema = z.object({
   tag: z.string().trim().min(1).optional(),
   sourceId: z.string().trim().min(1).optional(),
   category: z.string().trim().min(1).optional(),
+  /** Multi-category browse filter (`.in("category", ...)`) - used by the public /search page's filter-only (no text query) browse path, added alongside `categories` for `fullTextSearchParamsSchema` below in the product polishing phase. `category` (singular) stays for every other existing caller. */
+  categories: z.array(z.string().trim().min(1)).min(1).optional(),
   language: z.string().trim().min(1).optional(),
   country: z.string().trim().min(1).optional(),
   dateFrom: z.string().trim().min(1).optional(),
   dateTo: z.string().trim().min(1).optional(),
   /** Defaults to newest-first by publish date; "trending_score" powers the paginated `/most-read` page. */
   sortBy: z.enum(["published_at", "trending_score"]).default("published_at"),
+  /** Sort direction for `sortBy` - defaults to descending (newest/highest first). Set `true` for an ascending ("Oldest") sort, used by the /search page's filter-only browse path. */
+  sortAscending: z.boolean().default(false),
   page: z.number().int().min(1).default(1),
   pageSize: z.number().int().min(1).max(100).default(20),
 
@@ -121,6 +125,8 @@ export const fullTextSearchParamsSchema = z.object({
   tag: z.string().trim().min(1).optional(),
   dateFrom: z.string().trim().min(1).optional(),
   dateTo: z.string().trim().min(1).optional(),
+  /** Result order - 'relevance' (default, rank-based), 'newest', or 'oldest' by publish date. Maps onto `search_articles_fts`'s `sort_by` parameter (see `supabase/migrations/0008_search_sort_and_title_boost.sql`). Powers the /search page's Sort control. */
+  sortBy: z.enum(["relevance", "newest", "oldest"]).default("relevance"),
   page: z.number().int().min(1).default(1),
   pageSize: z.number().int().min(1).max(50).default(10),
 });

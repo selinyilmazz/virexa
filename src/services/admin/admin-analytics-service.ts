@@ -209,8 +209,21 @@ export type AnalyticsTopLists = {
 
 const TOP_LIST_LIMIT = 5;
 
-/** Same fixed 8-value taxonomy used by `AdminArticleFilters`' category dropdown (see `types/news.ts`'s `Category` type) - duplicated as a local literal array the same way that component does, rather than introducing a new shared constants module for one list. */
-const CATEGORIES: Category[] = ["Technology", "Business", "AI", "Games", "World", "Science", "Security", "Startup"];
+/** Same fixed 12-value taxonomy used by `AdminArticleFilters`' category dropdown (see `types/news.ts`'s `Category` type) - duplicated as a local literal array the same way that component does, rather than introducing a new shared constants module for one list. */
+const CATEGORIES: Category[] = [
+  "Technology",
+  "Business",
+  "AI",
+  "Games",
+  "World",
+  "Science",
+  "Security",
+  "Startup",
+  "Programming",
+  "Mobile",
+  "Robotics",
+  "Space",
+];
 
 /**
  * The six Top Lists (requirement 3). Every independent list is fetched

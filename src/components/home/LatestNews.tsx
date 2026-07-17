@@ -1,8 +1,14 @@
 import { NewsCard } from "@/components/news/NewsCard";
-import { getLatestArticles } from "@/services/articles/article-read-service";
+import { getFeaturedArticle, getLatestArticles } from "@/services/articles/article-read-service";
 
 export async function LatestNews() {
-  const latestNewsItems = await getLatestArticles(8);
+  // Excludes whatever HeroSection is currently featuring, so the same
+  // story doesn't show up as both the Hero and the first Latest News
+  // card (product polishing phase, area 5). `getFeaturedArticle` is
+  // request-cached, so this doesn't add a second DB round trip beyond
+  // what HeroSection already pays.
+  const featured = await getFeaturedArticle();
+  const latestNewsItems = await getLatestArticles(8, featured?.slug);
 
   return (
     <section aria-labelledby="latest-news-title" className="mx-auto mt-10 max-w-[1280px]">

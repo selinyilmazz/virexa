@@ -3,7 +3,20 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const CATEGORIES = ["Technology", "Business", "AI", "Games", "World", "Science", "Security", "Startup"] as const;
+const CATEGORIES = [
+  "Technology",
+  "Business",
+  "AI",
+  "Games",
+  "World",
+  "Science",
+  "Security",
+  "Startup",
+  "Programming",
+  "Mobile",
+  "Robotics",
+  "Space",
+] as const;
 
 type SourceOption = { id: string; name: string };
 

@@ -43,7 +43,19 @@ export type Source = {
  * gets mapped into. Kept intentionally small and stable — see
  * `src/lib/news/category-mapper.ts` for the alias table.
  */
-export type Category = "Technology" | "Business" | "AI" | "Games" | "World" | "Science" | "Security" | "Startup";
+export type Category =
+  | "Technology"
+  | "Business"
+  | "AI"
+  | "Games"
+  | "World"
+  | "Science"
+  | "Security"
+  | "Startup"
+  | "Programming"
+  | "Mobile"
+  | "Robotics"
+  | "Space";
 
 export type Tag = string;
 

@@ -1,7 +1,5 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-
 export type CategoryFilterOption = {
   slug: string;
   label: string;
@@ -10,43 +8,20 @@ export type CategoryFilterOption = {
 
 type CategoryFilterCardProps = {
   options: CategoryFilterOption[];
+  selected: string[];
+  onToggle: (slug: string) => void;
+  onClear: () => void;
 };
 
-export function CategoryFilterCard({ options }: CategoryFilterCardProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const selectedSlugs = searchParams.get("categories")?.split(",").filter(Boolean) ?? [];
-
-  function toggleCategory(slug: string) {
-    const nextSlugs = selectedSlugs.includes(slug)
-      ? selectedSlugs.filter((item) => item !== slug)
-      : [...selectedSlugs, slug];
-
-    const params = new URLSearchParams(searchParams.toString());
-    if (nextSlugs.length > 0) {
-      params.set("categories", nextSlugs.join(","));
-    } else {
-      params.delete("categories");
-    }
-    params.delete("page");
-    router.push(`/search?${params.toString()}`, { scroll: false });
-  }
-
-  function clearFilters() {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("categories");
-    params.delete("time");
-    params.delete("page");
-    router.push(`/search?${params.toString()}`, { scroll: false });
-  }
-
+/** Controlled, presentation-only - see `TimeFilterCard`'s doc comment for why (staged state lives in `SearchFiltersPanel`, committed on Apply). */
+export function CategoryFilterCard({ options, selected, onToggle, onClear }: CategoryFilterCardProps) {
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="text-2xl font-bold tracking-tight text-slate-950">Categories</h2>
 
       <div className="mt-4 space-y-2">
         {options.map((option) => {
-          const isSelected = selectedSlugs.includes(option.slug);
+          const isSelected = selected.includes(option.slug);
           return (
             <label
               key={option.slug}
@@ -56,7 +31,7 @@ export function CategoryFilterCard({ options }: CategoryFilterCardProps) {
                 <input
                   type="checkbox"
                   checked={isSelected}
-                  onChange={() => toggleCategory(option.slug)}
+                  onChange={() => onToggle(option.slug)}
                   className="size-4 rounded accent-[#2f67e8]"
                 />
                 <span className="text-base font-medium text-slate-700">{option.label}</span>
@@ -71,7 +46,7 @@ export function CategoryFilterCard({ options }: CategoryFilterCardProps) {
 
       <button
         type="button"
-        onClick={clearFilters}
+        onClick={onClear}
         className="mt-5 flex items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-[#2f67e8]"
       >
         <svg

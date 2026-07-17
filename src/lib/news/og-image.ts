@@ -1,4 +1,5 @@
 import { fetchWithTimeout } from "@/lib/news/fetch-with-timeout";
+import { isAcceptableImageUrl } from "@/lib/news/image-fallback";
 
 /** How long to wait for the article page itself. Matches every provider's own `REQUEST_TIMEOUT_MS`/`FEED_TIMEOUT_MS` (8000, see `rss-provider.ts`/`newsapi-provider.ts`/`gnews-provider.ts`/`hackernews-provider.ts`) rather than a shorter, provider-specific value - many publisher article pages are heavier than their own feed/API responses, and this was previously set 2s tighter than that shared convention, cutting off some real og:image lookups (and falling back to a category placeholder image) on slower-loading pages for no real benefit. */
 const OG_IMAGE_TIMEOUT_MS = 8000;
@@ -129,6 +130,15 @@ export async function fetchOgImage(pageUrl: string): Promise<OgImageResult | und
 
     const widthProperty = IMAGE_WIDTH_META_PROPERTIES[match.property];
     const width = widthProperty ? parseDeclaredWidth(extractMetaContentFor(html, widthProperty)) : undefined;
+
+    // Reject a favicon/logo/placeholder/too-small og:image right at the
+    // source (product polishing phase, area 3) - many publisher pages
+    // fall back to their own site logo or a generic social-share badge
+    // for og:image when an article genuinely has no photo, and that's
+    // exactly the "tiny logos, publisher icons, generic placeholders"
+    // pattern the polishing pass calls out. Every caller (RSSProvider,
+    // HackerNewsProvider) benefits automatically without its own check.
+    if (!isAcceptableImageUrl(url, width)) return undefined;
 
     return { url, width };
   } catch (error) {

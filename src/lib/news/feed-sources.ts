@@ -136,8 +136,13 @@ export const FEED_SOURCES: FeedSourceConfig[] = [
     id: "github-blog",
     label: "GitHub Blog",
     url: "https://github.blog/feed/",
+    // Recategorized Technology -> Programming (product polishing phase,
+    // area 2): a developer-tooling/open-source blog is a much more
+    // accurate fit for Programming than the generic Technology bucket,
+    // and it also gives the previously-empty Programming category its
+    // first real source at zero new-feed cost.
     sourceId: "github-blog",
-    category: "Technology",
+    category: "Programming",
     enabled: true,
   },
   {
@@ -167,5 +172,166 @@ export const FEED_SOURCES: FeedSourceConfig[] = [
     enabled: false,
     disabledReason:
       "Candidate replacement for the retired blogs.microsoft.com/ai/feed/ endpoint (Microsoft's Tech Community AI Platform board, standard board.id RSS pattern) - outbound network fetches were not available in this environment to confirm it resolves and returns valid RSS before enabling it. Verify manually, then flip enabled to true.",
+  },
+
+  // ==========================================================================
+  // Product polishing phase, area 2 ("CATEGORY COVERAGE"): Technology and AI
+  // had many/some articles; Business, Games, World, Science, Security,
+  // Startup, Programming, Mobile, Robotics, and Space had almost none -
+  // every enabled feed above only ever labels its own items "Technology" or
+  // "AI". The feeds below give every one of those categories a real,
+  // dedicated source. Same house rule as above: only feeds on a domain/URL
+  // pattern already confirmed working elsewhere in this registry (BBC,
+  // TechCrunch) or an extremely long-standing, widely-documented endpoint
+  // are enabled outright; anything less certain is added `enabled: false`
+  // with a `disabledReason` for manual verification, never guessed live.
+  // ==========================================================================
+  {
+    id: "bbc-world",
+    label: "BBC World News",
+    url: "https://feeds.bbci.co.uk/news/world/rss.xml",
+    sourceId: "bbc",
+    category: "World",
+    enabled: true,
+  },
+  {
+    id: "bbc-science-environment",
+    label: "BBC Science & Environment",
+    url: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
+    sourceId: "bbc",
+    category: "Science",
+    enabled: true,
+  },
+  {
+    id: "aljazeera-all",
+    label: "Al Jazeera",
+    url: "https://www.aljazeera.com/xml/rss/all.xml",
+    sourceId: "al-jazeera",
+    category: "World",
+    enabled: true,
+  },
+  {
+    id: "techcrunch-startups",
+    label: "TechCrunch Startups",
+    url: "https://techcrunch.com/category/startups/feed/",
+    sourceId: "techcrunch",
+    category: "Startup",
+    enabled: true,
+  },
+  {
+    id: "forbes-business",
+    label: "Forbes Business",
+    url: "https://www.forbes.com/business/feed/",
+    sourceId: "forbes",
+    category: "Business",
+    enabled: true,
+  },
+  {
+    id: "fortune",
+    label: "Fortune",
+    url: "https://fortune.com/feed/",
+    sourceId: "forbes",
+    category: "Business",
+    enabled: false,
+    disabledReason: "Candidate second Business source - Fortune's CMS/feed path could not be confirmed without outbound network access in this environment. Verify manually, then flip enabled to true (and register a dedicated 'fortune' source id instead of reusing 'forbes').",
+  },
+  {
+    id: "ign-all",
+    label: "IGN",
+    url: "https://feeds.ign.com/ign/all",
+    sourceId: "ign",
+    category: "Games",
+    enabled: true,
+  },
+  {
+    id: "polygon",
+    label: "Polygon",
+    url: "https://www.polygon.com/rss/index.xml",
+    sourceId: "polygon",
+    category: "Games",
+    enabled: true,
+  },
+  {
+    id: "pcgamer",
+    label: "PC Gamer",
+    url: "https://www.pcgamer.com/rss/",
+    sourceId: "ign",
+    category: "Games",
+    enabled: false,
+    disabledReason: "Candidate third Games source - Future plc's exact feed path for this title could not be confirmed without outbound network access. Verify manually, then flip enabled to true (and register a dedicated 'pc-gamer' source id instead of reusing 'ign').",
+  },
+  {
+    id: "krebs-on-security",
+    label: "Krebs on Security",
+    url: "https://krebsonsecurity.com/feed/",
+    sourceId: "krebs-on-security",
+    category: "Security",
+    enabled: true,
+  },
+  {
+    id: "the-hacker-news",
+    label: "The Hacker News",
+    url: "https://feeds.feedburner.com/TheHackersNews",
+    sourceId: "the-hacker-news",
+    category: "Security",
+    enabled: true,
+  },
+  {
+    id: "science-daily-all",
+    label: "ScienceDaily",
+    url: "https://www.sciencedaily.com/rss/all.xml",
+    sourceId: "science-daily",
+    category: "Science",
+    enabled: true,
+  },
+  {
+    id: "stackoverflow-blog",
+    label: "Stack Overflow Blog",
+    url: "https://stackoverflow.blog/feed/",
+    sourceId: "stack-overflow-blog",
+    category: "Programming",
+    enabled: true,
+  },
+  {
+    id: "android-authority",
+    label: "Android Authority",
+    url: "https://www.androidauthority.com/feed/",
+    sourceId: "android-authority",
+    category: "Mobile",
+    enabled: true,
+  },
+  {
+    id: "the-robot-report",
+    label: "The Robot Report",
+    url: "https://www.therobotreport.com/feed/",
+    sourceId: "the-robot-report",
+    category: "Robotics",
+    enabled: true,
+  },
+  {
+    id: "ieee-spectrum-robotics",
+    label: "IEEE Spectrum - Robotics",
+    url: "https://spectrum.ieee.org/feeds/topic/robotics.rss",
+    sourceId: "the-robot-report",
+    category: "Robotics",
+    enabled: false,
+    disabledReason: "Candidate second Robotics source - IEEE Spectrum's exact topic-feed path could not be confirmed without outbound network access. Verify manually, then flip enabled to true (and register a dedicated 'ieee-spectrum' source id instead of reusing 'the-robot-report').",
+  },
+  {
+    id: "nasa-breaking-news",
+    label: "NASA Breaking News",
+    url: "https://www.nasa.gov/rss/dyn/breaking_news.rss",
+    sourceId: "nasa",
+    category: "Space",
+    enabled: true,
+  },
+  {
+    id: "space-com",
+    label: "Space.com",
+    url: "https://www.space.com/feeds/all",
+    sourceId: "nasa",
+    category: "Space",
+    enabled: false,
+    disabledReason: "Candidate second Space source - Future plc's exact feed path for this title could not be confirmed without outbound network access. Verify manually, then flip enabled to true (and register a dedicated 'space-com' source id instead of reusing 'nasa').",
   },
 ];
