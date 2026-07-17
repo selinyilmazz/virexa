@@ -1,5 +1,6 @@
 export const latestNewsItems = [
   {
+    slug: "ai-revolutionizes-city-transportation-systems",
     image: "/images/news/ai-city.jpg",
     category: "Technology",
     title: "AI Revolutionizes City Transportation Systems",
@@ -9,6 +10,7 @@ export const latestNewsItems = [
     isBookmarked: false,
   },
   {
+    slug: "next-generation-gaming-takes-center-stage",
     image: "/images/news/gaming.jpg",
     category: "Games",
     title: "Next-Generation Gaming Takes Center Stage",
@@ -18,6 +20,7 @@ export const latestNewsItems = [
     isBookmarked: true,
   },
   {
+    slug: "apple-reports-record-quarterly-revenue",
     image: "/images/news/apple.jpg",
     category: "Business",
     title: "Apple Reports Record Quarterly Revenue",
@@ -27,6 +30,7 @@ export const latestNewsItems = [
     isBookmarked: false,
   },
   {
+    slug: "anthropic-raises-26-billion-in-funding",
     image: "/images/news/funding.jpg",
     category: "AI",
     title: "Anthropic Raises $2.6 Billion in Funding",

@@ -1,3 +1,7 @@
+import { latestNewsItems } from "@/data/latestNews";
+import { categories } from "@/data/categories";
+import { mostReadItems } from "@/data/most-read";
+
 export type ArticleContentBlock =
   | { type: "heading"; text: string }
   | { type: "paragraph"; text: string }
@@ -129,10 +133,156 @@ export const articles: Article[] = [
         source: "9to5Mac",
         publishedDate: "May 16, 2024",
       },
+      {
+        slug: "microsoft-invests-10b-in-ai",
+        image: "/images/news/gaming.jpg",
+        title: "Microsoft invests $10B in AI",
+        source: "CNBC",
+        publishedDate: "May 11, 2024",
+      },
     ],
   },
 ];
 
+type ArticleSeed = {
+  slug: string;
+  title: string;
+  image: string;
+  category?: string;
+  source?: string;
+  publishedDate?: string;
+  description?: string;
+};
+
+function collectSeeds(): ArticleSeed[] {
+  const seeds: ArticleSeed[] = [];
+
+  latestNewsItems.forEach((item) => {
+    seeds.push({
+      slug: item.slug,
+      title: item.title,
+      image: item.image,
+      category: item.category,
+      source: item.source,
+      publishedDate: item.publishedDate,
+      description: item.description,
+    });
+  });
+
+  categories.forEach((category) => {
+    category.news.forEach((item) => {
+      seeds.push({
+        slug: item.slug,
+        title: item.title,
+        image: item.image,
+        category: item.category,
+        source: item.source,
+        publishedDate: item.publishedDate,
+        description: item.description,
+      });
+    });
+  });
+
+  articles.forEach((article) => {
+    article.relatedArticles.forEach((related) => {
+      seeds.push({
+        slug: related.slug,
+        title: related.title,
+        image: related.image,
+        source: related.source,
+        publishedDate: related.publishedDate,
+      });
+    });
+  });
+
+  mostReadItems.forEach((item) => {
+    seeds.push({
+      slug: item.slug,
+      title: item.title,
+      image: item.image,
+      category: item.category,
+      source: item.source,
+      publishedDate: item.publishedDate,
+      description: item.description,
+    });
+  });
+
+  return seeds;
+}
+
+export function findCategoryHref(categoryName?: string): string {
+  if (!categoryName) return "/";
+  const match = categories.find((category) => category.name.toLowerCase() === categoryName.toLowerCase());
+  return match ? `/category/${match.slug}` : "/";
+}
+
+function buildFallbackArticle(seed: ArticleSeed, allSeeds: ArticleSeed[]): Article {
+  const categoryLabel = seed.category ?? "News";
+
+  const relatedArticles: RelatedArticleItem[] = allSeeds
+    .filter(
+      (candidate) =>
+        candidate.slug !== seed.slug &&
+        candidate.category !== undefined &&
+        seed.category !== undefined &&
+        candidate.category.toLowerCase() === seed.category.toLowerCase()
+    )
+    .slice(0, 4)
+    .map((candidate) => ({
+      slug: candidate.slug,
+      image: candidate.image,
+      title: candidate.title,
+      source: candidate.source ?? "Virexa",
+      publishedDate: candidate.publishedDate ?? "Recently",
+    }));
+
+  return {
+    slug: seed.slug,
+    category: categoryLabel,
+    title: seed.title,
+    summary: seed.description ?? `${seed.title} — full coverage from the Virexa newsroom.`,
+    coverImage: seed.image,
+    author: {
+      name: seed.source ?? "Virexa Newsroom",
+      avatar: "/images/article/authors/newsroom.svg",
+    },
+    publishedDate: seed.publishedDate ?? "Recently",
+    readTime: "3 min read",
+    breadcrumb: [
+      { label: "Home", href: "/" },
+      { label: categoryLabel, href: findCategoryHref(seed.category) },
+      { label: seed.title, href: `/article/${seed.slug}` },
+    ],
+    content: [
+      {
+        type: "paragraph",
+        text:
+          seed.description ??
+          `${seed.title}. Our newsroom is tracking this story as it develops, with more details to follow.`,
+      },
+      {
+        type: "paragraph",
+        text: `This summary was compiled from ${seed.source ?? "wire"} reporting. Check back soon for the full in-depth report.`,
+      },
+    ],
+    tags: [categoryLabel],
+    sourceLabel: seed.source ?? "Virexa",
+    sourceUrl: "#",
+    relatedArticles,
+  };
+}
+
 export function getArticleBySlug(slug: string): Article | undefined {
-  return articles.find((article) => article.slug === slug);
+  const curated = articles.find((article) => article.slug === slug);
+  if (curated) {
+    return curated;
+  }
+
+  const seeds = collectSeeds();
+  const seed = seeds.find((candidate) => candidate.slug === slug);
+  if (!seed) {
+    return undefined;
+  }
+
+  return buildFallbackArticle(seed, seeds);
 }

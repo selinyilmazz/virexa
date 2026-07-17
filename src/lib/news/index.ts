@@ -1,0 +1,11 @@
+export { normalizeCategory } from "@/lib/news/category-mapper";
+export { dedupeArticles, isDuplicateArticle } from "@/lib/news/duplicate-detector";
+export { SOURCES, getSourceById } from "@/lib/news/sources";
+export { slugify, buildArticleId, makeUniqueSlug } from "@/lib/news/slug";
+export { TTLCache } from "@/lib/news/ttl-cache";
+export { resolveArticleImage } from "@/lib/news/image-fallback";
+export { getSourceLogo, DEFAULT_SOURCE_LOGO } from "@/lib/news/source-logos";
+export { formatPublishedDate } from "@/lib/news/date-format";
+export { toCategoryNewsItem } from "@/lib/news/ui-adapter";
+export { FEED_SOURCES } from "@/lib/news/feed-sources";
+export type { FeedSourceConfig } from "@/lib/news/feed-sources";

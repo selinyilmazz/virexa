@@ -7,7 +7,7 @@ import { ShareButtons } from "@/components/article/ShareButtons";
 import { ArticleContent } from "@/components/article/ArticleContent";
 import { ArticleTags } from "@/components/article/ArticleTags";
 import { RelatedArticles } from "@/components/article/RelatedArticles";
-import { articles, getArticleBySlug } from "@/data/article";
+import { articles, findCategoryHref, getArticleBySlug } from "@/data/article";
 
 type ArticlePageProps = {
   params: Promise<{ slug: string }>;
@@ -64,7 +64,18 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   publishedDate={article.publishedDate}
                   readTime={article.readTime}
                 />
-                <ShareButtons />
+                <ShareButtons
+                  title={article.title}
+                  bookmarkItem={{
+                    slug: article.slug,
+                    image: article.coverImage,
+                    category: article.category,
+                    title: article.title,
+                    description: article.summary,
+                    source: article.sourceLabel,
+                    publishedDate: article.publishedDate,
+                  }}
+                />
               </div>
 
               <div className="mt-6">
@@ -81,7 +92,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             </div>
 
             <aside className="min-w-0">
-              <RelatedArticles items={article.relatedArticles} />
+              <RelatedArticles items={article.relatedArticles} viewAllHref={findCategoryHref(article.category)} />
             </aside>
           </div>
         </div>

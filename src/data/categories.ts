@@ -1,5 +1,8 @@
+import { toCategoryNewsItem } from "@/lib/news";
+import { getLiveArticlesSync } from "@/services/news";
+
 export type CategoryNewsItem = {
-  id: string;
+  slug: string;
   image: string;
   category: string;
   title: string;
@@ -22,6 +25,7 @@ export type BreadcrumbItem = {
 export type Category = {
   slug: string;
   name: string;
+  icon: string;
   description: string;
   breadcrumb: BreadcrumbItem[];
   popularTags: CategoryTag[];
@@ -54,7 +58,7 @@ const CARD_DATES = [
 
 function buildCategoryNews(categoryName: string, slug: string, titles: string[]): CategoryNewsItem[] {
   return titles.map((title, index) => ({
-    id: `${slug}-${index + 1}`,
+    slug: `${slug}-${index + 1}`,
     image: CARD_IMAGES[index % CARD_IMAGES.length],
     category: categoryName,
     title,
@@ -69,6 +73,7 @@ export const categories: Category[] = [
   {
     slug: "technology",
     name: "Technology",
+    icon: "💻",
     description:
       "The latest breakthroughs in software, hardware, and emerging tech shaping how the world builds and connects.",
     breadcrumb: [
@@ -103,6 +108,7 @@ export const categories: Category[] = [
   {
     slug: "business",
     name: "Business",
+    icon: "💼",
     description: "Markets, earnings, and the corporate moves driving the global economy forward.",
     breadcrumb: [
       { label: "Home", href: "/" },
@@ -136,6 +142,7 @@ export const categories: Category[] = [
   {
     slug: "ai",
     name: "AI",
+    icon: "🤖",
     description:
       "Everything about artificial intelligence — new models, research breakthroughs, and how AI is reshaping industries.",
     breadcrumb: [
@@ -170,6 +177,7 @@ export const categories: Category[] = [
   {
     slug: "games",
     name: "Games",
+    icon: "🎮",
     description: "Console, PC, and mobile gaming news — releases, studios, esports, and the technology behind the games.",
     breadcrumb: [
       { label: "Home", href: "/" },
@@ -203,6 +211,7 @@ export const categories: Category[] = [
   {
     slug: "world",
     name: "World",
+    icon: "🌍",
     description: "Global affairs, diplomacy, and the events shaping communities and economies around the world.",
     breadcrumb: [
       { label: "Home", href: "/" },
@@ -233,8 +242,269 @@ export const categories: Category[] = [
       "United Nations Convenes on Global Security",
     ]),
   },
+  {
+    slug: "security",
+    name: "Security",
+    icon: "🔒",
+    description: "Cybersecurity threats, data breaches, and the defenses protecting people and organizations online.",
+    breadcrumb: [
+      { label: "Home", href: "/" },
+      { label: "Security", href: "/category/security" },
+    ],
+    popularTags: [
+      { label: "Cybersecurity", count: 89 },
+      { label: "Data Breach", count: 54 },
+      { label: "Ransomware", count: 46 },
+      { label: "Encryption", count: 33 },
+      { label: "Zero-Day", count: 28 },
+      { label: "Phishing", count: 41 },
+      { label: "Compliance", count: 25 },
+      { label: "Bug Bounty", count: 19 },
+    ],
+    news: buildCategoryNews("Security", "security", [
+      "Major Data Breach Exposes Millions of Records",
+      "Zero-Day Vulnerability Patched Across Browsers",
+      "Ransomware Attacks Target Healthcare Systems",
+      "Multi-Factor Authentication Adoption Grows",
+      "Nation-State Hackers Target Critical Infrastructure",
+      "Password Manager Breach Prompts Security Review",
+      "AI-Powered Phishing Attacks on the Rise",
+      "Cloud Misconfigurations Lead to Data Leaks",
+      "New Encryption Standard Gains Industry Support",
+      "Bug Bounty Programs Pay Out Record Sums",
+      "Supply Chain Attacks Target Open-Source Packages",
+      "Governments Tighten Cybersecurity Regulations",
+    ]),
+  },
+  {
+    slug: "robotics",
+    name: "Robotics",
+    icon: "🦾",
+    description: "Humanoid robots, automation, and the machines reshaping factories, warehouses, and daily life.",
+    breadcrumb: [
+      { label: "Home", href: "/" },
+      { label: "Robotics", href: "/category/robotics" },
+    ],
+    popularTags: [
+      { label: "Humanoid Robots", count: 62 },
+      { label: "Automation", count: 58 },
+      { label: "Warehousing", count: 34 },
+      { label: "Exoskeletons", count: 21 },
+      { label: "Drones", count: 39 },
+      { label: "Manufacturing", count: 47 },
+      { label: "AI Robotics", count: 51 },
+      { label: "Swarm Robotics", count: 17 },
+    ],
+    news: buildCategoryNews("Robotics", "robotics", [
+      "Humanoid Robots Enter Commercial Warehouses",
+      "Surgical Robots Achieve New Precision Milestone",
+      "Agricultural Robots Automate Crop Harvesting",
+      "Robot Dogs Deployed for Infrastructure Inspection",
+      "Soft Robotics Advances Enable Delicate Handling",
+      "Robotics Startups Raise Record Funding Round",
+      "Autonomous Delivery Robots Expand to New Cities",
+      "Swarm Robotics Shows Promise for Disaster Response",
+      "Factory Automation Adoption Accelerates Worldwide",
+      "Robotic Exoskeletons Aid Rehabilitation Patients",
+      "Open-Source Robotics Platforms Gain Momentum",
+      "Underwater Robots Map Ocean Floor Ecosystems",
+    ]),
+  },
+  {
+    slug: "mobile",
+    name: "Mobile",
+    icon: "📱",
+    description: "Smartphones, mobile chipsets, and the apps and networks powering life on the go.",
+    breadcrumb: [
+      { label: "Home", href: "/" },
+      { label: "Mobile", href: "/category/mobile" },
+    ],
+    popularTags: [
+      { label: "Smartphones", count: 91 },
+      { label: "5G", count: 52 },
+      { label: "Foldables", count: 36 },
+      { label: "Wearables", count: 31 },
+      { label: "App Stores", count: 28 },
+      { label: "Mobile Gaming", count: 62 },
+      { label: "Chipsets", count: 44 },
+      { label: "Battery Tech", count: 22 },
+    ],
+    news: buildCategoryNews("Mobile", "mobile", [
+      "Flagship Smartphones Unveil Foldable Displays",
+      "Mobile Chipsets Push On-Device AI Performance",
+      "5G Rollout Reaches New Milestone Globally",
+      "Battery Technology Breakthrough Extends Phone Life",
+      "App Stores Face New Regulatory Scrutiny",
+      "Mobile Payments Adoption Surges Worldwide",
+      "Camera Innovations Define Next Smartphone Generation",
+      "Wearables Integrate Deeper with Mobile Ecosystems",
+      "Budget Smartphones Gain Premium Features",
+      "Mobile Gaming Performance Rivals Consoles",
+      "Foldable Tablets Enter Mainstream Market",
+      "On-Device AI Models Shrink Without Losing Accuracy",
+    ]),
+  },
+  {
+    slug: "programming",
+    name: "Programming",
+    icon: "👨‍💻",
+    description: "Languages, frameworks, and developer tools shaping how software gets built.",
+    breadcrumb: [
+      { label: "Home", href: "/" },
+      { label: "Programming", href: "/category/programming" },
+    ],
+    popularTags: [
+      { label: "Open Source", count: 78 },
+      { label: "AI Coding", count: 64 },
+      { label: "Frameworks", count: 49 },
+      { label: "DevTools", count: 37 },
+      { label: "Languages", count: 41 },
+      { label: "Cloud Native", count: 33 },
+      { label: "Serverless", count: 26 },
+      { label: "Low-Code", count: 18 },
+    ],
+    news: buildCategoryNews("Programming", "programming", [
+      "New Language Feature Simplifies Async Code",
+      "Open-Source Framework Reaches Major Milestone",
+      "AI Coding Assistants Reshape Developer Workflows",
+      "Language Runtime Update Boosts Performance Significantly",
+      "Developer Survey Reveals Shifting Tool Preferences",
+      "Package Manager Adds Enhanced Security Scanning",
+      "New IDE Features Speed Up Debugging",
+      "Static Typing Adoption Grows Across Codebases",
+      "Serverless Architectures Gain Developer Traction",
+      "Open-Source Maintainers Call for More Funding",
+      "Compiler Optimizations Cut Build Times in Half",
+      "Low-Code Platforms Expand Enterprise Adoption",
+    ]),
+  },
+  {
+    slug: "startups",
+    name: "Startups",
+    icon: "🚀",
+    description: "Funding rounds, founders, and the early-stage companies betting on what comes next.",
+    breadcrumb: [
+      { label: "Home", href: "/" },
+      { label: "Startups", href: "/category/startups" },
+    ],
+    popularTags: [
+      { label: "Venture Capital", count: 88 },
+      { label: "Seed Funding", count: 52 },
+      { label: "Unicorns", count: 34 },
+      { label: "Accelerators", count: 27 },
+      { label: "M&A", count: 38 },
+      { label: "Founders", count: 45 },
+      { label: "Climate Tech", count: 29 },
+      { label: "Bootstrapping", count: 16 },
+    ],
+    news: buildCategoryNews("Startups", "startups", [
+      "Seed Funding Rounds Rebound After Slow Quarter",
+      "AI Startup Reaches Unicorn Valuation",
+      "Accelerator Program Announces New Cohort",
+      "Climate Tech Startups Attract Fresh Capital",
+      "Founders Navigate Tighter Fundraising Environment",
+      "Startup Acquired in Major Industry Consolidation",
+      "Early-Stage Investors Shift Focus to AI Infrastructure",
+      "Bootstrapped Startup Reaches Profitability Milestone",
+      "Startup Layoffs Slow as Market Stabilizes",
+      "New Incubator Targets Underrepresented Founders",
+      "Venture Debt Emerges as Popular Funding Alternative",
+      "Startup Ecosystem Expands Beyond Major Hubs",
+    ]),
+  },
+  {
+    slug: "space",
+    name: "Space",
+    icon: "🛰️",
+    description: "Rocket launches, space exploration, and the missions pushing beyond Earth's orbit.",
+    breadcrumb: [
+      { label: "Home", href: "/" },
+      { label: "Space", href: "/category/space" },
+    ],
+    popularTags: [
+      { label: "SpaceX", count: 73 },
+      { label: "NASA", count: 68 },
+      { label: "Satellites", count: 41 },
+      { label: "Mars", count: 36 },
+      { label: "Rockets", count: 44 },
+      { label: "Astronomy", count: 39 },
+      { label: "Space Tourism", count: 22 },
+      { label: "Exoplanets", count: 27 },
+    ],
+    news: buildCategoryNews("Space", "space", [
+      "SpaceX Completes Successful Starship Test Flight",
+      "NASA Confirms New Exoplanet Discovery",
+      "Private Space Station Plans Move Forward",
+      "Lunar Mission Prepares for Crewed Landing",
+      "Satellite Constellation Expands Global Internet Coverage",
+      "Space Telescope Captures Stunning Deep-Field Image",
+      "Asteroid Mining Startup Secures New Funding",
+      "Mars Rover Uncovers Evidence of Ancient Water",
+      "Space Tourism Flights Resume After Safety Review",
+      "International Partners Advance Space Station Plans",
+      "Rocket Reusability Milestone Cuts Launch Costs",
+      "Astronomers Detect Signals from Distant Galaxy",
+    ]),
+  },
+  {
+    slug: "science",
+    name: "Science",
+    icon: "🔬",
+    description: "Research breakthroughs across physics, biology, climate, and the natural world.",
+    breadcrumb: [
+      { label: "Home", href: "/" },
+      { label: "Science", href: "/category/science" },
+    ],
+    popularTags: [
+      { label: "Climate Science", count: 66 },
+      { label: "Genetics", count: 44 },
+      { label: "Physics", count: 37 },
+      { label: "Renewable Energy", count: 51 },
+      { label: "Health Research", count: 48 },
+      { label: "Archaeology", count: 23 },
+      { label: "Quantum", count: 31 },
+      { label: "Biotech", count: 39 },
+    ],
+    news: buildCategoryNews("Science", "science", [
+      "Researchers Achieve Breakthrough in Fusion Energy",
+      "New Study Links Gut Health to Brain Function",
+      "Scientists Map Uncharted Deep-Sea Ecosystem",
+      "Gene Editing Trial Shows Promising Early Results",
+      "Climate Researchers Warn of Accelerating Ice Loss",
+      "Physicists Observe Rare Quantum Phenomenon",
+      "New Vaccine Technology Shows Broad Protection",
+      "Archaeologists Uncover Ancient Civilization Remains",
+      "Renewable Energy Storage Reaches New Efficiency Record",
+      "Study Reveals New Insights into Aging Process",
+      "Researchers Develop Biodegradable Plastic Alternative",
+      "Astronomers Refine Estimate of Universe's Age",
+    ]),
+  },
 ];
 
 export function getCategoryBySlug(slug: string): Category | undefined {
-  return categories.find((category) => category.slug === slug.toLowerCase());
+  const category = categories.find((candidate) => candidate.slug === slug.toLowerCase());
+  if (!category) {
+    return undefined;
+  }
+
+  // Merge in live (RSS/API-sourced) articles for this category, if any
+  // are cached. Never mutates the static `categories` array - this
+  // builds a fresh object per call so repeated lookups stay stable.
+  // getLiveArticlesSync() is a synchronous, always-safe read (see
+  // src/services/news/live-articles.ts): on a cold cache or any
+  // provider failure it simply returns [], and this function falls
+  // straight back to the existing mock-only behavior.
+  const liveItems = getLiveArticlesSync()
+    .filter((article) => article.category.toLowerCase() === category.name.toLowerCase())
+    .map(toCategoryNewsItem);
+
+  if (liveItems.length === 0) {
+    return category;
+  }
+
+  const existingSlugs = new Set(category.news.map((item) => item.slug));
+  const newLiveItems = liveItems.filter((item) => !existingSlugs.has(item.slug));
+
+  return { ...category, news: [...category.news, ...newLiveItems] };
 }

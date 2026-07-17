@@ -10,14 +10,14 @@ export function RelatedArticleCard({ article }: RelatedArticleCardProps) {
   return (
     <Link
       href={`/article/${article.slug}`}
-      className="flex items-center gap-3 rounded-2xl p-1 transition-colors hover:bg-slate-50"
+      className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#2f67e8]/30 hover:shadow-md"
     >
-      <span className="relative size-16 shrink-0 overflow-hidden rounded-xl">
-        <Image src={article.image} alt={article.title} fill sizes="64px" className="object-cover" />
+      <span className="relative size-20 shrink-0 overflow-hidden rounded-xl">
+        <Image src={article.image} alt={article.title} fill sizes="80px" className="object-cover" />
       </span>
       <div className="min-w-0">
         <p className="line-clamp-2 text-base font-semibold leading-snug text-slate-950">{article.title}</p>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1.5 text-sm text-slate-500">
           {article.source} <span aria-hidden="true">•</span> {article.publishedDate}
         </p>
       </div>

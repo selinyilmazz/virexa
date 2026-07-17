@@ -7,10 +7,7 @@ type TrendingTopicCardProps = {
 export function TrendingTopicCard({ topic }: TrendingTopicCardProps) {
   return (
     <li>
-      <a
-        href={`/topics/${topic.name.toLowerCase().replaceAll(" ", "-")}`}
-        className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 transition-shadow hover:shadow-md"
-      >
+      <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-800">
           {topic.rank}
         </span>
@@ -33,7 +30,7 @@ export function TrendingTopicCard({ topic }: TrendingTopicCardProps) {
           <path d="m4 16 6-6 4 4 6-7" />
           <path d="M15 7h5v5" />
         </svg>
-      </a>
+      </div>
     </li>
   );
 }

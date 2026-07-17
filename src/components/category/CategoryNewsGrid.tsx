@@ -8,8 +8,8 @@ type CategoryNewsGridProps = {
 export function CategoryNewsGrid({ items }: CategoryNewsGridProps) {
   return (
     <div className="grid gap-6 md:grid-cols-2">
-      {items.map(({ id, ...card }) => (
-        <NewsCard key={id} {...card} />
+      {items.map((item) => (
+        <NewsCard key={item.slug} {...item} />
       ))}
     </div>
   );

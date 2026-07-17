@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { HeaderAuthArea } from "@/components/layout/HeaderAuthArea";
+import { HeaderBookmarkLink } from "@/components/layout/HeaderBookmarkLink";
 
 const navigationItems = ["Technology", "Business", "AI", "Games", "World"];
 
@@ -26,28 +28,31 @@ export function Header() {
           </span>
         </Link>
 
-        <form role="search" className="min-w-0 flex-1 xl:max-w-[550px]">
+        <form role="search" action="/search" method="GET" className="min-w-0 flex-1 xl:max-w-[550px]">
           <label htmlFor="site-search" className="sr-only">
             Search news, topics or sources
           </label>
           <div className="flex h-14 items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-5 shadow-md">
             <input
               id="site-search"
+              name="q"
               type="search"
               placeholder="Search news, topics or sources..."
               className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-900 outline-none placeholder:text-slate-500"
             />
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 24 24"
-              className="h-7 w-7 shrink-0 text-slate-500"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            >
-              <circle cx="11" cy="11" r="6.5" />
-              <path d="m16 16 4.5 4.5" />
-            </svg>
+            <button type="submit" aria-label="Search" className="flex shrink-0 items-center justify-center">
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-7 w-7 shrink-0 text-slate-500"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <circle cx="11" cy="11" r="6.5" />
+                <path d="m16 16 4.5 4.5" />
+              </svg>
+            </button>
           </div>
         </form>
 
@@ -63,29 +68,15 @@ export function Header() {
           ))}
           <Link
             href="/categories"
-            className="flex items-center gap-1 text-xl font-semibold text-black transition-colors hover:text-[#2f67e8]"
+            className="text-xl font-semibold text-black transition-colors hover:text-[#2f67e8]"
           >
             More
-            <span aria-hidden="true" className="text-sm">
-              ▾
-            </span>
           </Link>
         </nav>
 
-        <div className="hidden shrink-0 items-center gap-3 md:flex">
-          <Link
-            href="/sign-in"
-            className="rounded-2xl border-2 border-[#2f67e8] px-6 py-2 text-xl font-semibold text-[#2f67e8] transition-colors hover:bg-blue-50"
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/sign-up"
-            className="rounded-2xl bg-[#2f67e8] px-6 py-2 text-xl font-semibold text-white transition-colors hover:bg-[#2556c9]"
-          >
-            Sign Up
-          </Link>
-        </div>
+        <HeaderBookmarkLink />
+
+        <HeaderAuthArea />
       </div>
     </header>
   );

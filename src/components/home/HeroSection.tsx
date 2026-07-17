@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function HeroSection() {
   return (
     <section
@@ -17,18 +19,18 @@ export function HeroSection() {
           coding and multimodal understanding, marking a significant step forward.
         </p>
         <div className="mt-8 flex flex-wrap gap-4">
-          <button
-            type="button"
+          <Link
+            href="/article/openai-gpt5"
             className="rounded-2xl bg-[#2f67e8] px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-[#2556c9]"
           >
             Read Full Story →
-          </button>
-          <button
-            type="button"
+          </Link>
+          <Link
+            href="/category/technology"
             className="rounded-2xl border-2 border-[#2f67e8] px-6 py-3 text-base font-semibold text-[#2f67e8] transition-colors hover:bg-blue-50"
           >
             View All Trending →
-          </button>
+          </Link>
         </div>
       </div>
 

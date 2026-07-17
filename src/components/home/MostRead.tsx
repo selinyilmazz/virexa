@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { mostReadItems } from "@/data/most-read";
 
 export function MostRead() {
@@ -25,12 +26,12 @@ export function MostRead() {
         ))}
       </ol>
 
-      <button
-        type="button"
-        className="mt-6 w-full rounded-2xl border-2 border-[#2f67e8] px-6 py-3 text-base font-semibold text-[#2f67e8] transition-colors hover:bg-blue-50"
+      <Link
+        href="/most-read"
+        className="mt-6 flex w-full items-center justify-center rounded-2xl border-2 border-[#2f67e8] px-6 py-3 text-base font-semibold text-[#2f67e8] transition-colors hover:bg-blue-50"
       >
         View all most read articles →
-      </button>
+      </Link>
     </section>
   );
 }

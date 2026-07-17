@@ -4,9 +4,10 @@ import type { RelatedArticleItem } from "@/data/article";
 
 type RelatedArticlesProps = {
   items: RelatedArticleItem[];
+  viewAllHref: string;
 };
 
-export function RelatedArticles({ items }: RelatedArticlesProps) {
+export function RelatedArticles({ items, viewAllHref }: RelatedArticlesProps) {
   return (
     <section
       aria-labelledby="related-articles-title"
@@ -16,7 +17,7 @@ export function RelatedArticles({ items }: RelatedArticlesProps) {
         Related Articles
       </h2>
 
-      <ul className="mt-4 space-y-2">
+      <ul className="mt-5 space-y-3">
         {items.map((item) => (
           <li key={item.slug}>
             <RelatedArticleCard article={item} />
@@ -25,7 +26,7 @@ export function RelatedArticles({ items }: RelatedArticlesProps) {
       </ul>
 
       <Link
-        href="/news"
+        href={viewAllHref}
         className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[#2f67e8] px-6 py-3 text-base font-semibold text-[#2f67e8] transition-colors hover:bg-blue-50"
       >
         View all related →

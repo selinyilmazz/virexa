@@ -17,7 +17,7 @@ export function LatestNews() {
       </div>
       <div className="mt-6 grid gap-6 md:grid-cols-2">
         {latestNewsItems.map((item) => (
-          <NewsCard key={item.title} {...item} />
+          <NewsCard key={item.slug} {...item} />
         ))}
       </div>
     </section>
