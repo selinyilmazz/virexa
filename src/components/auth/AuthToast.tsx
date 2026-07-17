@@ -1,8 +1,19 @@
+export type AuthToastVariant = "success" | "error" | "info";
+
 type AuthToastProps = {
   message: string;
+  variant?: AuthToastVariant;
 };
 
-export function AuthToast({ message }: AuthToastProps) {
+const VARIANT_STYLES: Record<AuthToastVariant, { badgeClass: string; icon: string }> = {
+  success: { badgeClass: "bg-green-100 text-green-600", icon: "✓" },
+  error: { badgeClass: "bg-red-100 text-red-600", icon: "!" },
+  info: { badgeClass: "bg-blue-100 text-[#2f67e8]", icon: "i" },
+};
+
+export function AuthToast({ message, variant = "success" }: AuthToastProps) {
+  const { badgeClass, icon } = VARIANT_STYLES[variant];
+
   return (
     <div
       role="status"
@@ -11,9 +22,9 @@ export function AuthToast({ message }: AuthToastProps) {
     >
       <span
         aria-hidden="true"
-        className="flex size-6 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600"
+        className={`flex size-6 shrink-0 items-center justify-center rounded-full ${badgeClass}`}
       >
-        ✓
+        {icon}
       </span>
       {message}
     </div>

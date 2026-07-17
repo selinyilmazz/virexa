@@ -24,3 +24,24 @@ export function resolveArticleImage(image: string | undefined, category: Categor
   }
   return CATEGORY_FALLBACK_IMAGES[category];
 }
+
+/**
+ * Same fallback images as `resolveArticleImage`, but tolerant of any
+ * plain `string` category (not just the strict `Category` union) and of
+ * a missing category entirely - always returns a valid local path, so
+ * it can never itself become a second broken image. Used client-side by
+ * `<NewsImage>` (`components/news/NewsImage.tsx`) as the `onError`
+ * target: at that point all that's available is whatever `category`
+ * string a component already had as a display prop (which is always a
+ * normalized `Category` value in practice, since it came from the
+ * server-side `normalizeCategory()` pipeline, but isn't always *typed*
+ * that strictly at every call site - e.g. `RelatedArticleItem` doesn't
+ * carry a category at all). Falls back to the Technology image for an
+ * unrecognized or missing category.
+ */
+export function resolveFallbackImageForCategory(category: string | undefined): string {
+  if (category && category in CATEGORY_FALLBACK_IMAGES) {
+    return CATEGORY_FALLBACK_IMAGES[category as Category];
+  }
+  return CATEGORY_FALLBACK_IMAGES.Technology;
+}

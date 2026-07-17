@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { BookmarkButton } from "@/components/news/BookmarkButton";
-import { AuthToast } from "@/components/auth/AuthToast";
+import { AuthToast, type AuthToastVariant } from "@/components/auth/AuthToast";
 import type { BookmarkItem } from "@/lib/bookmarks";
+import { reportArticleMetric } from "@/lib/metrics-client";
 
 type ShareButtonsProps = {
   bookmarkItem: BookmarkItem;
@@ -67,7 +68,7 @@ const shareIcon = (
 
 export function ShareButtons({ bookmarkItem, title }: ShareButtonsProps) {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; variant: AuthToastVariant } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -83,11 +84,17 @@ export function ShareButtons({ bookmarkItem, title }: ShareButtonsProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isPopoverOpen]);
 
+  function showToast(message: string, variant: AuthToastVariant = "success") {
+    setToast({ message, variant });
+    setTimeout(() => setToast(null), 2000);
+  }
+
   async function handleShareClick() {
     const url = window.location.href;
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({ title, url });
+        void reportArticleMetric(bookmarkItem.slug, "share");
       } catch {
         // User cancelled the native share sheet — nothing to do.
       }
@@ -99,12 +106,12 @@ export function ShareButtons({ bookmarkItem, title }: ShareButtonsProps) {
   async function handleCopyLink() {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      setToastMessage("Link copied");
+      showToast("Link copied");
+      void reportArticleMetric(bookmarkItem.slug, "share");
     } catch {
-      setToastMessage("Couldn't copy link");
+      showToast("Couldn't copy link", "error");
     }
     setIsPopoverOpen(false);
-    setTimeout(() => setToastMessage(null), 2000);
   }
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
@@ -133,13 +140,13 @@ export function ShareButtons({ bookmarkItem, title }: ShareButtonsProps) {
 
   return (
     <div ref={containerRef} className="relative flex shrink-0 items-center gap-3">
-      {toastMessage && <AuthToast message={toastMessage} />}
+      {toast && <AuthToast message={toast.message} variant={toast.variant} />}
 
-      <BookmarkButton item={bookmarkItem} variant="pill" />
+      <BookmarkButton item={bookmarkItem} variant="pill" onError={(message) => showToast(message, "error")} />
 
       <button
         type="button"
-        onClick={handleShareClick}
+        onClick={() => void handleShareClick()}
         aria-expanded={isPopoverOpen}
         aria-haspopup="true"
         className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50"
@@ -152,7 +159,7 @@ export function ShareButtons({ bookmarkItem, title }: ShareButtonsProps) {
         <div className="absolute right-0 top-full z-20 mt-2 w-60 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
           <button
             type="button"
-            onClick={handleCopyLink}
+            onClick={() => void handleCopyLink()}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-base font-medium text-slate-700 transition-colors hover:bg-slate-50"
           >
             {copyLinkIcon}
@@ -167,7 +174,10 @@ export function ShareButtons({ bookmarkItem, title }: ShareButtonsProps) {
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => setIsPopoverOpen(false)}
+              onClick={() => {
+                setIsPopoverOpen(false);
+                void reportArticleMetric(bookmarkItem.slug, "share");
+              }}
               className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50"
             >
               {link.icon}

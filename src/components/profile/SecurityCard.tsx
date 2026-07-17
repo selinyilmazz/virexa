@@ -2,8 +2,11 @@
 
 import { useState, type FormEvent } from "react";
 import { PasswordInput } from "@/components/auth/PasswordInput";
-import { AuthToast } from "@/components/auth/AuthToast";
+import { AuthToast, type AuthToastVariant } from "@/components/auth/AuthToast";
 import { isRequired, isStrongEnoughPassword } from "@/lib/validators";
+import { useAuth } from "@/hooks/useAuth";
+import { createClient } from "@/lib/supabase/client";
+import { getAuthErrorMessage } from "@/lib/supabase/errors";
 
 type SecurityErrors = {
   currentPassword?: string;
@@ -12,13 +15,20 @@ type SecurityErrors = {
 };
 
 export function SecurityCard() {
+  const { user } = useAuth();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<SecurityErrors>({});
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; variant: AuthToastVariant } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function showToast(message: string, variant: AuthToastVariant, durationMs = 2500) {
+    setToast({ message, variant });
+    setTimeout(() => setToast(null), durationMs);
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const nextErrors: SecurityErrors = {};
@@ -38,16 +48,47 @@ export function SecurityCard() {
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setToastMessage("Password changed successfully!");
-    setTimeout(() => setToastMessage(null), 2000);
+    if (!user?.email) {
+      showToast("Your session looks signed out. Please sign in again.", "error", 4000);
+      return;
+    }
+
+    setIsSubmitting(true);
+    const supabase = createClient();
+    try {
+      // Supabase's `updateUser` doesn't take a "current password" - it
+      // trusts whoever holds the active session. Re-authenticating with
+      // the current password first is what actually verifies it before
+      // allowing the change.
+      const { error: reauthError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+      if (reauthError) {
+        setErrors({ currentPassword: "Current password is incorrect." });
+        return;
+      }
+
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+      if (updateError) {
+        showToast(getAuthErrorMessage(updateError), "error", 4000);
+        return;
+      }
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      showToast("Password changed successfully!", "success");
+    } catch {
+      showToast("Network error. Please check your connection and try again.", "error", 4000);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-      {toastMessage && <AuthToast message={toastMessage} />}
+    <form onSubmit={(event) => void handleSubmit(event)} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      {toast && <AuthToast message={toast.message} variant={toast.variant} />}
 
       <h2 className="text-2xl font-bold tracking-tight text-slate-950">Security</h2>
       <p className="mt-1 text-base text-slate-500">Change your password to keep your account secure.</p>
@@ -86,9 +127,10 @@ export function SecurityCard() {
 
       <button
         type="submit"
-        className="mt-6 flex h-12 items-center justify-center rounded-xl bg-[#2f67e8] px-8 text-base font-semibold text-white transition-colors hover:bg-[#2556c9]"
+        disabled={isSubmitting}
+        className="mt-6 flex h-12 items-center justify-center rounded-xl bg-[#2f67e8] px-8 text-base font-semibold text-white transition-colors hover:bg-[#2556c9] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        Change Password
+        {isSubmitting ? "Changing..." : "Change Password"}
       </button>
     </form>
   );

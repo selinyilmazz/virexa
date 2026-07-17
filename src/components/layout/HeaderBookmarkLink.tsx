@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSession } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 
 export function HeaderBookmarkLink() {
-  const session = useSession();
+  const { user } = useAuth();
   const router = useRouter();
 
   function handleClick(event: React.MouseEvent<HTMLAnchorElement>) {
-    if (!session) {
+    if (!user) {
       event.preventDefault();
       router.push("/signin?redirect=/bookmarks");
     }

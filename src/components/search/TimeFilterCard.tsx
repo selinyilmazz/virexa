@@ -1,10 +1,18 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { getTimeFilterOptions } from "@/data/search";
 
-export function TimeFilterCard() {
-  const options = getTimeFilterOptions();
+export type TimeFilterOption = {
+  id: string;
+  label: string;
+  count: number;
+};
+
+type TimeFilterCardProps = {
+  options: TimeFilterOption[];
+};
+
+export function TimeFilterCard({ options }: TimeFilterCardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedTime = searchParams.get("time") ?? "";
@@ -12,6 +20,7 @@ export function TimeFilterCard() {
   function selectTime(id: string) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("time", id);
+    params.delete("page");
     router.push(`/search?${params.toString()}`, { scroll: false });
   }
 

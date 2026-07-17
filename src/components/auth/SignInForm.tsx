@@ -12,17 +12,18 @@ import { AuthTermsNotice } from "@/components/auth/AuthTermsNotice";
 import { Spinner } from "@/components/auth/Spinner";
 import { AuthToast } from "@/components/auth/AuthToast";
 import { isRequired, isValidEmail } from "@/lib/validators";
-import { deriveNameFromEmail, setSession } from "@/lib/auth";
-import { mockUser } from "@/data/user";
+import { createClient } from "@/lib/supabase/client";
+import { getAuthErrorMessage } from "@/lib/supabase/errors";
 
 type FormErrors = {
   email?: string;
   password?: string;
 };
 
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+type ToastState = {
+  message: string;
+  variant: "success" | "error" | "info";
+};
 
 const emailIcon = (
   <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -37,13 +38,22 @@ type SignInFormProps = {
 
 export function SignInForm({ redirectTo }: SignInFormProps) {
   const router = useRouter();
-  const safeRedirectTo = redirectTo && redirectTo.startsWith("/") ? redirectTo : "/";
+  // Guards against open redirects: must be an internal path (starts with
+  // "/") and NOT protocol-relative ("//evil.com" also starts with "/" but
+  // browsers resolve it as an absolute URL to a different origin - a
+  // well-known bypass of a naive `startsWith("/")` check).
+  const safeRedirectTo = redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
+
+  function showToast(message: string, variant: ToastState["variant"], durationMs = 3000) {
+    setToast({ message, variant });
+    setTimeout(() => setToast(null), durationMs);
+  }
 
   function validate(): boolean {
     const nextErrors: FormErrors = {};
@@ -59,31 +69,34 @@ export function SignInForm({ redirectTo }: SignInFormProps) {
     return Object.keys(nextErrors).length === 0;
   }
 
-  async function completeMockAuth(message: string, sessionEmail?: string) {
-    setIsSubmitting(true);
-    await wait(1000);
-    setIsSubmitting(false);
-    setSession({
-      name: sessionEmail ? deriveNameFromEmail(sessionEmail) : mockUser.name,
-      email: sessionEmail ?? mockUser.email,
-      avatar: mockUser.avatar,
-    });
-    setToastMessage(message);
-    await wait(600);
-    router.push(safeRedirectTo);
-  }
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isSubmitting || !validate()) return;
-    void completeMockAuth("Signed in successfully! Redirecting...", email);
+
+    setIsSubmitting(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setIsSubmitting(false);
+
+    if (error) {
+      showToast(getAuthErrorMessage(error), "error", 4000);
+      return;
+    }
+
+    showToast("Signed in successfully! Redirecting...", "success");
+    router.push(safeRedirectTo);
+    router.refresh();
+  }
+
+  function handleGoogleClick() {
+    showToast("Google sign-in isn't available yet. Please use email and password.", "info", 3500);
   }
 
   return (
     <>
-      {toastMessage && <AuthToast message={toastMessage} />}
+      {toast && <AuthToast message={toast.message} variant={toast.variant} />}
 
-      <form onSubmit={handleSubmit} noValidate className="space-y-5">
+      <form onSubmit={(event) => void handleSubmit(event)} noValidate className="space-y-5">
         <AuthInput
           id="signin-email"
           label="Email"
@@ -131,10 +144,7 @@ export function SignInForm({ redirectTo }: SignInFormProps) {
 
         <AuthDivider />
 
-        <SocialLoginButtons
-          disabled={isSubmitting}
-          onGoogleClick={() => void completeMockAuth("Signed in with Google! Redirecting...")}
-        />
+        <SocialLoginButtons disabled={isSubmitting} onGoogleClick={handleGoogleClick} />
       </form>
 
       <AuthFooter text="Don't have an account?" linkLabel="Sign Up" href="/signup" />

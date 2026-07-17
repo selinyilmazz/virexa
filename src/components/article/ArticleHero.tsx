@@ -1,4 +1,5 @@
-import Image from "next/image";
+import { NewsImage } from "@/components/news/NewsImage";
+import { resolveFallbackImageForCategory } from "@/lib/news";
 
 type ArticleHeroProps = {
   image: string;
@@ -11,8 +12,9 @@ export function ArticleHero({ image, category, title, summary }: ArticleHeroProp
   return (
     <div>
       <div className="relative aspect-[12/5] w-full overflow-hidden rounded-3xl">
-        <Image
+        <NewsImage
           src={image}
+          fallbackSrc={resolveFallbackImageForCategory(category)}
           alt={title}
           fill
           sizes="(max-width: 1024px) 100vw, 1180px"

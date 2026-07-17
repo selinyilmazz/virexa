@@ -4,5 +4,7 @@ export { ManualProvider } from "@/services/news/providers/manual-provider";
 export { RSSProvider } from "@/services/news/providers/rss-provider";
 export { NewsAPIProvider } from "@/services/news/providers/newsapi-provider";
 export { GNewsProvider } from "@/services/news/providers/gnews-provider";
+export { HackerNewsProvider } from "@/services/news/providers/hackernews-provider";
 export { newsAggregator } from "@/services/news/aggregator-instance";
-export { getLiveArticlesSync } from "@/services/news/live-articles";
+export { getLiveArticlesSync, refreshLiveArticlesCache, getLiveArticlesCacheStatus } from "@/services/news/live-articles";
+export { getTrendingArticlesSync } from "@/services/news/trending-articles";

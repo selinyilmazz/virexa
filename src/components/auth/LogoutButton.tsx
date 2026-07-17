@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { clearSession } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/client";
 
 type LogoutButtonProps = {
   className?: string;
@@ -12,14 +12,16 @@ type LogoutButtonProps = {
 export function LogoutButton({ className, children, onBeforeNavigate }: LogoutButtonProps) {
   const router = useRouter();
 
-  function handleClick() {
-    clearSession();
+  async function handleClick() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
     onBeforeNavigate?.();
     router.push("/");
+    router.refresh();
   }
 
   return (
-    <button type="button" onClick={handleClick} className={className}>
+    <button type="button" onClick={() => void handleClick()} className={className}>
       {children}
     </button>
   );

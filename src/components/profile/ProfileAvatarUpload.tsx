@@ -3,13 +3,11 @@
 import { useRef, useState, type ChangeEvent } from "react";
 import Image from "next/image";
 import { saveProfile, useProfile } from "@/lib/profile";
-import { setSession, useSession } from "@/lib/auth";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
 export function ProfileAvatarUpload() {
   const profile = useProfile();
-  const session = useSession();
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,10 +30,13 @@ export function ProfileAvatarUpload() {
     reader.onload = () => {
       const dataUrl = reader.result;
       if (typeof dataUrl !== "string") return;
-      saveProfile({ avatar: dataUrl });
-      if (session) {
-        setSession({ ...session, avatar: dataUrl });
-      }
+      // `saveProfile` applies the new avatar optimistically (shows
+      // immediately) and persists `avatar_url` to the `profiles` table
+      // in the background - see `src/lib/profile.ts`. If the write
+      // fails, the cache (and this preview) rolls back automatically.
+      saveProfile({ avatar: dataUrl }).catch(() => {
+        setError("Couldn't save your new photo. Please try again.");
+      });
     };
     reader.readAsDataURL(file);
   }

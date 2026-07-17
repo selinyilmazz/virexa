@@ -163,6 +163,16 @@ export const SOURCES: Record<string, Source> = {
     trustScore: 90,
     official: true,
   },
+  "google-developers": {
+    id: "google-developers",
+    name: "Google Developers",
+    website: "https://developers.googleblog.com",
+    logo: "/logos/google.svg",
+    country: "US",
+    language: "en",
+    trustScore: 89,
+    official: true,
+  },
   nvidia: {
     id: "nvidia",
     name: "NVIDIA",
@@ -183,8 +193,81 @@ export const SOURCES: Record<string, Source> = {
     trustScore: 88,
     official: true,
   },
+  /**
+   * Hacker News (news.ycombinator.com) - a community link-aggregator,
+   * not a first-party publisher (`official: false`, matching how
+   * TechCrunch/The Verge/etc. are classified, not the OpenAI/Anthropic/
+   * NVIDIA-style official blogs). Every article ingested via
+   * `HackerNewsProvider` uses THIS source id regardless of which
+   * external site the story actually links to - "Hacker News yeni bir
+   * source olarak... diğer kaynaklarla aynı davranışı göstersin" means
+   * the aggregator itself is the source of record, same as how a wire
+   * service is credited even though its stories run in many outlets.
+   * trustScore (65) sits deliberately between the generic `web` fallback
+   * (55) and the independent editorial outlets (80-88): HN's community
+   * upvote/curation process has real signal, but it's user-generated
+   * content, not edited journalism, so it shouldn't outrank a vetted
+   * outlet on trust alone. Tunable later, same as every other entry
+   * here. No `logo` asset exists yet - falls back to
+   * `DEFAULT_SOURCE_LOGO`, same as `associated-press`/`cnbc`/etc.
+   */
+  "hacker-news": {
+    id: "hacker-news",
+    name: "Hacker News",
+    website: "https://news.ycombinator.com",
+    country: "US",
+    language: "en",
+    trustScore: 65,
+    official: false,
+  },
+  /**
+   * Fallback for API-provider results (NewsAPI, GNews) whose reported
+   * outlet name doesn't match anything in this registry - those APIs
+   * aggregate thousands of publishers, far more than Virexa curates by
+   * hand. Kept deliberately mid/low trust so an unrecognized source
+   * never outranks a known, vetted one; see `findSourceIdByName` below.
+   */
+  web: {
+    id: "web",
+    name: "Web",
+    website: "",
+    country: "US",
+    language: "en",
+    trustScore: 55,
+    official: false,
+  },
 };
 
 export function getSourceById(sourceId: string): Source | undefined {
   return SOURCES[sourceId];
+}
+
+/** Lowercased source name -> id, plus a few known aliases API providers commonly use. */
+const NAME_TO_SOURCE_ID: Map<string, string> = new Map([
+  ...Object.values(SOURCES).map((source) => [source.name.toLowerCase(), source.id] as const),
+  ["bbc news", "bbc"],
+  ["bbc.com", "bbc"],
+  ["reuters.com", "reuters"],
+  ["the verge", "the-verge"],
+  ["ars technica", "ars-technica"],
+  ["techcrunch.com", "techcrunch"],
+  ["google ai blog", "google-deepmind"],
+  ["deepmind", "google-deepmind"],
+  ["nvidia blog", "nvidia"],
+  ["github", "github-blog"],
+  ["hacker news", "hacker-news"],
+  ["ycombinator", "hacker-news"],
+  ["y combinator", "hacker-news"],
+]);
+
+/**
+ * Resolves a free-text publisher name (as returned by NewsAPI/GNews)
+ * to a known `sourceId`, falling back to the generic `"web"` source
+ * when nothing matches - so an aggregator-sourced article from an
+ * outlet Virexa doesn't specifically curate still gets displayed
+ * (with a conservative trust score) instead of being silently dropped.
+ */
+export function findSourceIdByName(name: string | undefined | null): string {
+  if (!name) return "web";
+  return NAME_TO_SOURCE_ID.get(name.trim().toLowerCase()) ?? "web";
 }

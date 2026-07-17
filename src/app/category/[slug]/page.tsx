@@ -5,6 +5,7 @@ import { CategoryNewsGrid } from "@/components/category/CategoryNewsGrid";
 import { CategorySidebar } from "@/components/category/CategorySidebar";
 import { Pagination } from "@/components/category/Pagination";
 import { categories, getCategoryBySlug } from "@/data/categories";
+import { getRecentArticlesForCategory, searchCategoryArticles } from "@/services/articles/article-read-service";
 
 const PAGE_SIZE = 8;
 
@@ -26,11 +27,17 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     notFound();
   }
 
-  const totalPages = Math.max(1, Math.ceil(category.news.length / PAGE_SIZE));
   const requestedPage = Number(page ?? "1");
-  const currentPage = Number.isFinite(requestedPage) ? Math.min(Math.max(1, requestedPage), totalPages) : 1;
-  const pageStart = (currentPage - 1) * PAGE_SIZE;
-  const pageItems = category.news.slice(pageStart, pageStart + PAGE_SIZE);
+  const currentPage = Number.isFinite(requestedPage) && requestedPage > 0 ? Math.floor(requestedPage) : 1;
+
+  // Real, database-backed news + pagination for this category ("kategori
+  // sayfası gerçek veritabanından beslenecek"). Taxonomy (name,
+  // description, breadcrumb, popular tags) still comes from the static
+  // registry above - only the article list and its pagination are live.
+  const [newsPage, recentNews] = await Promise.all([
+    searchCategoryArticles(category.name, currentPage, PAGE_SIZE),
+    getRecentArticlesForCategory(category.name, 5),
+  ]);
 
   return (
     <>
@@ -40,22 +47,36 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
           <CategoryHeader
             name={category.name}
             description={category.description}
-            articleCount={category.news.length}
+            articleCount={newsPage.total}
             breadcrumb={category.breadcrumb}
           />
 
           <div className="mt-5 grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.42fr)]">
             <div className="min-w-0">
-              <CategoryNewsGrid items={pageItems} />
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                buildHref={(targetPage) => `/category/${category.slug}?page=${targetPage}`}
-              />
+              {newsPage.items.length === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
+                  <span className="text-4xl" aria-hidden="true">
+                    📰
+                  </span>
+                  <p className="mt-3 text-base font-semibold text-slate-700">No articles yet</p>
+                  <p className="mt-1 max-w-sm text-sm text-slate-500">
+                    No {category.name.toLowerCase()} articles have been published yet. Check back soon.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <CategoryNewsGrid items={newsPage.items} />
+                  <Pagination
+                    currentPage={newsPage.page}
+                    totalPages={newsPage.totalPages}
+                    buildHref={(targetPage) => `/category/${category.slug}?page=${targetPage}`}
+                  />
+                </>
+              )}
             </div>
 
             <aside className="min-w-0 xl:self-start">
-              <CategorySidebar tags={category.popularTags} recentNews={category.news.slice(0, 5)} />
+              <CategorySidebar tags={category.popularTags} recentNews={recentNews} />
             </aside>
           </div>
         </div>

@@ -4,13 +4,15 @@ import { ManualProvider } from "@/services/news/providers/manual-provider";
 import { RSSProvider } from "@/services/news/providers/rss-provider";
 import { NewsAPIProvider } from "@/services/news/providers/newsapi-provider";
 import { GNewsProvider } from "@/services/news/providers/gnews-provider";
+import { HackerNewsProvider } from "@/services/news/providers/hackernews-provider";
 
 /**
  * Default, ready-to-use aggregator instance wired with every known
  * provider. `RSSProvider` only actively polls the feeds marked
  * `enabled: true` in `src/lib/news/feed-sources.ts`; `NewsAPIProvider`
  * and `GNewsProvider` no-op until their API keys are set (see
- * `.env.example`). None of that requires touching this file again —
+ * `.env.example`); `HackerNewsProvider` needs no key at all, same as
+ * `RSSProvider`. None of that requires touching this file again —
  * enabling a feed or adding a key is enough.
  *
  * Kept in its own module (rather than inline in `index.ts`) so
@@ -22,4 +24,5 @@ export const newsAggregator = new NewsAggregator([
   new RSSProvider(),
   new NewsAPIProvider(env.news.newsApiKey),
   new GNewsProvider(env.news.gNewsApiKey),
+  new HackerNewsProvider(),
 ]);

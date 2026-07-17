@@ -1,4 +1,8 @@
-export const latestNewsItems = [
+import type { CategoryNewsItem } from "@/data/categories";
+import { toCategoryNewsItem } from "@/lib/news";
+import { getLiveArticlesSync } from "@/services/news";
+
+export const latestNewsItems: CategoryNewsItem[] = [
   {
     slug: "ai-revolutionizes-city-transportation-systems",
     image: "/images/news/ai-city.jpg",
@@ -40,3 +44,20 @@ export const latestNewsItems = [
     isBookmarked: false,
   },
 ];
+
+/**
+ * `latestNewsItems` plus any live (RSS/API-sourced) articles, deduped by
+ * slug - same merge pattern as `getCategoryBySlug` in
+ * `src/data/categories.ts`. `latestNewsItems` itself stays untouched for
+ * other consumers (e.g. `src/data/article.ts`'s fallback article lookup)
+ * that specifically want the curated-only list. Bounded to `limit` so
+ * the Home page grid doesn't grow unbounded once real feeds are live.
+ */
+export function getLatestNewsItems(limit = 8): CategoryNewsItem[] {
+  const existingSlugs = new Set(latestNewsItems.map((item) => item.slug));
+  const liveItems = getLiveArticlesSync()
+    .filter((article) => !existingSlugs.has(article.slug))
+    .map(toCategoryNewsItem);
+
+  return [...latestNewsItems, ...liveItems].slice(0, limit);
+}

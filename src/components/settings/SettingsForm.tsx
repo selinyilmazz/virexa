@@ -1,9 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ToggleSwitch } from "@/components/settings/ToggleSwitch";
-import { AuthToast } from "@/components/auth/AuthToast";
-import { defaultSettings, loadSettings, saveSettings, type UserSettings } from "@/lib/settings";
+import { AuthToast, type AuthToastVariant } from "@/components/auth/AuthToast";
+import {
+  saveSettings,
+  useSettings,
+  useSettingsStatus,
+  useSettingsError,
+  retrySettings,
+  type UserSettings,
+} from "@/lib/settings";
+import { settingsSchema } from "@/lib/validation/settings-schema";
+import { formatZodError } from "@/lib/validation/format-zod-error";
 import { categories } from "@/data/categories";
 
 const languageOptions = [
@@ -21,15 +30,32 @@ const summaryLengthOptions: { value: UserSettings["summaryLength"]; label: strin
 ];
 
 export function SettingsForm() {
-  const [settings, setSettings] = useState<UserSettings>(defaultSettings);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const savedSettings = useSettings();
+  const status = useSettingsStatus();
+  const loadError = useSettingsError();
+  const [settings, setSettings] = useState<UserSettings>(savedSettings);
+  const [syncedSettings, setSyncedSettings] = useState<UserSettings>(savedSettings);
+  const [toast, setToast] = useState<{ message: string; variant: AuthToastVariant } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    // One-time client-only hydration of the saved draft from localStorage;
-    // no external store subscription is needed since this form owns the only writer.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSettings(loadSettings());
-  }, []);
+  // Keep the local draft in sync whenever the underlying store updates
+  // (initial load finishing, or a background refresh) - but only while
+  // the user hasn't started editing away from what's saved, so an
+  // in-flight edit is never clobbered by a refetch. Adjusting state
+  // directly during render (React's recommended pattern for this, see
+  // https://react.dev/learn/you-might-not-need-an-effect) rather than in
+  // a `useEffect`, matching `ProfileEditForm`'s identical draft-sync.
+  if (savedSettings !== syncedSettings) {
+    if (settings === syncedSettings) {
+      setSettings(savedSettings);
+    }
+    setSyncedSettings(savedSettings);
+  }
+
+  function showToast(message: string, variant: AuthToastVariant, durationMs = 2500) {
+    setToast({ message, variant });
+    setTimeout(() => setToast(null), durationMs);
+  }
 
   function toggleCategory(name: string) {
     setSettings((prev) => ({
@@ -40,15 +66,50 @@ export function SettingsForm() {
     }));
   }
 
-  function handleSave() {
-    saveSettings(settings);
-    setToastMessage("Settings saved!");
-    setTimeout(() => setToastMessage(null), 2000);
+  async function handleSave() {
+    const result = settingsSchema.safeParse(settings);
+    if (!result.success) {
+      showToast(formatZodError(result.error), "error", 4000);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await saveSettings(result.data);
+      showToast("Settings saved!", "success");
+    } catch {
+      showToast("Couldn't save your settings. Please try again.", "error", 4000);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center rounded-3xl border border-slate-200 bg-white p-10 text-base text-slate-500 shadow-sm">
+        Loading your settings...
+      </div>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <div className="flex flex-col items-center gap-4 rounded-3xl border border-red-200 bg-red-50/40 p-10 text-center shadow-sm">
+        <p className="text-base font-medium text-red-600">{loadError ?? "Couldn't load your settings."}</p>
+        <button
+          type="button"
+          onClick={() => void retrySettings()}
+          className="rounded-xl border border-red-200 bg-white px-5 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
+        >
+          Retry
+        </button>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      {toastMessage && <AuthToast message={toastMessage} />}
+      {toast && <AuthToast message={toast.message} variant={toast.variant} />}
 
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <h2 className="text-2xl font-bold tracking-tight text-slate-950">Appearance</h2>
@@ -257,10 +318,11 @@ export function SettingsForm() {
 
       <button
         type="button"
-        onClick={handleSave}
-        className="flex h-12 w-full items-center justify-center rounded-xl bg-[#2f67e8] text-base font-semibold text-white transition-colors hover:bg-[#2556c9] sm:w-auto sm:px-8"
+        onClick={() => void handleSave()}
+        disabled={isSaving}
+        className="flex h-12 w-full items-center justify-center rounded-xl bg-[#2f67e8] text-base font-semibold text-white transition-colors hover:bg-[#2556c9] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-8"
       >
-        Save Changes
+        {isSaving ? "Saving..." : "Save Changes"}
       </button>
     </div>
   );

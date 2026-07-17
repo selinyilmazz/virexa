@@ -75,6 +75,27 @@ export type NewsArticle = {
   language: string;
   /** ISO 3166-1 alpha-2 country code; defaults to the source's country when a provider omits it. */
   country: string;
+  /** Resolved once at normalization time via `getSourceLogo()` - always a renderable path, never missing. */
+  sourceLogo: string;
+  /** Estimated minutes to read, derived from word count (see `lib/news/reading-time.ts`). Always >= 1. */
+  readingTime: number;
+  /** 0-100 editorial trust score for this article (see `lib/news/trust-score.ts`) - currently mirrors `source.trustScore`, kept as its own field so a future per-article adjustment doesn't require touching every consumer. */
+  trustScore: number;
+  /** 0-100 relative "how hot is this right now" score (see `lib/news/trending-score.ts`). Recomputed on every aggregation pass, so it decays as an article ages even if nothing else changes. */
+  trendingScore: number;
+  /**
+   * Optional raw community-engagement signal from a provider that has
+   * one (e.g. Hacker News's `score`/points) - kept separate from
+   * `trustScore`/`trendingScore` since it's a provider-native number,
+   * not something Virexa computed. Blended into `trendingScore` via
+   * `TrendingSignals.engagementScore` (see `lib/news/trending-score.ts`)
+   * both at initial normalization AND whenever trending scores are
+   * later recomputed (`runtime/pipeline/steps/finalize-steps.ts`), so
+   * the signal survives beyond the first fetch. `undefined` for
+   * providers that don't expose an equivalent metric (RSS, NewsAPI,
+   * GNews) - those are entirely unaffected by this field's addition.
+   */
+  engagementScore?: number;
 };
 
 /**
@@ -99,10 +120,12 @@ export type ProviderNewsItem = {
   /** Optional overrides; default to the resolved source's language/country when omitted. */
   language?: string;
   country?: string;
+  /** See `NewsArticle.engagementScore` - carried from provider through normalization unchanged. */
+  engagementScore?: number;
 };
 
 /** Identifiers for the built-in provider implementations. */
-export type NewsProviderId = "manual" | "rss" | "newsapi" | "gnews";
+export type NewsProviderId = "manual" | "rss" | "newsapi" | "gnews" | "hn";
 
 /** Optional query parameters supported when asking a provider for articles. */
 export type FetchArticlesParams = {

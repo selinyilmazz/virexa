@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { HeaderAuthArea } from "@/components/layout/HeaderAuthArea";
 import { HeaderBookmarkLink } from "@/components/layout/HeaderBookmarkLink";
+import { HeaderSearchInput } from "@/components/layout/HeaderSearchInput";
 
 const navigationItems = ["Technology", "Business", "AI", "Games", "World"];
 
@@ -33,13 +35,19 @@ export function Header() {
             Search news, topics or sources
           </label>
           <div className="flex h-14 items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-5 shadow-md">
-            <input
-              id="site-search"
-              name="q"
-              type="search"
-              placeholder="Search news, topics or sources..."
-              className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-900 outline-none placeholder:text-slate-500"
-            />
+            <Suspense
+              fallback={
+                <input
+                  id="site-search"
+                  name="q"
+                  type="search"
+                  placeholder="Search news, topics or sources..."
+                  className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-900 outline-none placeholder:text-slate-500"
+                />
+              }
+            >
+              <HeaderSearchInput />
+            </Suspense>
             <button type="submit" aria-label="Search" className="flex shrink-0 items-center justify-center">
               <svg
                 aria-hidden="true"

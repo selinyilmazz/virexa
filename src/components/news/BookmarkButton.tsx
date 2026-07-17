@@ -2,29 +2,36 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { toggleBookmark, useIsBookmarked, type BookmarkItem } from "@/lib/bookmarks";
-import { useSession } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 
 type BookmarkButtonProps = {
   item: BookmarkItem;
   variant?: "icon" | "pill";
   className?: string;
+  /** Called if the Supabase write fails, after the optimistic state has already rolled back. */
+  onError?: (message: string) => void;
 };
 
-export function BookmarkButton({ item, variant = "icon", className = "" }: BookmarkButtonProps) {
+export function BookmarkButton({ item, variant = "icon", className = "", onError }: BookmarkButtonProps) {
   const storedBookmarked = useIsBookmarked(item.slug);
-  const session = useSession();
-  const bookmarked = session ? storedBookmarked : false;
+  const { user } = useAuth();
+  const bookmarked = user ? storedBookmarked : false;
   const router = useRouter();
   const pathname = usePathname();
 
   function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
-    if (!session) {
+    if (!user) {
       router.push(`/signin?redirect=${encodeURIComponent(pathname)}`);
       return;
     }
-    toggleBookmark(item);
+    // Optimistic: the icon flips immediately. `toggleBookmark` persists
+    // to Supabase in the background and rolls the local state back on
+    // its own if that write fails - this just reports the failure.
+    toggleBookmark(item).catch(() => {
+      onError?.("Couldn't update your bookmark. Please try again.");
+    });
   }
 
   const icon = (

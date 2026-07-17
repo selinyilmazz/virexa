@@ -1,7 +1,8 @@
-import { trendingTopics, type TrendingTopic } from "@/data/trendingTopics";
+import { trendingTopics } from "@/data/trendingTopics";
+import { getTrendingCategories } from "@/services/articles/article-read-service";
 
 type TrendingTopicCardProps = {
-  topic: TrendingTopic;
+  topic: { rank: number; name: string; articleCount: string };
 };
 
 export function TrendingTopicCard({ topic }: TrendingTopicCardProps) {
@@ -35,7 +36,13 @@ export function TrendingTopicCard({ topic }: TrendingTopicCardProps) {
   );
 }
 
-export function TrendingTopics() {
+export async function TrendingTopics() {
+  const realTopics = await getTrendingCategories(6);
+  // Graceful fallback: an empty database (or a read error, already
+  // logged upstream) falls back to the curated static list instead of
+  // rendering an empty "Trending Topics" section.
+  const topics = realTopics.length > 0 ? realTopics : trendingTopics;
+
   return (
     <section
       aria-labelledby="trending-topics-title"
@@ -48,7 +55,7 @@ export function TrendingTopics() {
         <p className="mt-1 text-base text-slate-500">Most discussed topics today</p>
       </div>
       <ol className="mt-4 space-y-4">
-        {trendingTopics.map((topic) => (
+        {topics.map((topic) => (
           <TrendingTopicCard key={topic.rank} topic={topic} />
         ))}
       </ol>

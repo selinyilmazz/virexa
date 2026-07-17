@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { clearSession } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/client";
 import { clearBookmarks } from "@/lib/bookmarks";
 import { resetProfile } from "@/lib/profile";
 import { resetSettings } from "@/lib/settings";
@@ -11,16 +11,31 @@ export function DangerZoneCard() {
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!confirming) {
       setConfirming(true);
       return;
     }
-    clearBookmarks();
+
+    // Full account deletion (removing the auth.users row, which cascades
+    // to profiles/bookmarks/user_settings via the FKs in the migration)
+    // requires the Supabase service role key (admin API) and is
+    // deferred to a follow-up task. For now this clears the local
+    // caches and signs the user out for real - `clearBookmarks()` also
+    // deletes the rows server-side, so nothing stale is left to reload
+    // on next sign-in even though full account deletion isn't wired up
+    // yet.
+    clearBookmarks().catch((error) => {
+      console.error("[DangerZoneCard] Failed to clear bookmarks before account reset:", error);
+    });
     resetProfile();
     resetSettings();
-    clearSession();
+
+    const supabase = createClient();
+    await supabase.auth.signOut();
+
     router.push("/");
+    router.refresh();
   }
 
   return (
@@ -31,7 +46,7 @@ export function DangerZoneCard() {
       </p>
       <button
         type="button"
-        onClick={handleDelete}
+        onClick={() => void handleDelete()}
         onBlur={() => setConfirming(false)}
         className={`mt-5 flex h-12 items-center justify-center gap-2 rounded-xl border px-6 text-base font-semibold transition-colors ${
           confirming

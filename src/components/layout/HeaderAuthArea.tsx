@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { LogoutButton } from "@/components/auth/LogoutButton";
-import { useSession } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
+import { getAvatarUrl, getDisplayName } from "@/lib/supabase/utils";
 
 const dropdownLinks = [
   {
@@ -43,7 +44,7 @@ const dropdownLinks = [
 ];
 
 export function HeaderAuthArea() {
-  const session = useSession();
+  const { user, isLoading } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -60,7 +61,15 @@ export function HeaderAuthArea() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
-  if (!session) {
+  if (isLoading) {
+    // Server-resolved auth state normally lands before first paint (see
+    // AuthProvider), so this is a brief defensive placeholder rather
+    // than a real loading state - reserves the same layout slot so
+    // nothing shifts once resolved.
+    return <div className="hidden shrink-0 items-center gap-3 md:flex" aria-hidden="true" />;
+  }
+
+  if (!user) {
     return (
       <div className="hidden shrink-0 items-center gap-3 md:flex">
         <Link
@@ -79,6 +88,9 @@ export function HeaderAuthArea() {
     );
   }
 
+  const displayName = getDisplayName(user);
+  const avatarUrl = getAvatarUrl(user);
+
   return (
     <div ref={containerRef} className="relative hidden shrink-0 items-center md:flex">
       <button
@@ -89,9 +101,9 @@ export function HeaderAuthArea() {
         className="flex items-center gap-2.5 rounded-2xl border border-slate-200 px-3 py-2 transition-colors hover:bg-slate-50"
       >
         <span className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full">
-          <Image src={session.avatar} alt={session.name} fill unoptimized className="object-cover" />
+          <Image src={avatarUrl} alt={displayName} fill unoptimized className="object-cover" />
         </span>
-        <span className="max-w-[140px] truncate text-lg font-semibold text-slate-950">{session.name}</span>
+        <span className="max-w-[140px] truncate text-lg font-semibold text-slate-950">{displayName}</span>
         <svg
           aria-hidden="true"
           viewBox="0 0 24 24"

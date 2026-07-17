@@ -1,5 +1,28 @@
-import { useSyncExternalStore } from "react";
+"use client";
 
+import { useSyncExternalStore } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { createBookmarkRepository } from "@/repositories/bookmark-repository";
+import { createUserResourceStore, type ResourceStatus } from "@/lib/cache/resource-store";
+import { reportArticleMetric } from "@/lib/metrics-client";
+
+/**
+ * Bookmarks, backed by the `bookmarks` table (see
+ * `supabase/migrations/0001_production_schema.sql`) via
+ * `src/repositories/bookmark-repository.ts`. The exported surface
+ * (`BookmarkItem`, `getBookmarks`, `isBookmarked`, `addBookmark`,
+ * `removeBookmark`, `toggleBookmark`, `clearBookmarks`, `useBookmarks`,
+ * `useIsBookmarked`) is unchanged from the previous localStorage-backed
+ * version - only `addBookmark`/`removeBookmark`/`toggleBookmark`/
+ * `clearBookmarks` are now `async` (they were fire-and-forget before
+ * too; callers that don't need to know about failures can keep calling
+ * them the same way).
+ *
+ * `addBookmark`/`removeBookmark` also report to `/api/metrics`
+ * ("Bookmark yapılınca bookmark_count güncellensin") - best-effort,
+ * fire-and-forget, and never blocks or fails the bookmark action itself
+ * if the metrics call fails.
+ */
 export type BookmarkItem = {
   slug: string;
   image: string;
@@ -10,76 +33,106 @@ export type BookmarkItem = {
   publishedDate: string;
 };
 
-const STORAGE_KEY = "virexa:bookmarks";
-export const BOOKMARKS_EVENT = "virexa:bookmarks-changed";
 const EMPTY_BOOKMARKS: BookmarkItem[] = [];
 
-let cache: BookmarkItem[] | null = null;
+// Client-only: repositories/Supabase clients are never touched during SSR.
+const supabase = typeof window !== "undefined" ? createClient() : null;
+const bookmarkRepository = supabase ? createBookmarkRepository(supabase) : null;
 
-function readFromStorage(): BookmarkItem[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as BookmarkItem[]) : [];
-  } catch {
-    return [];
-  }
-}
+const store = createUserResourceStore<BookmarkItem[]>({
+  defaultValue: EMPTY_BOOKMARKS,
+  fetcher: async (userId) => {
+    if (!bookmarkRepository) return EMPTY_BOOKMARKS;
+    return bookmarkRepository.list(userId);
+  },
+});
 
-function getCache(): BookmarkItem[] {
-  if (cache === null) {
-    cache = readFromStorage();
-  }
-  return cache;
-}
-
-function persist(items: BookmarkItem[]) {
-  cache = items;
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    window.dispatchEvent(new Event(BOOKMARKS_EVENT));
-  }
+/**
+ * Called by `AuthProvider` on every auth state change. Signing out
+ * clears bookmarks from the cache immediately (a signed-out visitor
+ * must never see a previous user's saved articles); signing in fetches
+ * that user's real bookmarks, including ones saved from another device.
+ */
+export function syncBookmarksAuthContext(userId: string | null) {
+  store.setUser(userId);
 }
 
 export function getBookmarks(): BookmarkItem[] {
-  return getCache();
+  return store.getState().data;
+}
+
+export function getBookmarksStatus(): ResourceStatus {
+  return store.getState().status;
+}
+
+export function getBookmarksError(): string | null {
+  return store.getState().error;
+}
+
+export function retryBookmarks(): Promise<void> {
+  return store.retry();
 }
 
 export function isBookmarked(slug: string): boolean {
-  return getCache().some((item) => item.slug === slug);
+  return store.getState().data.some((item) => item.slug === slug);
 }
 
-export function addBookmark(item: BookmarkItem) {
-  const items = getCache();
-  if (items.some((existing) => existing.slug === item.slug)) return;
-  persist([item, ...items]);
+export async function addBookmark(item: BookmarkItem): Promise<void> {
+  await store.mutate(
+    (current) => (current.some((existing) => existing.slug === item.slug) ? current : [item, ...current]),
+    async (userId) => {
+      if (!bookmarkRepository) throw new Error("Supabase is not configured.");
+      await bookmarkRepository.add(userId, item);
+    }
+  );
+  void reportArticleMetric(item.slug, "bookmark_add");
 }
 
-export function removeBookmark(slug: string) {
-  persist(getCache().filter((item) => item.slug !== slug));
+export async function removeBookmark(slug: string): Promise<void> {
+  await store.mutate(
+    (current) => current.filter((item) => item.slug !== slug),
+    async (userId) => {
+      if (!bookmarkRepository) throw new Error("Supabase is not configured.");
+      await bookmarkRepository.remove(userId, slug);
+    }
+  );
+  void reportArticleMetric(slug, "bookmark_remove");
 }
 
-export function toggleBookmark(item: BookmarkItem): boolean {
+export async function toggleBookmark(item: BookmarkItem): Promise<boolean> {
   const bookmarked = isBookmarked(item.slug);
   if (bookmarked) {
-    removeBookmark(item.slug);
+    await removeBookmark(item.slug);
     return false;
   }
-  addBookmark(item);
+  await addBookmark(item);
   return true;
 }
 
-export function clearBookmarks() {
-  persist([]);
+export async function clearBookmarks(): Promise<void> {
+  await store.mutate(
+    () => [],
+    async (userId) => {
+      if (!bookmarkRepository) throw new Error("Supabase is not configured.");
+      await bookmarkRepository.clear(userId);
+    }
+  );
 }
 
 function subscribeToBookmarks(callback: () => void) {
-  window.addEventListener(BOOKMARKS_EVENT, callback);
-  return () => window.removeEventListener(BOOKMARKS_EVENT, callback);
+  return store.subscribe(callback);
 }
 
 export function useBookmarks(): BookmarkItem[] {
   return useSyncExternalStore(subscribeToBookmarks, getBookmarks, () => EMPTY_BOOKMARKS);
+}
+
+export function useBookmarksStatus(): ResourceStatus {
+  return useSyncExternalStore(subscribeToBookmarks, getBookmarksStatus, () => "idle");
+}
+
+export function useBookmarksError(): string | null {
+  return useSyncExternalStore(subscribeToBookmarks, getBookmarksError, () => null);
 }
 
 export function useIsBookmarked(slug: string): boolean {

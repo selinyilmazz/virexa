@@ -11,8 +11,8 @@ import { AuthTermsNotice } from "@/components/auth/AuthTermsNotice";
 import { Spinner } from "@/components/auth/Spinner";
 import { AuthToast } from "@/components/auth/AuthToast";
 import { isRequired, isStrongEnoughPassword, isValidEmail } from "@/lib/validators";
-import { setSession } from "@/lib/auth";
-import { mockUser } from "@/data/user";
+import { createClient } from "@/lib/supabase/client";
+import { getAuthErrorMessage } from "@/lib/supabase/errors";
 
 type FormErrors = {
   name?: string;
@@ -22,9 +22,10 @@ type FormErrors = {
   agreeToTerms?: string;
 };
 
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+type ToastState = {
+  message: string;
+  variant: "success" | "error" | "info";
+};
 
 const nameIcon = (
   <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -46,7 +47,11 @@ type SignUpFormProps = {
 
 export function SignUpForm({ redirectTo }: SignUpFormProps) {
   const router = useRouter();
-  const safeRedirectTo = redirectTo && redirectTo.startsWith("/") ? redirectTo : "/";
+  // Guards against open redirects: must be an internal path (starts with
+  // "/") and NOT protocol-relative ("//evil.com" also starts with "/" but
+  // browsers resolve it as an absolute URL to a different origin - a
+  // well-known bypass of a naive `startsWith("/")` check).
+  const safeRedirectTo = redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -54,7 +59,12 @@ export function SignUpForm({ redirectTo }: SignUpFormProps) {
   const [agreeToTerms, setAgreeToTerms] = useState(true);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
+
+  function showToast(message: string, variant: ToastState["variant"], durationMs = 3000) {
+    setToast({ message, variant });
+    setTimeout(() => setToast(null), durationMs);
+  }
 
   function validate(): boolean {
     const nextErrors: FormErrors = {};
@@ -83,31 +93,47 @@ export function SignUpForm({ redirectTo }: SignUpFormProps) {
     return Object.keys(nextErrors).length === 0;
   }
 
-  async function completeMockAuth(message: string, sessionOverride?: { name: string; email: string }) {
-    setIsSubmitting(true);
-    await wait(1000);
-    setIsSubmitting(false);
-    setSession({
-      name: sessionOverride?.name ?? mockUser.name,
-      email: sessionOverride?.email ?? mockUser.email,
-      avatar: mockUser.avatar,
-    });
-    setToastMessage(message);
-    await wait(600);
-    router.push(safeRedirectTo);
-  }
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isSubmitting || !validate()) return;
-    void completeMockAuth("Account created successfully! Redirecting...", { name, email });
+
+    setIsSubmitting(true);
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name } },
+    });
+    setIsSubmitting(false);
+
+    if (error) {
+      showToast(getAuthErrorMessage(error), "error", 4000);
+      return;
+    }
+
+    if (!data.session) {
+      // Email confirmation is required by the Supabase project settings -
+      // there's no active session yet, so don't redirect into a
+      // protected page. Send them to sign in once they've confirmed.
+      showToast("Account created! Please check your email to confirm your account.", "info", 5000);
+      router.push("/signin");
+      return;
+    }
+
+    showToast("Account created successfully! Redirecting...", "success");
+    router.push(safeRedirectTo);
+    router.refresh();
+  }
+
+  function handleGoogleClick() {
+    showToast("Google sign-in isn't available yet. Please use email and password.", "info", 3500);
   }
 
   return (
     <>
-      {toastMessage && <AuthToast message={toastMessage} />}
+      {toast && <AuthToast message={toast.message} variant={toast.variant} />}
 
-      <form onSubmit={handleSubmit} noValidate className="space-y-5">
+      <form onSubmit={(event) => void handleSubmit(event)} noValidate className="space-y-5">
         <AuthInput
           id="signup-name"
           label="Full Name"
@@ -178,10 +204,7 @@ export function SignUpForm({ redirectTo }: SignUpFormProps) {
 
         <AuthDivider />
 
-        <SocialLoginButtons
-          disabled={isSubmitting}
-          onGoogleClick={() => void completeMockAuth("Signed up with Google! Redirecting...")}
-        />
+        <SocialLoginButtons disabled={isSubmitting} onGoogleClick={handleGoogleClick} />
       </form>
 
       <AuthFooter text="Already have an account?" linkLabel="Sign In" href="/signin" />

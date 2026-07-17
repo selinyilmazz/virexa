@@ -1,10 +1,18 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { getCategoryFilterOptions } from "@/data/search";
 
-export function CategoryFilterCard() {
-  const options = getCategoryFilterOptions();
+export type CategoryFilterOption = {
+  slug: string;
+  label: string;
+  count: number;
+};
+
+type CategoryFilterCardProps = {
+  options: CategoryFilterOption[];
+};
+
+export function CategoryFilterCard({ options }: CategoryFilterCardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedSlugs = searchParams.get("categories")?.split(",").filter(Boolean) ?? [];
@@ -20,6 +28,7 @@ export function CategoryFilterCard() {
     } else {
       params.delete("categories");
     }
+    params.delete("page");
     router.push(`/search?${params.toString()}`, { scroll: false });
   }
 
@@ -27,6 +36,7 @@ export function CategoryFilterCard() {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("categories");
     params.delete("time");
+    params.delete("page");
     router.push(`/search?${params.toString()}`, { scroll: false });
   }
 

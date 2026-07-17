@@ -64,18 +64,52 @@ function extractLink(block: string): string | undefined {
   return textLink;
 }
 
+/**
+ * Some feeds list several `<media:content>`/`<media:thumbnail>` sizes
+ * as sibling tags for the same item ("Aynı haber için birden fazla
+ * görsel bulunursa en kaliteli olan seçilsin") - picks the one with the
+ * largest `width` attribute, falling back to the first match when no
+ * tag declares a width.
+ */
+function pickLargestMediaUrl(block: string, tagName: string): string | undefined {
+  const regex = new RegExp(`<${tagName}\\b[^>]*\\/?>`, "gi");
+  let best: { url: string; width: number } | undefined;
+
+  for (const match of block.matchAll(regex)) {
+    const tag = match[0];
+    const url = extractAttribute(tag, "url");
+    if (!url) continue;
+
+    const widthRaw = extractAttribute(tag, "width");
+    const width = widthRaw ? Number.parseInt(widthRaw, 10) : 0;
+
+    if (!best || width > best.width) {
+      best = { url, width: Number.isNaN(width) ? 0 : width };
+    }
+  }
+
+  return best?.url;
+}
+
+/**
+ * Image priority: `media:content` > `media:thumbnail` > `enclosure` >
+ * an inline `<img>` in the body. `RSSProvider` adds a final OpenGraph
+ * fallback (`fetchOgImage`) on top of this when none of these are
+ * present - that step needs a real HTTP request, so it deliberately
+ * lives outside this pure, network-free parser.
+ */
 function extractImage(block: string): string | undefined {
+  const mediaContent = pickLargestMediaUrl(block, "media:content");
+  if (mediaContent) return mediaContent;
+
+  const mediaThumbnail = pickLargestMediaUrl(block, "media:thumbnail");
+  if (mediaThumbnail) return mediaThumbnail;
+
   const enclosure = block.match(/<enclosure\b[^>]*\/?>/i);
   if (enclosure) {
     const type = extractAttribute(enclosure[0], "type");
     const url = extractAttribute(enclosure[0], "url");
     if (url && (!type || type.startsWith("image/"))) return url;
-  }
-
-  const mediaContent = block.match(/<media:content\b[^>]*\/?>/i) ?? block.match(/<media:thumbnail\b[^>]*\/?>/i);
-  if (mediaContent) {
-    const url = extractAttribute(mediaContent[0], "url");
-    if (url) return url;
   }
 
   const html = extractTagText(block, "content:encoded") ?? extractTagText(block, "description") ?? "";

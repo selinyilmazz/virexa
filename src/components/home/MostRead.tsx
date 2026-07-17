@@ -1,7 +1,13 @@
 import Link from "next/link";
-import { mostReadItems } from "@/data/most-read";
+import { getMostReadArticles } from "@/services/articles/article-read-service";
 
-export function MostRead() {
+function formatMeta(item: { source: string; viewCount: number }): string {
+  return item.viewCount > 0 ? `${item.viewCount.toLocaleString("en-US")} views` : item.source;
+}
+
+export async function MostRead() {
+  const mostReadItems = await getMostReadArticles(5);
+
   return (
     <section
       aria-labelledby="most-read-title"
@@ -14,17 +20,23 @@ export function MostRead() {
         <p className="mt-1 text-base text-slate-500">Most viewed articles today</p>
       </div>
 
-      <ol className="mt-4 space-y-4">
-        {mostReadItems.map((item) => (
-          <li key={item.rank} className="flex items-start gap-3">
-            <span className="w-5 shrink-0 text-base font-bold text-slate-950">{item.rank}</span>
-            <div className="min-w-0">
-              <p className="text-base font-semibold leading-snug text-slate-950">{item.title}</p>
-              <p className="mt-0.5 text-sm text-slate-500">{item.views}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
+      {mostReadItems.length === 0 ? (
+        <p className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
+          No articles yet.
+        </p>
+      ) : (
+        <ol className="mt-4 space-y-4">
+          {mostReadItems.map((item, index) => (
+            <li key={item.slug} className="flex items-start gap-3">
+              <span className="w-5 shrink-0 text-base font-bold text-slate-950">{index + 1}</span>
+              <div className="min-w-0">
+                <p className="text-base font-semibold leading-snug text-slate-950">{item.title}</p>
+                <p className="mt-0.5 text-sm text-slate-500">{formatMeta(item)}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
 
       <Link
         href="/most-read"

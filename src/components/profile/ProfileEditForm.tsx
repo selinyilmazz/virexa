@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { AuthToast } from "@/components/auth/AuthToast";
+import { AuthToast, type AuthToastVariant } from "@/components/auth/AuthToast";
 import { saveProfile, useProfile, type UserProfile } from "@/lib/profile";
-import { setSession, useSession } from "@/lib/auth";
+import { profileSchema } from "@/lib/validation/profile-schema";
+import { formatZodError } from "@/lib/validation/format-zod-error";
 
 const countryOptions = [
   "Türkiye",
@@ -20,29 +21,51 @@ const countryOptions = [
 
 export function ProfileEditForm() {
   const profile = useProfile();
-  const session = useSession();
   const [draft, setDraft] = useState<UserProfile>(profile);
   const [syncedProfile, setSyncedProfile] = useState<UserProfile>(profile);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; variant: AuthToastVariant } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   if (profile !== syncedProfile) {
     setSyncedProfile(profile);
     setDraft(profile);
   }
 
-  function handleSave(event: FormEvent<HTMLFormElement>) {
+  function showToast(message: string, variant: AuthToastVariant, durationMs = 2500) {
+    setToast({ message, variant });
+    setTimeout(() => setToast(null), durationMs);
+  }
+
+  async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    saveProfile(draft);
-    if (session) {
-      setSession({ ...session, name: draft.fullName, avatar: profile.avatar });
+
+    const result = profileSchema.safeParse({
+      fullName: draft.fullName,
+      username: draft.username,
+      bio: draft.bio,
+      country: draft.country,
+    });
+    if (!result.success) {
+      showToast(formatZodError(result.error), "error", 4000);
+      return;
     }
-    setToastMessage("Profile updated successfully!");
-    setTimeout(() => setToastMessage(null), 2000);
+
+    setIsSaving(true);
+    try {
+      await saveProfile(result.data);
+      showToast("Profile updated successfully!", "success");
+    } catch {
+      // `saveProfile` already rolled the local cache back to the
+      // previous value - just tell the user it didn't persist.
+      showToast("Couldn't save your profile. Please try again.", "error", 4000);
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
-    <form onSubmit={handleSave} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-      {toastMessage && <AuthToast message={toastMessage} />}
+    <form onSubmit={(event) => void handleSave(event)} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      {toast && <AuthToast message={toast.message} variant={toast.variant} />}
 
       <h2 className="text-2xl font-bold tracking-tight text-slate-950">Edit Profile</h2>
       <p className="mt-1 text-base text-slate-500">Update your personal information.</p>
@@ -121,9 +144,10 @@ export function ProfileEditForm() {
 
       <button
         type="submit"
-        className="mt-6 flex h-12 items-center justify-center rounded-xl bg-[#2f67e8] px-8 text-base font-semibold text-white transition-colors hover:bg-[#2556c9]"
+        disabled={isSaving}
+        className="mt-6 flex h-12 items-center justify-center rounded-xl bg-[#2f67e8] px-8 text-base font-semibold text-white transition-colors hover:bg-[#2556c9] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        Save Changes
+        {isSaving ? "Saving..." : "Save Changes"}
       </button>
     </form>
   );
