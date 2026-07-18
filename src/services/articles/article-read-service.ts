@@ -1,7 +1,7 @@
 import { cache } from "react";
 import type { CategoryNewsItem } from "@/data/categories";
 import type { ArticleContentBlock } from "@/data/article";
-import { formatPublishedDate, getSourceById, resolveArticleImage } from "@/lib/news";
+import { formatPublishedDate, getSourceById, resolveArticleImage, SEARCH_CATEGORY_SLUGS } from "@/lib/news";
 import { createClient } from "@/lib/supabase/server";
 import { createArticleAIRepository } from "@/repositories/article-ai-repository";
 import { createArticleMetricsRepository } from "@/repositories/article-metrics-repository";
@@ -213,25 +213,51 @@ export async function getMostReadPage(page: number, pageSize: number): Promise<A
 
 export type TrendingCategoryStat = { rank: number; name: string; articleCount: string };
 
-/** Tallies category frequency across the top-trending article pool - backs "Trending Topics" (Home sidebar + Search sidebar) with real data instead of a static topic list. */
+/**
+ * Real per-category article counts across all 12 canonical categories
+ * (`SEARCH_CATEGORY_SLUGS`), sorted by count descending - backs
+ * "Trending Topics" (Home sidebar + Search sidebar) with the site's
+ * actual category distribution instead of a static topic list.
+ *
+ * Previously this tallied category frequency across only the top-100
+ * highest-`trending_score` articles (`listTopByTrending(100)`). That
+ * was a fragile proxy: a brand-new article starts with a low
+ * `trending_score` regardless of category, so any category whose
+ * articles hadn't yet accumulated enough score to crack that
+ * fixed-size-100 pool was invisible to this widget - even once real
+ * articles existed for it. In practice, since most of the historical
+ * article base came from RSS feeds hardcoded to "Technology"/"AI"
+ * (see `feed-sources.ts`), that pool of 100 was saturated almost
+ * entirely by those two categories, and every other category (with
+ * real, stored articles) never showed up in "Trending Topics" at all -
+ * not a SQL bug or a UI limit, but this function's own choice of
+ * candidate pool.
+ *
+ * Fixed by running one small, count-only query per category in
+ * parallel (same pattern `getCategoryFilterCounts` already uses for
+ * the search sidebar's filter counts) instead of sampling a
+ * trending-score-ordered pool - every category with at least one
+ * stored article is counted correctly and independently of its
+ * articles' trending_score.
+ */
 export async function getTrendingCategories(limit = 6): Promise<TrendingCategoryStat[]> {
   try {
     const { articles } = await getRepositories();
-    const pool = await articles.listTopByTrending(100);
-    if (pool.length === 0) return [];
+    const counts = await Promise.all(
+      SEARCH_CATEGORY_SLUGS.map(async ({ name }) => {
+        const result = await articles.search({ category: name, page: 1, pageSize: 1 });
+        return { name, count: result.total };
+      })
+    );
 
-    const counts = new Map<string, number>();
-    for (const row of pool) {
-      counts.set(row.category, (counts.get(row.category) ?? 0) + 1);
-    }
-
-    return [...counts.entries()]
-      .sort((a, b) => b[1] - a[1])
+    return counts
+      .filter((entry) => entry.count > 0)
+      .sort((a, b) => b.count - a.count)
       .slice(0, limit)
-      .map(([name, count], index) => ({
+      .map((entry, index) => ({
         rank: index + 1,
-        name,
-        articleCount: `${count} article${count === 1 ? "" : "s"}`,
+        name: entry.name,
+        articleCount: `${entry.count} article${entry.count === 1 ? "" : "s"}`,
       }));
   } catch (error) {
     console.error("[article-read-service] getTrendingCategories failed:", error);
