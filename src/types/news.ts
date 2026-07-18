@@ -73,8 +73,24 @@ export type NewsArticle = {
   summary: string;
   content?: string;
   url: string;
+  /**
+   * Optional discussion/comments page URL, distinct from `url` above.
+   * `url` is always the article's own destination (the story a provider
+   * links to); `discussionUrl` is only populated by providers that ALSO
+   * have their own separate discussion thread for that story - today,
+   * only `HackerNewsProvider`, always set to the story's permanent
+   * `https://news.ycombinator.com/item?id=<id>` page. Every other
+   * provider leaves this `undefined`. The article page's "Source" link
+   * prefers this over `url` when present (see `article-read-service.ts`),
+   * so a link labeled "Hacker News" always opens Hacker News's own
+   * discussion - never whatever external site (including, sometimes, a
+   * Reddit thread) the story itself happens to link to.
+   */
+  discussionUrl?: string;
   /** Always populated — falls back to a category-based default image (see `image-fallback.ts`). */
   image: string;
+  /** Which stage of the image pipeline supplied `image` - 'provider' (the source's own feed/API image, including any og:image already merged in upstream by that provider) | 'stock:pexels' | 'stock:unsplash' | 'stock:pixabay' | 'stock:wikimedia' | 'placeholder'. Observability only, see `lib/news/stock-image-provider.ts`. */
+  imageSource: string;
   category: Category;
   tags: Tag[];
   author?: Author;
@@ -121,6 +137,8 @@ export type ProviderNewsItem = {
   summary: string;
   content?: string;
   url: string;
+  /** See `NewsArticle.discussionUrl` - only ever set by `HackerNewsProvider`. Carried through normalization unchanged by every other provider (stays `undefined`). */
+  discussionUrl?: string;
   /** Optional — missing images are filled in by the aggregator via `image-fallback.ts`. */
   image?: string;
   category: string;

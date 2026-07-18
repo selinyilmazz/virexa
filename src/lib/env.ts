@@ -67,6 +67,18 @@ export const env = {
     gNewsApiKey: process.env.GNEWS_API_KEY,
     theNewsApiKey: process.env.THENEWS_API_KEY,
   },
+  /**
+   * Stock photo search providers for the image-fallback pipeline's stage
+   * 3 (see `lib/news/stock-image-provider.ts`) - all optional, all
+   * server-only. Every one of these safely no-ops without its key set,
+   * same convention as `news.*`/`ai.*` above; `Wikimedia Commons` needs
+   * none of these at all and is always available regardless.
+   */
+  stockImages: {
+    pexelsApiKey: process.env.PEXELS_API_KEY,
+    unsplashAccessKey: process.env.UNSPLASH_ACCESS_KEY,
+    pixabayApiKey: process.env.PIXABAY_API_KEY,
+  },
   supabase: {
     url: process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL,
     anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY,

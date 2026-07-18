@@ -29,7 +29,11 @@ export const articleInputSchema = z.object({
   description: z.string().trim().default(""),
   content: z.string().trim().nullable().optional(),
   url: z.string().trim().url("Article url must be a valid URL."),
+  /** Discussion/comments page URL, distinct from `url` - only ever populated by HackerNewsProvider. */
+  discussionUrl: z.string().trim().url("discussionUrl must be a valid URL.").nullable().optional(),
   imageUrl: z.string().trim().default(""),
+  /** Which stage of the image pipeline supplied `imageUrl` - observability only. */
+  imageSource: z.string().trim().nullable().optional(),
   publishedAt: z.string().trim().min(1, "publishedAt is required."),
   language: z.string().trim().default("en"),
   country: z.string().trim().default(""),

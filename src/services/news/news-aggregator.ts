@@ -5,15 +5,38 @@ import {
   getSourceById,
   getSourceLogo,
   inferCategoryFromTitle,
+  isAcceptableImageUrl,
   makeUniqueSlug,
   normalizeCategory,
-  resolveArticleImage,
+  resolveFallbackImageForCategory,
   resolveTrustScore,
+  searchStockImage,
   slugify,
   buildArticleId,
 } from "@/lib/news";
 import type { FetchArticlesParams, NewsArticle, ProviderNewsItem } from "@/types/news";
 import type { NewsProvider } from "@/services/news/providers/news-provider.interface";
+
+/**
+ * Cap on how many articles get a stock-photo search (stage 3) in one
+ * `fetchArticles()` call - bounds API cost/rate-limit exposure the same
+ * way `MAX_OG_LOOKUPS_PER_FEED` bounds `RSSProvider`'s og:image lookups.
+ * Every article beyond this cap that's still missing an image simply
+ * falls straight to the stage-5 local placeholder for this run.
+ *
+ * Same amortized-cost tradeoff `RSSProvider`'s og:image lookups already
+ * accept: a still-imageless item that stays in a feed's own listing
+ * across several pipeline runs gets searched again on each of those
+ * runs (this stage has no "already tried this exact article" memory of
+ * its own - `NewsAggregator` is storage-agnostic, used by both the
+ * persisted pipeline and the in-memory live-articles cache, so it can't
+ * check the database without breaking that separation). In practice
+ * this is naturally bounded, not unbounded: RSS/HN feeds only list a
+ * fixed, small window of recent items, so an item stops being
+ * re-fetched (and re-searched) at all once it ages out of its feed's
+ * own listing - typically within a day, not indefinitely.
+ */
+const MAX_STOCK_IMAGE_LOOKUPS_PER_RUN = 40;
 
 /**
  * Normalizes one raw provider item into the final `NewsArticle` shape:
@@ -57,6 +80,17 @@ function normalizeProviderItem(
   const slug = makeUniqueSlug(slugify(item.title), usedSlugs);
   const trustScore = resolveTrustScore(source);
 
+  // Image resolution happens in two passes: an acceptable candidate the
+  // PROVIDER itself already supplied (a raw RSS feed image, NewsAPI's
+  // `urlToImage`, GNews's `image`, or an og:image already merged in
+  // upstream by that provider's own enrichment - `RSSProvider`'s
+  // `resolveBestImages`, `HackerNewsProvider`'s `fetchOgImagesById`) is
+  // kept here immediately; anything still missing is left as `""` (NOT
+  // the category placeholder yet) so `fetchArticles()` below can batch a
+  // stock-photo search for exactly those articles before anything falls
+  // back to a local placeholder - see that function's doc comment.
+  const hasAcceptableImage = isAcceptableImageUrl(item.image);
+
   return {
     id: buildArticleId(source.id, slug),
     slug,
@@ -64,7 +98,9 @@ function normalizeProviderItem(
     summary: item.summary,
     content: item.content,
     url: item.url,
-    image: resolveArticleImage(item.image, category),
+    discussionUrl: item.discussionUrl,
+    image: hasAcceptableImage ? (item.image as string) : "",
+    imageSource: hasAcceptableImage ? "provider" : "",
     category,
     tags: item.tags ?? [],
     author: item.author,
@@ -126,6 +162,71 @@ export class NewsAggregator {
     const bestFirst = [...normalized].sort((a, b) => b.trustScore - a.trustScore);
     const deduped = dedupeArticles(bestFirst);
 
-    return deduped.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+    // Image resolution, stages 3-5 (stages 1-2 - the provider's own feed/
+    // API image and any upstream og:image lookup - already happened
+    // in normalizeProviderItem above). Deliberately run AFTER dedupe, not
+    // before, so a duplicate copy of the same story never burns its own
+    // stock-photo search budget - only the one surviving copy does.
+    const withImages = await resolveMissingImages(deduped);
+
+    return withImages.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
   }
+}
+
+/**
+ * Image resolution, stages 3-5: for every article that still has no
+ * acceptable image after stages 1-2 (`article.image === ""`, set that way
+ * by `normalizeProviderItem` above), tries a real, topically-relevant,
+ * royalty-free stock photo search (stage 3 - `searchStockImage`, tried
+ * for at most `MAX_STOCK_IMAGE_LOOKUPS_PER_RUN` articles per call, run in
+ * parallel via `Promise.allSettled` so one slow/broken lookup never
+ * delays the rest), then falls back to a local, category-specific SVG
+ * placeholder (stage 5 - `resolveFallbackImageForCategory`, a total
+ * function that can never itself fail) for anything still missing after
+ * that - either because the stock search itself found nothing, or the
+ * article was beyond this run's lookup budget.
+ *
+ * Runs once per `fetchArticles()` call - i.e. once per ingestion pass,
+ * never per page view (see `searchStockImage`'s own doc comment) - and
+ * every article this function returns leaves it with `image` set to a
+ * real, renderable URL and `imageSource` recording which stage supplied
+ * it, for both the persisted pipeline (`runtime/pipeline/steps/
+ * database-step.ts` writes `imageSource` straight to
+ * `articles.image_source`) and the in-memory live-articles cache.
+ */
+async function resolveMissingImages(articles: NewsArticle[]): Promise<NewsArticle[]> {
+  const missing = articles.filter((article) => !article.image);
+  const candidates = missing.slice(0, MAX_STOCK_IMAGE_LOOKUPS_PER_RUN);
+
+  const stockResultById = new Map<string, { url: string; imageSource: string }>();
+
+  if (candidates.length > 0) {
+    const results = await Promise.allSettled(
+      candidates.map((article) => searchStockImage(article.title, article.category))
+    );
+
+    results.forEach((result, index) => {
+      const article = candidates[index];
+      if (result.status === "fulfilled" && result.value) {
+        stockResultById.set(article.id, {
+          url: result.value.url,
+          imageSource: `stock:${result.value.provider}`,
+        });
+      } else if (result.status === "rejected") {
+        console.error(`[NewsAggregator] Stock image search failed for "${article.title}":`, result.reason);
+      }
+    });
+  }
+
+  return articles.map((article) => {
+    if (article.image) return article;
+
+    const stock = stockResultById.get(article.id);
+    if (stock) return { ...article, image: stock.url, imageSource: stock.imageSource };
+
+    // Stage 5, last resort: a local category placeholder. Total
+    // function, always succeeds, so every article this map produces is
+    // guaranteed to have a real, renderable `image`.
+    return { ...article, image: resolveFallbackImageForCategory(article.category), imageSource: "placeholder" };
+  });
 }

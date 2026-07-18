@@ -19,3 +19,5 @@ export { fetchWithTimeout, classifyHttpStatus, ProviderHttpError } from "@/lib/n
 export type { ProviderFailureKind } from "@/lib/news/fetch-with-timeout";
 export { fetchOgImage } from "@/lib/news/og-image";
 export { resolveFallbackImageForCategory } from "@/lib/news/image-fallback";
+export { searchStockImage } from "@/lib/news/stock-image-provider";
+export type { StockImageProviderId, StockImageResult } from "@/lib/news/stock-image-provider";

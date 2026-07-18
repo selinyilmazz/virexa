@@ -114,7 +114,11 @@ export type ArticleRow = {
   description: string;
   content: string | null;
   url: string;
+  /** Discussion/comments page URL, distinct from `url` - only ever set by HackerNewsProvider (see 0010_discussion_url_and_image_source.sql). Null for every other provider. */
+  discussion_url: string | null;
   image_url: string;
+  /** Which stage of the image pipeline supplied `image_url` - observability only, see lib/news/stock-image-provider.ts. */
+  image_source: string | null;
   published_at: string;
   language: string;
   country: string;

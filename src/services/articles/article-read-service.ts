@@ -525,7 +525,15 @@ export async function getArticleDetail(slug: string): Promise<ArticleDetail | nu
       image: resolveDisplayImage(row),
       category: row.category,
       source: resolveSourceName(row.source_id),
-      sourceUrl: row.url,
+      // Prefer the article's own discussion page (currently only ever
+      // set for Hacker News - see `types/database.ts`'s `discussion_url`
+      // doc comment) over its plain `url`, so a link labeled with the
+      // source's name always opens THAT source, not whatever external
+      // site (e.g. a Reddit thread) the story happens to link to. Every
+      // non-Hacker-News article has `discussion_url === null` and
+      // this falls back to `url` exactly as before - zero behavior
+      // change for RSS/NewsAPI/GNews-sourced articles.
+      sourceUrl: row.discussion_url ?? row.url,
       publishedDate: formatPublishedDate(row.published_at),
       publishedAtIso: row.published_at,
       readingTime: `${row.reading_time} min read`,

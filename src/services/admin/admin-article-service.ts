@@ -244,7 +244,10 @@ export async function getAdminArticleDetail(id: string): Promise<AdminArticleDet
       content: row.content && row.content.trim().length > 0 ? row.content : row.description,
       description: row.description,
       sourceName: source?.name ?? row.source_id,
-      sourceUrl: row.url,
+      // Same discussion_url-preferred fix as the public article-read-service
+      // - a Hacker News-labeled source link should open Hacker News's own
+      // discussion thread, not whatever external site the story links to.
+      sourceUrl: row.discussion_url ?? row.url,
       publishedDate: formatPublishedDate(row.published_at),
       category: row.category,
       language: row.language,

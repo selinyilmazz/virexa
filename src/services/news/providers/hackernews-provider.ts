@@ -127,6 +127,16 @@ function toProviderItem(item: HackerNewsItem, image: string | undefined): Provid
   const url = item.url ?? `https://news.ycombinator.com/item?id=${item.id}`;
   const domain = extractDomain(item.url);
 
+  // Every HN story - self-post or link-post alike - has a permanent
+  // discussion page at this URL. Unlike `url` above (which for a
+  // link-post points at whatever external site the story links to -
+  // occasionally a Reddit thread, which is what was previously getting
+  // shown as "the Hacker News link" since `url` was the only field this
+  // provider populated), `discussionUrl` always, unconditionally points
+  // at Hacker News itself. See `NewsArticle.discussionUrl`'s doc comment
+  // for how the read layer uses this.
+  const discussionUrl = `https://news.ycombinator.com/item?id=${item.id}`;
+
   const author: Author | undefined = item.by ? { name: item.by } : undefined;
 
   return {
@@ -134,6 +144,7 @@ function toProviderItem(item: HackerNewsItem, image: string | undefined): Provid
     summary: buildSummary(item, domain),
     content: item.text ? stripHtml(item.text) : undefined,
     url,
+    discussionUrl,
     image,
     category: "Technology",
     tags: deriveTags(item.title),
