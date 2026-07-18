@@ -46,14 +46,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
 
   const query = params.q?.trim() ?? "";
-
-  console.log("SEARCH PARAMS:", params);
-  console.log("QUERY:", query);
-
   const hasQuery = query.length > 0;
-
-  console.log("HAS QUERY:", hasQuery);
-  
 
   // Resolves EVERY checked category slug to its real DB category name
   // via `SEARCH_CATEGORY_SLUGS` (the canonical, 8-category list also
