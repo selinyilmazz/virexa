@@ -21,3 +21,4 @@ export { fetchOgImage } from "@/lib/news/og-image";
 export { resolveFallbackImageForCategory } from "@/lib/news/image-fallback";
 export { searchStockImage } from "@/lib/news/stock-image-provider";
 export type { StockImageProviderId, StockImageResult } from "@/lib/news/stock-image-provider";
+export { fetchArticleContent, MIN_ACCEPTABLE_CONTENT_LENGTH } from "@/lib/news/article-content";

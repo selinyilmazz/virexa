@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAdminUserOrNull } from "@/lib/admin/authorization";
 import { runtimeEngine } from "@/runtime/engine";
-import { backfillArticleImages, recalculateTrustScores } from "@/services/admin/admin-runtime-ops-service";
+import { backfillArticleContent, backfillArticleImages, recalculateTrustScores } from "@/services/admin/admin-runtime-ops-service";
 import { recordAuditEvent } from "@/services/admin/admin-audit-service";
 
 /**
@@ -24,6 +24,9 @@ import { recordAuditEvent } from "@/services/admin/admin-audit-service";
  *                              `backfillArticleImages` - same "no
  *                              matching job type, plain repository
  *                              operation" shape as recalculate-trust
+ * - backfill-content       -> `admin-runtime-ops-service.ts`'s
+ *                              `backfillArticleContent` - same shape,
+ *                              for thin/missing article body text
  *
  * Every action `runtimeEngine.enqueueJob()` reaches the existing job
  * registry unmodified (`runtime/jobs/*`) - this route adds no new job
@@ -41,6 +44,7 @@ const ACTIONS = [
   "retry-failed",
   "recalculate-trust",
   "backfill-images",
+  "backfill-content",
 ] as const;
 
 const bodySchema = z.object({
@@ -102,6 +106,15 @@ export async function POST(request: Request) {
           result.checked === 0
             ? "No articles needed a real-photo backfill."
             : `Checked ${result.checked} article(s), found real photos for ${result.updated}.`;
+        metadata = result;
+        break;
+      }
+      case "backfill-content": {
+        const result = await backfillArticleContent();
+        message =
+          result.checked === 0
+            ? "No articles needed a content backfill."
+            : `Checked ${result.checked} article(s), extracted fuller content for ${result.updated}.`;
         metadata = result;
         break;
       }

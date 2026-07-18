@@ -19,7 +19,7 @@ export async function BreakingNews() {
   if (items.length === 0) return null;
 
   return (
-    <section aria-labelledby="breaking-news-title" className="mx-auto mt-6 max-w-[1280px]">
+    <section aria-labelledby="breaking-news-title" className="mx-auto mt-10 max-w-[1280px]">
       <div className="flex items-center gap-2">
         <span className="relative flex size-2.5">
           <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-500 opacity-75" />

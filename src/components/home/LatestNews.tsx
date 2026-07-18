@@ -12,7 +12,7 @@ export async function LatestNews() {
   const latestNewsItems = await getLatestArticles(8, featured?.slug);
 
   return (
-    <section aria-labelledby="latest-news-title" className="mx-auto mt-12 max-w-[1280px]">
+    <section aria-labelledby="latest-news-title" className="mx-auto mt-10 max-w-[1280px]">
       <div className="flex items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2f67e8]">Newsroom</p>

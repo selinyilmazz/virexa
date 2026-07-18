@@ -2,7 +2,14 @@ import { cache } from "react";
 import { categories as categoryTaxonomy } from "@/data/categories";
 import type { CategoryNewsItem } from "@/data/categories";
 import type { ArticleContentBlock } from "@/data/article";
-import { formatPublishedDate, getSourceById, resolveArticleImage, searchStockImage, SEARCH_CATEGORY_SLUGS } from "@/lib/news";
+import {
+  formatPublishedDate,
+  getSourceById,
+  MIN_ACCEPTABLE_CONTENT_LENGTH,
+  resolveArticleImage,
+  searchStockImage,
+  SEARCH_CATEGORY_SLUGS,
+} from "@/lib/news";
 import { createClient } from "@/lib/supabase/server";
 import { createArticleAIRepository } from "@/repositories/article-ai-repository";
 import { createArticleMetricsRepository } from "@/repositories/article-metrics-repository";
@@ -188,49 +195,13 @@ export const getFeaturedArticle = cache(async (): Promise<FeaturedArticle | null
 });
 
 /**
- * Ranks a trending-score candidate pool by real `view_count` (falling
- * back to `trending_score` for articles with no views yet, which is
- * every article until real traffic accrues) - backs Home's "Most Read"
- * widget. `excludeSlug` (product polishing phase, area 5) drops the
- * Hero/Featured article from consideration - it's drawn from the same
- * trending-score pool as this widget, so without exclusion it would
- * routinely also land in the Most Read top 5.
- */
-export type MostReadArticle = CategoryNewsItem & { viewCount: number };
-
-export async function getMostReadArticles(limit = 5, excludeSlug?: string): Promise<MostReadArticle[]> {
-  try {
-    const { articles, metrics } = await getRepositories();
-    const rawPool = await articles.listTopByTrending(Math.max(limit * 4, 20) + (excludeSlug ? 1 : 0));
-    const pool = excludeSlug ? rawPool.filter((row) => row.slug !== excludeSlug) : rawPool;
-    if (pool.length === 0) return [];
-
-    const metricsRows = await metrics.getManyByArticleIds(pool.map((row) => row.id));
-    const viewsByArticleId = new Map(metricsRows.map((row) => [row.article_id, row.view_count]));
-
-    const ranked = [...pool].sort((a, b) => {
-      const viewsDiff = (viewsByArticleId.get(b.id) ?? 0) - (viewsByArticleId.get(a.id) ?? 0);
-      return viewsDiff !== 0 ? viewsDiff : b.trending_score - a.trending_score;
-    });
-
-    return ranked
-      .slice(0, limit)
-      .map((row) => ({ ...toCategoryNewsItem(row), viewCount: viewsByArticleId.get(row.id) ?? 0 }));
-  } catch (error) {
-    console.error("[article-read-service] getMostReadArticles failed:", error);
-    return [];
-  }
-}
-
-/**
  * Exact, paginated "most read" listing for the dedicated `/most-read`
  * page - sorted by `trending_score` via `ArticleRepository.search()`'s
  * `sortBy` option, using the same `count: "exact"` pagination as every
- * other real listing (category, search). Deliberately a separate
- * function from `getMostReadArticles`: that one ranks a bounded
- * candidate pool by real `view_count` for a small, non-paginated Home
- * widget, while this one needs an honest `totalPages` for a real
- * paginated page, which only an exact, DB-ordered sort can provide.
+ * other real listing (category, search). The homepage no longer has its
+ * own "Most Read" widget (product polishing phase, 2nd pass:
+ * "sadeleştir" - it was dropped along with the sidebar layout), so this
+ * dedicated page is the only remaining consumer of most-read data.
  */
 export async function getMostReadPage(page: number, pageSize: number): Promise<ArticlesPage> {
   try {
@@ -462,69 +433,6 @@ export async function getBreakingNews(limit = 4, excludeSlugs: string[] = []): P
   }
 }
 
-/**
- * Newest articles by INGESTION time (`created_at` - when the row
- * entered Virexa's database), not original publish time - backs the
- * "Recently Added" section, deliberately distinct from "Latest News"
- * (which sorts by `published_at`, i.e. when the SOURCE published it).
- * A backfilled older story that Virexa only just ingested shows up here
- * but not necessarily at the top of Latest News, and vice versa for a
- * same-day story from a slow-to-sync feed.
- */
-export async function getRecentlyAdded(limit = 6, excludeSlugs: string[] = []): Promise<CategoryNewsItem[]> {
-  try {
-    const { articles } = await getRepositories();
-    const result = await articles.search({ sortBy: "created_at", page: 1, pageSize: limit + excludeSlugs.length });
-    const filtered = result.items.filter((row) => !excludeSlugs.includes(row.slug));
-    return filtered.slice(0, limit).map(toCategoryNewsItem);
-  } catch (error) {
-    console.error("[article-read-service] getRecentlyAdded failed:", error);
-    return [];
-  }
-}
-
-export type AIExplainedArticle = CategoryNewsItem & { aiSummary: string | null };
-
-/**
- * AI-category articles that already have real AI enrichment
- * (`article_ai.summary`/`.tldr`), highest-trending first - backs the
- * "AI Explained" section, which exists to surface Virexa's own AI
- * analysis (not just AI-topic news) as a distinct, premium-feeling
- * section. Falls back to AI-category articles without enrichment yet
- * when fewer than `limit` have any (so the section isn't empty on a
- * dataset where AI enrichment hasn't caught up with ingestion) -
- * `aiSummary` is simply `null` for those, and the UI treats that as
- * "no AI insight yet" rather than an error.
- */
-export async function getAIExplained(limit = 4): Promise<AIExplainedArticle[]> {
-  try {
-    const { articles, ai } = await getRepositories();
-    const result = await articles.search({
-      category: "AI",
-      sortBy: "trending_score",
-      page: 1,
-      pageSize: Math.max(limit * 3, 12),
-    });
-    if (result.items.length === 0) return [];
-
-    const insightByArticleId = await ai.getLatestManyByArticleIds(result.items.map((row) => row.id));
-
-    const withInsight = result.items.filter((row) => insightByArticleId.has(row.id));
-    const chosenRows = withInsight.length >= limit ? withInsight : result.items;
-
-    return chosenRows.slice(0, limit).map((row) => {
-      const insight = insightByArticleId.get(row.id);
-      return {
-        ...toCategoryNewsItem(row),
-        aiSummary: insight?.summary ?? insight?.tldr?.title ?? null,
-      };
-    });
-  } catch (error) {
-    console.error("[article-read-service] getAIExplained failed:", error);
-    return [];
-  }
-}
-
 /** Paginated articles for one category - backs the category page's grid + `Pagination` component. */
 export async function searchCategoryArticles(categoryName: string, page: number, pageSize: number): Promise<ArticlesPage> {
   try {
@@ -723,15 +631,61 @@ export async function getTimeFilterCounts(options: { id: string; maxDays: number
   }
 }
 
-/** Splits stored plain-text `articles.content` into paragraph blocks the existing `ArticleContent` component already knows how to render. Falls back to the article's `description` when `content` hasn't been captured for this article, so the page still shows something instead of an empty content area. */
-function buildContentBlocks(content: string | null, description: string): ArticleContentBlock[] {
-  const source = content && content.trim().length > 0 ? content : description;
-  if (!source || source.trim().length === 0) return [];
-  return source
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter((paragraph) => paragraph.length > 0)
-    .map((text) => ({ type: "paragraph" as const, text }));
+/**
+ * Splits stored plain-text `articles.content` into paragraph blocks the
+ * existing `ArticleContent` component already knows how to render. When
+ * `content` is missing or too thin to read (below the same
+ * `MIN_ACCEPTABLE_CONTENT_LENGTH` bar the ingestion-time
+ * `fetchArticleContent` extractor already enforces for newly-fetched
+ * articles - see `news-aggregator.ts`'s content-resolution stage), falls
+ * back to a richer combination of `description` + the article's already
+ * -existing AI enrichment (`summary`/`tldr`, from `article_ai` - never a
+ * NEW AI call made here) instead of showing the bare, often single-
+ * sentence `description` alone. This only matters for articles ingested
+ * before that extraction stage existed, or where extraction itself
+ * failed for that specific article's page (paywall, non-HTML response,
+ * etc.) - product polishing phase, 2nd pass, area 8: "çok kısa
+ * içerikler gösterme."
+ */
+function buildContentBlocks(
+  content: string | null,
+  description: string,
+  aiSummary: string | null,
+  tldr: StoredTldr | null
+): ArticleContentBlock[] {
+  const trimmedContent = content?.trim() ?? "";
+  if (trimmedContent.length >= MIN_ACCEPTABLE_CONTENT_LENGTH) {
+    return trimmedContent
+      .split(/\n{2,}/)
+      .map((paragraph) => paragraph.trim())
+      .filter((paragraph) => paragraph.length > 0)
+      .map((text) => ({ type: "paragraph" as const, text }));
+  }
+
+  const blocks: ArticleContentBlock[] = [];
+  const trimmedDescription = description?.trim() ?? "";
+  if (trimmedDescription.length > 0) {
+    blocks.push({ type: "paragraph", text: trimmedDescription });
+  }
+
+  const trimmedSummary = aiSummary?.trim() ?? "";
+  if (trimmedSummary.length > 0 && trimmedSummary !== trimmedDescription) {
+    blocks.push({ type: "paragraph", text: trimmedSummary });
+  }
+
+  const bulletText = (tldr?.bullets ?? []).map((bullet) => bullet.trim()).filter((bullet) => bullet.length > 0).join(" ");
+  if (bulletText.length > 0) {
+    blocks.push({ type: "paragraph", text: bulletText });
+  }
+
+  // Whatever short raw `content` did exist (below the length bar above,
+  // but not necessarily empty) is still real article text, worth
+  // showing after the richer summary blocks rather than discarding it.
+  if (trimmedContent.length > 0 && trimmedContent !== trimmedDescription) {
+    blocks.push({ type: "paragraph", text: trimmedContent });
+  }
+
+  return blocks;
 }
 
 export type ArticleAIInsights = {
@@ -797,7 +751,7 @@ export async function getArticleDetail(slug: string): Promise<ArticleDetail | nu
       publishedDate: formatPublishedDate(row.published_at),
       publishedAtIso: row.published_at,
       readingTime: `${row.reading_time} min read`,
-      content: buildContentBlocks(row.content, row.description),
+      content: buildContentBlocks(row.content, row.description, aiRow?.summary ?? null, aiRow?.tldr ?? null),
       tags: row.tags,
       trustScore: row.trust_score,
       trendingScore: row.trending_score,

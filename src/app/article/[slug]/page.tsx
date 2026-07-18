@@ -12,7 +12,8 @@ import { RelatedArticles } from "@/components/article/RelatedArticles";
 import { findCategoryHref } from "@/data/article";
 import type { RelatedArticleItem } from "@/data/article";
 import { getArticleDetail, getSimilarArticles } from "@/services/articles/article-read-service";
-import { incrementArticleView } from "@/services/articles/article-metrics-service";
+import { incrementArticleView, recordArticleRead } from "@/services/articles/article-metrics-service";
+import { createClient } from "@/lib/supabase/server";
 
 type ArticlePageProps = {
   params: Promise<{ slug: string }>;
@@ -62,6 +63,31 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   // safe (never throws, no-ops if storage isn't configured), so it
   // can't ever break rendering this page.
   void incrementArticleView(article.id);
+
+  // Real per-user reading history (product polishing phase, 2nd pass) -
+  // only written for a signed-in visitor; an anonymous reader still
+  // bumps `view_count` above but has no per-user history to record.
+  // Wrapped defensively for the same reason the root layout's own
+  // session read is - a transient auth/storage hiccup here must never
+  // break rendering the article itself.
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      void recordArticleRead(user.id, {
+        articleId: article.id,
+        slug: article.slug,
+        title: article.title,
+        image: article.image,
+        category: article.category,
+        source: article.source,
+      });
+    }
+  } catch (error) {
+    console.error("[ArticlePage] Failed to resolve session for reading history:", error);
+  }
 
   const similarArticles = await getSimilarArticles(article.category, article.id, 4);
   const relatedArticles: RelatedArticleItem[] = similarArticles.map((item) => ({

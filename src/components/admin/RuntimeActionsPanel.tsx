@@ -68,6 +68,18 @@ export function RuntimeActionsPanel() {
         }
         variant="secondary"
       />
+      <AdminActionButton
+        label="Backfill Article Content"
+        endpoint="/api/admin/runtime/actions"
+        buildBody={() => ({ action: "backfill-content" })}
+        confirmTitle="Backfill full content for older articles?"
+        confirmDescription="Fetches the source page for up to 15 already-stored articles whose content is still missing or too short to read, and extracts a fuller article body. Runs immediately; click again to work through more of the table."
+        confirmLabel="Backfill Content"
+        successMessage={(json) =>
+          typeof json.message === "string" ? json.message : "Content backfill complete."
+        }
+        variant="secondary"
+      />
     </div>
   );
 }

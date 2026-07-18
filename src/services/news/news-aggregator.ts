@@ -2,11 +2,13 @@ import {
   calculateTrendingScore,
   dedupeArticles,
   estimateReadingTime,
+  fetchArticleContent,
   getSourceById,
   getSourceLogo,
   inferCategoryFromTitle,
   isAcceptableImageUrl,
   makeUniqueSlug,
+  MIN_ACCEPTABLE_CONTENT_LENGTH,
   normalizeCategory,
   resolveFallbackImageForCategory,
   resolveTrustScore,
@@ -37,6 +39,20 @@ import type { NewsProvider } from "@/services/news/providers/news-provider.inter
  * own listing - typically within a day, not indefinitely.
  */
 const MAX_STOCK_IMAGE_LOOKUPS_PER_RUN = 40;
+
+/**
+ * Cap on how many articles get a full-content extraction attempt (stage
+ * "content resolution", sibling to `resolveMissingImages` below) in one
+ * `fetchArticles()` call - same amortized-cost/budget shape as
+ * `MAX_STOCK_IMAGE_LOOKUPS_PER_RUN`, just lower, since this stage does a
+ * full page fetch + HTML scan (`fetchArticleContent`) rather than a
+ * single API lookup. Articles beyond this cap that are still thin simply
+ * keep their provider-supplied `content`/`summary` for this run;
+ * `article-read-service.ts`'s `buildContentBlocks` has its own further
+ * fallback (description + AI summary) for whatever is still thin by the
+ * time a reader opens the article.
+ */
+const MAX_CONTENT_EXTRACTIONS_PER_RUN = 15;
 
 /**
  * Normalizes one raw provider item into the final `NewsArticle` shape:
@@ -169,7 +185,13 @@ export class NewsAggregator {
     // stock-photo search budget - only the one surviving copy does.
     const withImages = await resolveMissingImages(deduped);
 
-    return withImages.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+    // Content resolution (product polishing phase, 2nd pass, area 8:
+    // "haber detay sayfasını güçlendir"). Also run after dedupe, for the
+    // same reason images are: no point burning an extraction fetch on a
+    // duplicate copy of a story that's about to be dropped.
+    const withContent = await resolveMissingContent(withImages);
+
+    return withContent.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
   }
 }
 
@@ -228,5 +250,42 @@ async function resolveMissingImages(articles: NewsArticle[]): Promise<NewsArticl
     // function, always succeeds, so every article this map produces is
     // guaranteed to have a real, renderable `image`.
     return { ...article, image: resolveFallbackImageForCategory(article.category), imageSource: "placeholder" };
+  });
+}
+
+/**
+ * Attempts real full-article-text extraction (`fetchArticleContent`) for
+ * articles whose provider-supplied `content` is missing or too thin to
+ * actually read (product polishing phase, 2nd pass, area 8 - most RSS/
+ * API providers only ever supply a short blurb, not the real body).
+ * Bounded to `MAX_CONTENT_EXTRACTIONS_PER_RUN` candidates per call, run
+ * in parallel via `Promise.allSettled` so one slow/broken article page
+ * never delays the rest - the same shape as `resolveMissingImages`
+ * above. Articles whose extraction fails or is skipped for budget
+ * reasons simply keep whatever `content` they already had; nothing here
+ * ever regresses an article to less content than it started with.
+ */
+async function resolveMissingContent(articles: NewsArticle[]): Promise<NewsArticle[]> {
+  const thin = articles.filter((article) => !article.content || article.content.trim().length < MIN_ACCEPTABLE_CONTENT_LENGTH);
+  const candidates = thin.slice(0, MAX_CONTENT_EXTRACTIONS_PER_RUN);
+
+  const extractedById = new Map<string, string>();
+
+  if (candidates.length > 0) {
+    const results = await Promise.allSettled(candidates.map((article) => fetchArticleContent(article.url)));
+
+    results.forEach((result, index) => {
+      const article = candidates[index];
+      if (result.status === "fulfilled" && result.value) {
+        extractedById.set(article.id, result.value);
+      } else if (result.status === "rejected") {
+        console.error(`[NewsAggregator] Content extraction failed for "${article.title}":`, result.reason);
+      }
+    });
+  }
+
+  return articles.map((article) => {
+    const extracted = extractedById.get(article.id);
+    return extracted ? { ...article, content: extracted } : article;
   });
 }

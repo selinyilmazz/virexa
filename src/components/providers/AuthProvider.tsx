@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { syncProfileAuthContext } from "@/lib/profile";
 import { syncBookmarksAuthContext } from "@/lib/bookmarks";
 import { syncSettingsAuthContext } from "@/lib/settings";
+import { syncReadingHistoryAuthContext } from "@/lib/reading-history";
 
 export type AuthContextValue = {
   session: Session | null;
@@ -34,11 +35,12 @@ type AuthProviderProps = {
   initialSession: Session | null;
 };
 
-/** Pushes the resolved user into every per-user data store (profile, bookmarks, settings). */
+/** Pushes the resolved user into every per-user data store (profile, bookmarks, settings, reading history). */
 function syncDataStores(user: User | null) {
   syncProfileAuthContext(user ? { id: user.id, email: user.email, created_at: user.created_at as string | undefined } : null);
   syncBookmarksAuthContext(user?.id ?? null);
   syncSettingsAuthContext(user?.id ?? null);
+  syncReadingHistoryAuthContext(user?.id ?? null);
 }
 
 export function AuthProvider({ children, initialSession }: AuthProviderProps) {

@@ -1,5 +1,5 @@
 import { createServiceClient } from "@/lib/supabase/service-client";
-import { searchStockImage } from "@/lib/news";
+import { fetchArticleContent, searchStockImage } from "@/lib/news";
 import { createArticleRepository } from "@/repositories/article-repository";
 import { createSourceRepository } from "@/repositories/source-repository";
 import type { Category } from "@/types/news";
@@ -131,6 +131,62 @@ export async function backfillArticleImages(): Promise<BackfillImagesResult> {
 
   if (updates.length > 0) {
     await articleRepository.updateImages(updates);
+  }
+
+  return { checked: candidates.length, updated: updates.length };
+}
+
+/** Same order of magnitude as `IMAGE_BACKFILL_BATCH_SIZE`, kept lower since this action does a full page fetch + HTML scan per candidate (`fetchArticleContent`), not a single API lookup. */
+const CONTENT_BACKFILL_BATCH_SIZE = 15;
+
+export type BackfillContentResult = {
+  checked: number;
+  updated: number;
+};
+
+/**
+ * Re-runs the content-extraction stage (`lib/news/article-content.ts`)
+ * for already-stored articles whose `content` is still missing or too
+ * thin to read - the retroactive counterpart to
+ * `news-aggregator.ts`'s content-resolution stage, which only ever runs
+ * for NEWLY-ingested articles going forward. Product polishing phase,
+ * 2nd pass, area 8: without this, articles stored before that pipeline
+ * stage existed would keep their thin RSS blurb forever.
+ *
+ * Same shape as `backfillArticleImages` above: a plain Repository-
+ * Pattern read + bulk update triggered directly from an admin action.
+ * Only articles the extractor actually found substantial real text for
+ * are written - one still thin after this (paywall, non-HTML response,
+ * robots-blocked, genuinely short source article) is left unchanged
+ * rather than counted as "updated", and still falls back to
+ * `buildContentBlocks()`'s description+AI-summary combination on the
+ * article page regardless.
+ */
+export async function backfillArticleContent(): Promise<BackfillContentResult> {
+  const supabase = createServiceClient();
+  if (!supabase) {
+    throw new Error("Storage is not configured.");
+  }
+
+  const articleRepository = createArticleRepository(supabase);
+  const candidates = await articleRepository.listNeedingContentBackfill(CONTENT_BACKFILL_BATCH_SIZE);
+  if (candidates.length === 0) {
+    return { checked: 0, updated: 0 };
+  }
+
+  const results = await Promise.allSettled(candidates.map((candidate) => fetchArticleContent(candidate.url)));
+
+  const updates: { id: string; content: string }[] = [];
+  results.forEach((result, index) => {
+    if (result.status === "fulfilled" && result.value) {
+      updates.push({ id: candidates[index].id, content: result.value });
+    } else if (result.status === "rejected") {
+      console.error(`[admin-runtime-ops-service] Content backfill extraction failed for "${candidates[index].url}":`, result.reason);
+    }
+  });
+
+  if (updates.length > 0) {
+    await articleRepository.updateContent(updates);
   }
 
   return { checked: candidates.length, updated: updates.length };

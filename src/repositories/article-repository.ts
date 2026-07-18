@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { MIN_ACCEPTABLE_CONTENT_LENGTH } from "@/lib/news";
 import { articleInputSchema, articleSearchParamsSchema, fullTextSearchParamsSchema } from "@/lib/validation/article-storage-schema";
 import type { ArticleInput, ArticleSearchParams, FullTextSearchParams } from "@/lib/validation/article-storage-schema";
 import type { ArticleInsert, ArticleRow, Database } from "@/types/database";
@@ -472,6 +473,54 @@ export function createArticleRepository(supabase: SupabaseClient<Database>) {
         .limit(limit);
       if (error) throw error;
       return data ?? [];
+    },
+
+    /**
+     * Lightweight, columns-only update of `content` - the write side of
+     * Admin Runtime Operations' "Backfill Article Content" (see
+     * `admin-runtime-ops-service.ts`'s `backfillArticleContent`). Mirrors
+     * `updateImages`/`updateTrustScores` exactly: plain parallel
+     * `update()` calls, not an upsert.
+     */
+    async updateContent(updates: { id: string; content: string }[]): Promise<void> {
+      if (updates.length === 0) return;
+      const results = await Promise.all(
+        updates.map(({ id, content }) => supabase.from("articles").update({ content }).eq("id", id))
+      );
+      const failed = results.find((result) => result.error);
+      if (failed?.error) throw failed.error;
+    },
+
+    /**
+     * Articles whose `content` is still missing or thin (below
+     * `MIN_ACCEPTABLE_CONTENT_LENGTH` - same bar `fetchArticleContent`
+     * enforces at ingestion time, checked here in application code since
+     * PostgREST has no convenient "length of a nullable column" filter)
+     * - the retroactive counterpart to `news-aggregator.ts`'s
+     * content-resolution stage, which only ever runs for NEWLY-ingested
+     * articles going forward. Capped at `limit` and ordered by
+     * `trending_score` so an admin backfill run prioritizes the articles
+     * readers are actually most likely to open.
+     */
+    async listNeedingContentBackfill(limit: number): Promise<{ id: string; url: string; content: string | null }[]> {
+      // Scans a wider window than `limit` and filters for thin/missing
+      // content in application code (not a DB-side `length()` filter -
+      // PostgREST's REST filter syntax has no convenient way to express
+      // "length of a nullable text column"), then caps the RESULT at
+      // `limit`. The scan window is intentionally generous relative to
+      // `limit` since most trending articles already have real content
+      // by the time an admin runs this - see `backfillArticleContent`'s
+      // doc comment for the resulting content threshold this feeds.
+      const SCAN_WINDOW = Math.max(limit * 5, 100);
+      const { data, error } = await supabase
+        .from("articles")
+        .select("id, url, content")
+        .order("trending_score", { ascending: false })
+        .limit(SCAN_WINDOW);
+      if (error) throw error;
+      return (data ?? [])
+        .filter((row) => !row.content || row.content.trim().length < MIN_ACCEPTABLE_CONTENT_LENGTH)
+        .slice(0, limit);
     },
 
     /** Total row count - a zero-row `head` request, so it's cheap regardless of table size. Backs the Admin Dashboard's "Total Articles" stat card. */

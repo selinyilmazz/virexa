@@ -21,7 +21,7 @@ export function CompanyTicker() {
   return (
     <section
       aria-labelledby="trending-companies-title"
-      className="mx-auto mt-6 max-w-[1280px] rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+      className="mx-auto mt-10 max-w-[1280px] rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
     >
       <div className="px-1">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2f67e8]">Markets</p>

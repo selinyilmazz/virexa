@@ -66,6 +66,25 @@ export type BookmarkInsert = Partial<Omit<BookmarkRow, "id" | "created_at">> & {
 
 export type BookmarkUpdate = Partial<Omit<BookmarkRow, "id" | "user_id" | "created_at">>;
 
+export type ReadingHistoryRow = {
+  id: string;
+  user_id: string;
+  article_id: string;
+  article_slug: string;
+  article_title: string;
+  article_image: string;
+  article_category: string;
+  article_source: string;
+  read_at: string;
+};
+
+export type ReadingHistoryInsert = Partial<Omit<ReadingHistoryRow, "id">> & {
+  user_id: string;
+  article_id: string;
+};
+
+export type ReadingHistoryUpdate = Partial<Omit<ReadingHistoryRow, "id" | "user_id" | "article_id">>;
+
 export type UserSettingsRow = {
   id: string;
   dark_mode: boolean;
@@ -249,6 +268,11 @@ export type Database = {
         Row: BookmarkRow;
         Insert: BookmarkInsert;
         Update: BookmarkUpdate;
+      };
+      reading_history: {
+        Row: ReadingHistoryRow;
+        Insert: ReadingHistoryInsert;
+        Update: ReadingHistoryUpdate;
       };
       user_settings: {
         Row: UserSettingsRow;

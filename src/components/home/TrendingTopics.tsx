@@ -22,85 +22,61 @@ function TrendBadge({ direction, percent }: { direction: TrendingTopic["trendDir
 }
 
 /**
- * Simplified to a clear 3-row hierarchy (product polishing phase, area
- * 5: "cards now feel slightly overcrowded" - the old layout crammed a
- * rank badge, icon, name, count, AND trend badge into one single row).
- * Top row: icon + name + growth badge. Middle: article count, alone on
- * its own line. Bottom: sparkline + latest-article preview. The bottom
- * two rows are indented to align under the name (not the icon), reading
- * as "detail about this topic" rather than competing for the same
- * visual weight as the header row. Same data as before (icon, count,
- * trend badge, sparkline, latest article) - only the rank number was
- * dropped, since the list's own top-to-bottom order already conveys
- * rank without a second, redundant number badge.
+ * Product polishing phase (2nd pass): the "latest article preview" row
+ * is gone entirely - it was the single biggest contributor to card
+ * height, and duplicated content Latest News/Editor's Picks already
+ * cover elsewhere on the page. What's left is a tight 3-row card: icon
+ * + name (top), article count (middle), trend badge + sparkline
+ * (bottom) - about 30-40% shorter than the previous 4-row version, with
+ * no loss of the data that's actually useful for a "which category is
+ * heating up" scan.
  */
 function TrendingTopicCard({ topic }: { topic: TrendingCategoryStat | TrendingTopic }) {
   const categoryHref = findCategoryHref(topic.name);
 
   return (
-    <li className="rounded-2xl border border-slate-200 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
-      <Link href={categoryHref} className="group flex items-center gap-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-lg">
+    <li className="rounded-2xl border border-slate-200 p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
+      <Link href={categoryHref} className="group flex items-center gap-2.5">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-base">
           {topic.icon}
         </span>
-        <span className="min-w-0 flex-1 truncate text-base font-semibold text-slate-950 group-hover:text-[#2f67e8]">
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-950 group-hover:text-[#2f67e8]">
           {topic.name}
         </span>
-        <TrendBadge direction={topic.trendDirection} percent={topic.trendPercent} />
       </Link>
 
-      <p className="mt-2 pl-[52px] text-xs font-medium text-slate-500">{topic.articleCount}</p>
+      <p className="mt-2 text-xs font-medium text-slate-500">{topic.articleCount}</p>
 
-      <div className="mt-3 flex items-center gap-3 pl-[52px]">
+      <div className="mt-2.5 flex items-center justify-between gap-2">
         <Sparkline values={topic.sparkline} trendDirection={topic.trendDirection} className="shrink-0" />
-
-        {topic.latestArticle ? (
-          <Link
-            href={`/article/${topic.latestArticle.slug}`}
-            className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-slate-50 px-2.5 py-1.5 transition-colors hover:bg-blue-50"
-          >
-            <span
-              role="img"
-              aria-label=""
-              className="size-7 shrink-0 rounded-lg bg-cover bg-center"
-              style={{ backgroundImage: `url(${topic.latestArticle.image})` }}
-            />
-            <span className="truncate text-xs font-medium text-slate-600">{topic.latestArticle.title}</span>
-          </Link>
-        ) : (
-          <span className="flex-1 text-xs text-slate-400">No recent article yet</span>
-        )}
+        <TrendBadge direction={topic.trendDirection} percent={topic.trendPercent} />
       </div>
     </li>
   );
 }
 
 /**
- * Premium redesign of the "Trending Topics" widget (product redesign):
- * each row now carries a category icon, a real article count, a
- * this-week-vs-last-week trend badge, a 7-day mini sparkline, and the
- * category's newest article as a tiny inline preview - replacing the
- * old bare rank+count+chevron row. Real data via `getTrendingCategories`
- * (`article-read-service.ts`); falls back to the curated static list
- * (now carrying the same rich shape - see `data/trendingTopics.ts`) only
- * when the database has no articles yet.
+ * "Trending Topics" - moved out of the old homepage sidebar into the
+ * main single-column flow (product polishing phase, 2nd pass: "sadeleştir"
+ * - the homepage no longer has a sidebar at all, see `app/page.tsx`), as
+ * a full-width row of compact cards right after the Hero. Real data via
+ * `getTrendingCategories` (`article-read-service.ts`); falls back to the
+ * curated static list (`data/trendingTopics.ts`) only when the database
+ * has no articles yet.
  */
 export async function TrendingTopics() {
   const realTopics = await getTrendingCategories(6);
   const topics: (TrendingCategoryStat | TrendingTopic)[] = realTopics.length > 0 ? realTopics : trendingTopics;
 
   return (
-    <section
-      aria-labelledby="trending-topics-title"
-      className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
-    >
+    <section aria-labelledby="trending-topics-title" className="mx-auto mt-10 max-w-[1280px]">
       <div className="px-1">
-        <h2 id="trending-topics-title" className="text-2xl font-bold tracking-tight text-slate-950">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2f67e8]">This Week</p>
+        <h2 id="trending-topics-title" className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
           🔥 Trending Topics
         </h2>
-        <p className="mt-1 text-sm text-slate-500">Most active categories this week</p>
       </div>
-      <ol className="mt-4 space-y-3.5">
+      <ol className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {topics.map((topic) => (
           <TrendingTopicCard key={topic.rank} topic={topic} />
         ))}

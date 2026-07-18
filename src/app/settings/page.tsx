@@ -12,7 +12,7 @@ export default function SettingsPage() {
     <>
       <Header />
       <main className="bg-[#f8fafc] px-5 py-8 sm:px-8">
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-4xl">
           <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
             <Link href="/" className="transition-colors hover:text-[#2f67e8]">
               Home

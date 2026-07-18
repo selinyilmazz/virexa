@@ -47,10 +47,11 @@ export function SearchResults({ query, items, hasFilters }: SearchResultsProps) 
         <div key={item.slug} className="relative">
           {item.matchedIn && (
             <span className="pointer-events-none absolute -top-2 left-4 z-10 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[11px] font-semibold text-slate-500 shadow-sm">
-              Matched in {matchLabel(item.matchedIn)}
+              Matched &quot;{query}&quot; <span aria-hidden="true" className="text-slate-300">·</span> Found in{" "}
+              {matchLabel(item.matchedIn)}
             </span>
           )}
-          <SearchResultCard {...item} />
+          <SearchResultCard {...item} query={query} />
         </div>
       ))}
     </div>
