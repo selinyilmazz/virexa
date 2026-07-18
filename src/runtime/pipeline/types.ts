@@ -22,6 +22,7 @@ export type PipelineStepName =
   | "trust-score"
   | "ai-summary"
   | "tldr"
+  | "long-summary"
   | "tags"
   | "sentiment"
   | "bias"

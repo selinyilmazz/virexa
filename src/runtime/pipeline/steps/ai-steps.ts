@@ -1,7 +1,8 @@
+import { MIN_ACCEPTABLE_CONTENT_LENGTH } from "@/lib/news";
 import { runPipelineStep } from "@/runtime/pipeline/types";
 import type { PipelineStepResult } from "@/runtime/pipeline/types";
 import { aiService } from "@/services/ai";
-import type { AISummaryResult, AITagResult, BiasResult, SentimentResult, TLDRResult } from "@/types/ai";
+import type { AISummaryResult, AITagResult, BiasResult, LongSummaryResult, SentimentResult, TLDRResult } from "@/types/ai";
 import type { NewsArticle } from "@/types/news";
 
 /**
@@ -30,6 +31,21 @@ function articleContent(article: NewsArticle): string {
   return article.content ?? article.summary;
 }
 
+/**
+ * A separate, content-thinness-based selection (rather than
+ * `articlesForAI`'s plain top-N-of-the-run cap) - the structured long
+ * summary is only useful as a fallback for articles whose real content
+ * is too short to read (`article-read-service.ts`'s
+ * `MIN_ACCEPTABLE_CONTENT_LENGTH` bar, same one `fetchArticleContent`
+ * enforces at ingestion time), so generating it for an already-thick
+ * article would just waste provider budget on a result nothing will
+ * ever render. Still capped at `MAX_AI_ARTICLES_PER_RUN` for the same
+ * per-run cost predictability the other steps have.
+ */
+function articlesNeedingLongSummary(articles: NewsArticle[]): NewsArticle[] {
+  return articles.filter((article) => articleContent(article).trim().length < MIN_ACCEPTABLE_CONTENT_LENGTH).slice(0, MAX_AI_ARTICLES_PER_RUN);
+}
+
 export async function aiSummaryStep(articles: NewsArticle[]): Promise<PipelineStepResult<Map<string, AISummaryResult>>> {
   return runPipelineStep("ai-summary", async () => {
     const results = new Map<string, AISummaryResult>();
@@ -46,6 +62,17 @@ export async function tldrStep(articles: NewsArticle[]): Promise<PipelineStepRes
     const results = new Map<string, TLDRResult>();
     for (const article of articlesForAI(articles)) {
       const result = await aiService.getTLDR({ id: article.id, title: article.title, content: articleContent(article) });
+      if (result) results.set(article.id, result);
+    }
+    return results;
+  });
+}
+
+export async function longSummaryStep(articles: NewsArticle[]): Promise<PipelineStepResult<Map<string, LongSummaryResult>>> {
+  return runPipelineStep("long-summary", async () => {
+    const results = new Map<string, LongSummaryResult>();
+    for (const article of articlesNeedingLongSummary(articles)) {
+      const result = await aiService.getLongSummary({ id: article.id, title: article.title, content: articleContent(article) });
       if (result) results.set(article.id, result);
     }
     return results;

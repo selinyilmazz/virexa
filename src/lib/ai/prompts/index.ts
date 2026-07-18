@@ -6,3 +6,4 @@ export { buildTakeawaysPrompt, TAKEAWAYS_PROMPT_VERSION } from "@/lib/ai/prompts
 export { buildTagsPrompt, TAGS_PROMPT_VERSION } from "@/lib/ai/prompts/tags.prompt";
 export { buildSentimentPrompt, SENTIMENT_PROMPT_VERSION } from "@/lib/ai/prompts/sentiment.prompt";
 export { buildBiasPrompt, BIAS_PROMPT_VERSION } from "@/lib/ai/prompts/bias.prompt";
+export { buildLongSummaryPrompt, LONG_SUMMARY_PROMPT_VERSION } from "@/lib/ai/prompts/long-summary.prompt";

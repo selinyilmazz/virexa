@@ -1,24 +1,21 @@
 import { Header } from "@/components/layout/Header";
 import { BreakingNews } from "@/components/home/BreakingNews";
 import { CompanyTicker } from "@/components/home/CompanyTicker";
-import { EditorsPicks } from "@/components/home/EditorsPicks";
 import { HeroSection } from "@/components/home/HeroSection";
 import { LatestNews } from "@/components/home/LatestNews";
 import { TrendingTopics } from "@/components/home/TrendingTopics";
 
 /**
- * Homepage - simplified to a single vertical flow (product polishing
- * phase, 2nd pass: "sadeleştir" - the previous version had a sidebar
- * plus two extra sections that duplicated other sections' jobs).
- * Section order: Hero -> Trending Topics -> Breaking News -> Trending
- * Companies -> Latest News -> Editor's Picks -> Footer (Footer is
- * global, rendered by the root layout). AI Explained (duplicated the
- * article page's own AI Insights) and Recently Added (duplicated Latest
- * News) were removed outright, along with the sidebar's Most Read
- * widget (still available on its own dedicated `/most-read` page).
- * Every section that can be empty still renders `null` when it has
- * nothing to show, so a young/sparse dataset never leaves an empty
- * section shell on the page.
+ * Homepage (product polishing phase, 3rd pass - "bu çalışma yeniden
+ * tasarım değildir", explicitly reverting the 2nd pass's single-column
+ * experiment back to a 2-column layout with a right sidebar, which is
+ * the original/preferred structure). Left column: Hero, Breaking News,
+ * Latest News (Footer is global, rendered by the root layout). Right
+ * sidebar: Trending Topics, Trending Companies - both moved out of the
+ * main flow and now render as compact vertical lists rather than
+ * standalone full-width sections. Editor's Picks was removed outright
+ * (Hero/Breaking News/Latest News already cover its job - see the
+ * deleted `EditorsPicks.tsx` and `getEditorsPicks`).
  */
 export default function Home() {
   return (
@@ -26,11 +23,16 @@ export default function Home() {
       <Header />
       <main className="bg-[#f8fafc] px-5 py-8 sm:px-8">
         <HeroSection />
-        <TrendingTopics />
-        <BreakingNews />
-        <CompanyTicker />
-        <LatestNews />
-        <EditorsPicks />
+        <div className="mx-auto mt-10 grid max-w-[1280px] gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.34fr)]">
+          <div className="min-w-0 space-y-10">
+            <BreakingNews />
+            <LatestNews />
+          </div>
+          <aside className="min-w-0 space-y-6">
+            <TrendingTopics />
+            <CompanyTicker />
+          </aside>
+        </div>
       </main>
     </>
   );

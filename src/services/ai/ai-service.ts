@@ -2,6 +2,7 @@ import { AICache, buildCacheKey, hashArticleContent } from "@/lib/ai";
 import { findSimilarArticlesHeuristic } from "@/lib/ai/similar-articles";
 import {
   BIAS_PROMPT_VERSION,
+  LONG_SUMMARY_PROMPT_VERSION,
   SENTIMENT_PROMPT_VERSION,
   SUMMARY_PROMPT_VERSION,
   TAGS_PROMPT_VERSION,
@@ -15,6 +16,7 @@ import type {
   BiasResult,
   FindSimilarArticlesInput,
   KeyTakeawaysResult,
+  LongSummaryResult,
   SentimentResult,
   SimilarArticleMatch,
   TLDRResult,
@@ -118,6 +120,33 @@ export class AIService {
       provider: provider.id,
       version: TAKEAWAYS_PROMPT_VERSION,
     }));
+  }
+
+  /**
+   * The structured "Overview / Key Points / Technical Details / Why It
+   * Matters" briefing - `article-read-service.ts`'s article detail
+   * fallback for articles whose real content is too thin to read.
+   */
+  async getLongSummary(article: ArticleAIInput): Promise<LongSummaryResult | null> {
+    const provider = this.provider;
+    if (!provider) return null;
+
+    const contentHash = hashArticleContent(article.title, article.content);
+    return this.runCached("long-summary", article.id, contentHash, provider.id, LONG_SUMMARY_PROMPT_VERSION, async () => {
+      const { overview, keyPoints, technicalDetails, whyItMatters } = await provider.generateLongSummary({
+        title: article.title,
+        content: article.content,
+      });
+      return {
+        overview,
+        keyPoints,
+        technicalDetails,
+        whyItMatters,
+        generatedAt: new Date().toISOString(),
+        provider: provider.id,
+        version: LONG_SUMMARY_PROMPT_VERSION,
+      };
+    });
   }
 
   async getTags(article: ArticleAIInput & { category?: string }): Promise<AITagResult | null> {

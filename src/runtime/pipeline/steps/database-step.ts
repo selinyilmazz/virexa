@@ -7,12 +7,13 @@ import { createArticleAIRepository } from "@/repositories/article-ai-repository"
 import { createArticleMetricsRepository } from "@/repositories/article-metrics-repository";
 import { createArticleRepository } from "@/repositories/article-repository";
 import { createSourceRepository } from "@/repositories/source-repository";
-import type { AISummaryResult, AITagResult, BiasResult, SentimentResult, TLDRResult } from "@/types/ai";
+import type { AISummaryResult, AITagResult, BiasResult, LongSummaryResult, SentimentResult, TLDRResult } from "@/types/ai";
 import type { NewsArticle } from "@/types/news";
 
 export type PipelineAIResults = {
   summaries: Map<string, AISummaryResult>;
   tldrs: Map<string, TLDRResult>;
+  longSummaries: Map<string, LongSummaryResult>;
   tags: Map<string, AITagResult>;
   sentiments: Map<string, SentimentResult>;
   biases: Map<string, BiasResult>;
@@ -72,7 +73,7 @@ function toArticleInput(article: NewsArticle): ArticleInput {
 }
 
 /**
- * Builds one combined `article_ai` row per article from the 5 separate
+ * Builds one combined `article_ai` row per article from the 6 separate
  * AI pipeline steps' results (`pipeline/steps/ai-steps.ts`), keyed by
  * the article's content hash - see `repositories/article-ai-repository.ts`'s
  * doc for why that hash IS the version key. Articles with no AI result
@@ -85,19 +86,30 @@ function toAIInputs(articles: NewsArticle[], results: PipelineAIResults): Articl
   for (const article of articles) {
     const summary = results.summaries.get(article.id);
     const tldr = results.tldrs.get(article.id);
+    const longSummary = results.longSummaries.get(article.id);
     const tags = results.tags.get(article.id);
     const sentiment = results.sentiments.get(article.id);
     const bias = results.biases.get(article.id);
 
-    if (!summary && !tldr && !tags && !sentiment && !bias) continue;
+    if (!summary && !tldr && !longSummary && !tags && !sentiment && !bias) continue;
 
-    const provider = summary?.provider ?? tldr?.provider ?? tags?.provider ?? sentiment?.provider ?? bias?.provider ?? "unknown";
-    const promptVersion = summary?.version ?? tldr?.version ?? tags?.version ?? sentiment?.version ?? bias?.version ?? "";
+    const provider =
+      summary?.provider ?? tldr?.provider ?? longSummary?.provider ?? tags?.provider ?? sentiment?.provider ?? bias?.provider ?? "unknown";
+    const promptVersion =
+      summary?.version ?? tldr?.version ?? longSummary?.version ?? tags?.version ?? sentiment?.version ?? bias?.version ?? "";
 
     inputs.push({
       articleId: article.id,
       summary: summary?.summary ?? null,
       tldr: tldr ? { title: tldr.title, bullets: tldr.bullets } : null,
+      longSummary: longSummary
+        ? {
+            overview: longSummary.overview,
+            keyPoints: longSummary.keyPoints,
+            technicalDetails: longSummary.technicalDetails,
+            whyItMatters: longSummary.whyItMatters,
+          }
+        : null,
       tags: tags?.tags ?? [],
       sentiment: sentiment ? { label: sentiment.label, confidence: sentiment.confidence } : null,
       bias: bias ? { level: bias.level, confidence: bias.confidence } : null,

@@ -1,6 +1,7 @@
 import { parseJsonResponse } from "@/lib/ai/http";
 import {
   buildBiasPrompt,
+  buildLongSummaryPrompt,
   buildSentimentPrompt,
   buildSummaryPrompt,
   buildTLDRPrompt,
@@ -54,6 +55,12 @@ export abstract class BaseAIProvider implements AIProvider {
 
   async generateKeyTakeaways(input: SummarizeInput): Promise<string[]> {
     return this.runJsonTask(buildTakeawaysPrompt(input));
+  }
+
+  async generateLongSummary(
+    input: SummarizeInput
+  ): Promise<{ overview: string; keyPoints: string[]; technicalDetails: string; whyItMatters: string }> {
+    return this.runJsonTask(buildLongSummaryPrompt(input));
   }
 
   async generateTags(input: GenerateTagsInput): Promise<string[]> {

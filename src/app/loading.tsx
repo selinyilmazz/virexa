@@ -26,13 +26,17 @@ function StripSkeleton({ count, cardWidth }: { count: number; cardWidth: string 
   );
 }
 
-/** Matches the compact `TrendingTopicCard` grid's footprint. */
-function TrendingTopicsSkeleton() {
+/** Matches the compact vertical `TrendingTopicCard` list's footprint. */
+function SidebarListSkeleton({ count }: { count: number }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <div key={index} className="h-28 animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />
-      ))}
+    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="h-4 w-20 animate-pulse rounded bg-slate-200" />
+      <div className="mt-2 h-6 w-36 animate-pulse rounded bg-slate-200" />
+      <div className="mt-4 space-y-2">
+        {Array.from({ length: count }).map((_, index) => (
+          <div key={index} className="h-14 animate-pulse rounded-xl border border-slate-100 bg-slate-100" />
+        ))}
+      </div>
     </div>
   );
 }
@@ -40,12 +44,12 @@ function TrendingTopicsSkeleton() {
 /**
  * Automatic Suspense fallback for `/` (Next.js's `loading.tsx`
  * convention) while the homepage's real database reads resolve -
- * "hiçbir zaman boş ekran gösterilmeyecek". Mirrors the simplified
- * single-column homepage's actual section order/shapes (product
- * polishing phase, 2nd pass: dominant hero, trending topics row,
- * breaking news strip, company row, latest news grid, editor's picks
- * grid - no more sidebar, AI Explained, or Recently Added). `Header` is
- * included so the page chrome doesn't disappear/reflow during loading.
+ * "hiçbir zaman boş ekran gösterilmeyecek". Mirrors the 2-column
+ * homepage's actual layout (product polishing phase, 3rd pass reverted
+ * back to a sidebar): Hero, then a main column (Breaking News strip,
+ * Latest News grid) beside a sidebar column (Trending Topics, Trending
+ * Companies, both compact vertical lists). `Header` is included so the
+ * page chrome doesn't disappear/reflow during loading.
  */
 export default function HomeLoading() {
   return (
@@ -54,30 +58,21 @@ export default function HomeLoading() {
       <main className="bg-[#f8fafc] px-5 py-8 sm:px-8">
         <div className="mx-auto aspect-video w-full max-w-[1280px] animate-pulse rounded-3xl bg-slate-200 sm:aspect-[16/8] lg:aspect-[16/7]" />
 
-        <div className="mx-auto mt-10 max-w-[1280px]">
-          <TrendingTopicsSkeleton />
-        </div>
+        <div className="mx-auto mt-10 grid max-w-[1280px] gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.34fr)]">
+          <div className="min-w-0 space-y-10">
+            <StripSkeleton count={4} cardWidth="w-[280px] sm:w-[320px]" />
 
-        <div className="mx-auto mt-10 max-w-[1280px]">
-          <StripSkeleton count={4} cardWidth="w-[280px] sm:w-[320px]" />
-        </div>
+            <div className="grid gap-6 sm:grid-cols-2">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <NewsCardSkeleton key={index} />
+              ))}
+            </div>
+          </div>
 
-        <div className="mx-auto mt-10 grid max-w-[1280px] animate-pulse gap-3 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:grid-cols-2 xl:grid-cols-5">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className="h-16 rounded-2xl bg-slate-200" />
-          ))}
-        </div>
-
-        <div className="mx-auto mt-10 grid max-w-[1280px] gap-6 sm:grid-cols-2">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <NewsCardSkeleton key={index} />
-          ))}
-        </div>
-
-        <div className="mx-auto mt-10 grid max-w-[1280px] gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <NewsCardSkeleton key={index} />
-          ))}
+          <div className="min-w-0 space-y-6">
+            <SidebarListSkeleton count={6} />
+            <SidebarListSkeleton count={5} />
+          </div>
         </div>
       </main>
     </>

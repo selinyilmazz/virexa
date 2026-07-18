@@ -3,6 +3,7 @@ import { categories as categoryTaxonomy } from "@/data/categories";
 import type { CategoryNewsItem } from "@/data/categories";
 import type { ArticleContentBlock } from "@/data/article";
 import {
+  estimateReadingTime,
   formatPublishedDate,
   getSourceById,
   MIN_ACCEPTABLE_CONTENT_LENGTH,
@@ -16,7 +17,7 @@ import { createArticleMetricsRepository } from "@/repositories/article-metrics-r
 import { createArticleRepository } from "@/repositories/article-repository";
 import { createSourceRepository } from "@/repositories/source-repository";
 import type { FullTextSearchParams } from "@/lib/validation/article-storage-schema";
-import type { ArticleRow, StoredBias, StoredSentiment, StoredTldr } from "@/types/database";
+import type { ArticleRow, StoredBias, StoredLongSummary, StoredSentiment, StoredTldr } from "@/types/database";
 import type { Category as NewsCategory } from "@/types/news";
 
 /** Category name -> emoji icon, reusing `src/data/categories.ts`'s existing taxonomy (already has one per category for the `/category/[slug]` pages) instead of maintaining a second copy just for the homepage's Trending Topics widget. */
@@ -381,29 +382,6 @@ export async function getTopSourcesForCategory(categoryName: string, limit = 5):
   }
 }
 
-export type EditorsPickArticle = CategoryNewsItem & { trustScore: number };
-
-/**
- * The highest-`trust_score` articles, excluding whatever the caller
- * already has on screen elsewhere on the homepage - backs the "Editor's
- * Picks" section. There's no real editorial curation system yet (no
- * "is_editors_pick" flag on `articles`), so this is the closest honest
- * proxy available from existing data: the most editorially-trustworthy
- * sources' stories, not a popularity or recency signal like the other
- * homepage sections already cover.
- */
-export async function getEditorsPicks(limit = 4, excludeSlugs: string[] = []): Promise<EditorsPickArticle[]> {
-  try {
-    const { articles } = await getRepositories();
-    const pool = await articles.listTopByTrustScore(limit + excludeSlugs.length);
-    const filtered = pool.filter((row) => !excludeSlugs.includes(row.slug));
-    return filtered.slice(0, limit).map((row) => ({ ...toCategoryNewsItem(row), trustScore: row.trust_score }));
-  } catch (error) {
-    console.error("[article-read-service] getEditorsPicks failed:", error);
-    return [];
-  }
-}
-
 export type BreakingNewsArticle = CategoryNewsItem & { isFresh: boolean };
 
 /**
@@ -688,6 +666,14 @@ function buildContentBlocks(
   return blocks;
 }
 
+/** Flattens `ArticleContentBlock[]` back to plain text - used only to feed `estimateReadingTime` on whatever content actually ends up on the page (see `getArticleDetail` below), so "Reading Time" reflects the real, final rendered length rather than a value computed once at ingestion time and never revisited. */
+function blocksToPlainText(blocks: ArticleContentBlock[]): string {
+  return blocks
+    .map((block) => (block.type === "list" ? block.items.join(" ") : block.text))
+    .join(" ")
+    .trim();
+}
+
 export type ArticleAIInsights = {
   summary: string | null;
   tldr: StoredTldr | null;
@@ -695,6 +681,17 @@ export type ArticleAIInsights = {
   sentiment: StoredSentiment | null;
   bias: StoredBias | null;
 };
+
+/**
+ * The article detail page's Priority-2 content fallback (product
+ * polishing phase, 3rd pass, item 5) - only ever set when the article's
+ * real content is still too thin after ingestion-time extraction AND an
+ * AI-generated `long_summary` exists for it (`ai-steps.ts`'s
+ * `longSummaryStep` only runs for exactly those articles). `null` means
+ * the page should keep showing `content` (the real/description-based
+ * blocks) as-is instead.
+ */
+export type StructuredSummary = StoredLongSummary;
 
 export type ArticleDetail = {
   id: string;
@@ -709,6 +706,8 @@ export type ArticleDetail = {
   publishedAtIso: string;
   readingTime: string;
   content: ArticleContentBlock[];
+  /** Set only when `content` is still thin and an AI long summary is available for this article - see `StructuredSummary`'s doc comment. */
+  structuredSummary: StructuredSummary | null;
   tags: string[];
   trustScore: number;
   trendingScore: number;
@@ -730,6 +729,22 @@ export async function getArticleDetail(slug: string): Promise<ArticleDetail | nu
     if (!row) return null;
 
     const aiRow = await ai.getLatest(row.id);
+    const content = buildContentBlocks(row.content, row.description, aiRow?.summary ?? null, aiRow?.tldr ?? null);
+
+    // Product polishing phase, 3rd pass: "İçerik uzunluğuna göre otomatik
+    // hesapla" - recomputed here from the FINAL resolved content (real
+    // extracted body, or the description+AI-summary fallback above)
+    // rather than trusting `row.reading_time`, which was only ever
+    // stamped once at ingestion time from whatever thin content the
+    // provider originally supplied and never revisited afterwards.
+    const resolvedContentText = blocksToPlainText(content);
+
+    // Priority-2 fallback (product polishing phase, 3rd pass, item 5):
+    // only offered when the article's raw `content` is still thin - a
+    // full/real body always wins, the structured summary never replaces
+    // actual article text, only ever stands in for it.
+    const isRawContentThin = (row.content?.trim().length ?? 0) < MIN_ACCEPTABLE_CONTENT_LENGTH;
+    const structuredSummary = isRawContentThin && aiRow?.long_summary ? aiRow.long_summary : null;
 
     return {
       id: row.id,
@@ -750,8 +765,9 @@ export async function getArticleDetail(slug: string): Promise<ArticleDetail | nu
       sourceUrl: row.discussion_url ?? row.url,
       publishedDate: formatPublishedDate(row.published_at),
       publishedAtIso: row.published_at,
-      readingTime: `${row.reading_time} min read`,
-      content: buildContentBlocks(row.content, row.description, aiRow?.summary ?? null, aiRow?.tldr ?? null),
+      readingTime: `${estimateReadingTime(resolvedContentText, row.description)} min read`,
+      content,
+      structuredSummary,
       tags: row.tags,
       trustScore: row.trust_score,
       trendingScore: row.trending_score,

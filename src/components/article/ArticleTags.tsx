@@ -2,7 +2,10 @@ type ArticleTagsProps = {
   tags: string[];
 };
 
+/** Product polishing phase, 3rd pass: "Tag yoksa Tags başlığını gösterme" - renders nothing at all when there are no tags, rather than an empty heading. */
 export function ArticleTags({ tags }: ArticleTagsProps) {
+  if (tags.length === 0) return null;
+
   return (
     <div>
       <h3 className="text-sm font-semibold text-slate-950">Tags</h3>

@@ -159,12 +159,19 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 </div>
 
                 <div className="mt-6">
-                  <ArticleContent blocks={article.content} sourceLabel={article.source} sourceUrl={article.sourceUrl} />
+                  <ArticleContent
+                    blocks={article.content}
+                    structuredSummary={article.structuredSummary}
+                    sourceLabel={article.source}
+                    sourceUrl={article.sourceUrl}
+                  />
                 </div>
 
-                <div className="mt-8">
-                  <ArticleTags tags={article.tags} />
-                </div>
+                {article.tags.length > 0 && (
+                  <div className="mt-8">
+                    <ArticleTags tags={article.tags} />
+                  </div>
+                )}
               </div>
 
               <ArticleAIInsights ai={article.ai} trustScore={article.trustScore} trendingScore={article.trendingScore} />

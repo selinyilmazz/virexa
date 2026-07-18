@@ -38,6 +38,14 @@ export interface AIProvider {
   /** 3-5 concrete, standalone key takeaways. */
   generateKeyTakeaways(input: SummarizeInput): Promise<string[]>;
 
+  /** Structured 4-section briefing (overview/keyPoints/technicalDetails/whyItMatters) - the article detail page's thin-content fallback. */
+  generateLongSummary(input: SummarizeInput): Promise<{
+    overview: string;
+    keyPoints: string[];
+    technicalDetails: string;
+    whyItMatters: string;
+  }>;
+
   /** 3-6 short topical tags. */
   generateTags(input: GenerateTagsInput): Promise<string[]>;
 

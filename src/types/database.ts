@@ -173,11 +173,20 @@ export type StoredSentiment = { label: string; confidence: number };
 /** Stored shape of `article_ai.bias` (jsonb) - a slimmed-down `BiasResult`. */
 export type StoredBias = { level: string; confidence: number };
 
+/**
+ * Stored shape of `article_ai.long_summary` (jsonb) - a slimmed-down
+ * `LongSummaryResult` (product polishing phase, 3rd pass: the article
+ * detail page's structured "Overview / Key Points / Technical Details /
+ * Why It Matters" fallback for thin-content articles).
+ */
+export type StoredLongSummary = { overview: string; keyPoints: string[]; technicalDetails: string; whyItMatters: string };
+
 export type ArticleAIRow = {
   id: string;
   article_id: string;
   summary: string | null;
   tldr: StoredTldr | null;
+  long_summary: StoredLongSummary | null;
   tags: string[];
   sentiment: StoredSentiment | null;
   bias: StoredBias | null;

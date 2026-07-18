@@ -11,48 +11,50 @@ const searchQueryByCompany: Record<string, string> = {
 };
 
 /**
- * "Trending Companies" (product redesign - promoted from an unlabeled
- * ticker strip to its own titled section, matching every other
- * homepage widget's header treatment for visual consistency). Same
- * underlying data/links as before; each card is now a distinct
- * bordered tile with a stronger hover lift instead of a flat inline row.
+ * "Trending Companies" - moved from a full-width horizontal row into the
+ * right sidebar, directly under Trending Topics (product polishing
+ * phase, 3rd pass: "aynı sidebar mantığında yukarıdan aşağı liste halinde
+ * göster... kart tasarımını değiştirme, sadece dikey liste yap"). Same
+ * card content/links/hover treatment as before, just stacked
+ * top-to-bottom (`space-y-2`) instead of a `grid`, and sized to fit a
+ * ~360px sidebar column rather than the full content width.
  */
 export function CompanyTicker() {
   return (
     <section
       aria-labelledby="trending-companies-title"
-      className="mx-auto mt-10 max-w-[1280px] rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+      className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
     >
       <div className="px-1">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2f67e8]">Markets</p>
-        <h2 id="trending-companies-title" className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
+        <h2 id="trending-companies-title" className="mt-1 text-xl font-bold tracking-tight text-slate-950">
           Trending Companies
         </h2>
       </div>
-      <ul className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <ul className="mt-4 space-y-2">
         {companyTickerItems.map((item) => {
           const query = searchQueryByCompany[item.name] ?? item.name.toLowerCase();
           return (
             <li key={item.name} className="min-w-0">
               <Link
                 href={`/search?q=${query}`}
-                className="flex min-w-0 items-center gap-3 rounded-2xl border border-slate-100 p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-md"
+                className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-100 p-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-md"
               >
                 <span
-                  className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 p-2"
+                  className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 p-1.5"
                   style={{ backgroundColor: item.logoBg }}
                 >
                   <Image
                     src={item.logo}
                     alt={`${item.name} logo`}
-                    width={32}
-                    height={32}
+                    width={28}
+                    height={28}
                     className="h-full w-full object-contain"
                   />
                 </span>
                 <div className="min-w-0">
-                  <p className="font-semibold text-slate-950">{item.name}</p>
-                  <p className="mt-0.5 text-sm leading-snug text-slate-500">{item.summary}</p>
+                  <p className="text-sm font-semibold text-slate-950">{item.name}</p>
+                  <p className="mt-0.5 truncate text-xs leading-snug text-slate-500">{item.summary}</p>
                 </div>
               </Link>
             </li>

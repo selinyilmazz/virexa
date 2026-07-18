@@ -23,18 +23,20 @@ function ScoreBar({ label, value }: { label: string; value: number }) {
 
 /**
  * "AI verilerinin gösterimi" - a single additive card for everything
- * the AI layer (`article_ai`) and trust/trending scoring produce for
- * this article: AI Summary, TL;DR, AI Tags, Sentiment, Bias, Trust
- * Score, Trending Score. Trust/Trending scores always render (they're
- * columns on `articles` itself, not dependent on AI enrichment having
- * run yet); the AI-generated sections only render when `ai` is present
- * - an article with no `article_ai` row yet (enrichment hasn't run)
- * still shows a clean, non-broken card instead of empty AI sections.
- * Same card styling (`rounded-3xl border ... shadow-sm`) already used
- * by every other block on this page, so it reads as part of the
- * existing design rather than a bolted-on widget.
+ * the AI layer (`article_ai`) produces for this article: AI Summary,
+ * TL;DR, AI Tags, Sentiment, Bias, plus Trust/Trending scores alongside
+ * them. Product polishing phase, 3rd pass: "AI sonucu yoksa boş kart
+ * gösterme, kartı tamamen gizle" - an article with no `article_ai` row
+ * yet (enrichment hasn't run), or one whose row happens to carry no
+ * actual generated content, renders nothing at all here rather than an
+ * empty/near-empty card.
  */
 export function ArticleAIInsights({ ai, trustScore, trendingScore }: ArticleAIInsightsProps) {
+  const hasAnyInsight = Boolean(
+    ai && (ai.summary || (ai.tldr && ai.tldr.bullets.length > 0) || ai.sentiment || ai.bias || (ai.tags && ai.tags.length > 0))
+  );
+  if (!hasAnyInsight) return null;
+
   return (
     <section
       aria-labelledby="ai-insights-title"
@@ -98,10 +100,6 @@ export function ArticleAIInsights({ ai, trustScore, trendingScore }: ArticleAIIn
             ))}
           </ul>
         </div>
-      )}
-
-      {!ai && (
-        <p className="mt-4 text-sm text-slate-500">AI analysis for this article hasn&apos;t been generated yet.</p>
       )}
 
       <div className="mt-6 grid gap-4 border-t border-slate-200 pt-5 sm:grid-cols-2">

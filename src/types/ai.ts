@@ -65,6 +65,23 @@ export type KeyTakeawaysResult = {
   version: string;
 };
 
+/**
+ * The structured, longer-form briefing shown on the article detail page
+ * when raw content is too thin to read (product polishing phase, 3rd
+ * pass, item 5 - "Overview / Key Points / Technical Details / Why It
+ * Matters"). One combined result rather than four separate ones, since
+ * a single prompt produces all four sections together.
+ */
+export type LongSummaryResult = {
+  overview: string;
+  keyPoints: string[];
+  technicalDetails: string;
+  whyItMatters: string;
+  generatedAt: string;
+  provider: AIProviderId;
+  version: string;
+};
+
 export type AITagResult = {
   tags: string[];
   generatedAt: string;
@@ -130,6 +147,7 @@ export type AIArticleInsights = {
   summary?: AISummaryResult;
   tldr?: TLDRResult;
   keyTakeaways?: KeyTakeawaysResult;
+  longSummary?: LongSummaryResult;
   tags?: AITagResult;
   sentiment?: SentimentResult;
   bias?: BiasResult;
