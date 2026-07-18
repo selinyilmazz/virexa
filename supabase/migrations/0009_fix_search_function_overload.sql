@@ -65,8 +65,30 @@
 --    function isn't showing up yet."
 --
 -- Safe to re-run: the DROP loop is a no-op once nothing matches, and
--- `create or replace function` on the final, single 12-arg version is
--- idempotent from that point on.
+-- recreating the final, single 12-arg version is idempotent from that
+-- point on.
+--
+-- ============================================================================
+-- FRESH DATABASES
+-- ============================================================================
+-- This migration is also what makes a brand-new database - created by
+-- running 0001 through 0009 in order, start to finish, with nothing
+-- pre-existing - end up correct. Migrations 0004/0007/0008 each still
+-- run exactly as written and each still creates their own overload
+-- (10-arg, then 11-arg, then 12-arg) along the way, for the same
+-- CREATE OR REPLACE FUNCTION reason explained above - a fresh run is
+-- NOT exempt from that. But because this migration's cleanup step
+-- queries `pg_proc` at RUN TIME rather than assuming a specific prior
+-- state, it finds and drops whatever overloads exist at that moment -
+-- three of them on a fresh sequential run, however many happen to be
+-- present on an existing production database - before creating the
+-- one canonical function. Either way, once 0009 finishes, exactly one
+-- `search_articles_fts` exists. No manual cleanup step, no separate
+-- "fresh install" vs. "existing database" migration path, and no
+-- future migration that changes this function's parameter list needs
+-- to remember to drop anything by hand first - a later migration can
+-- just add its own new parameter (or copy this file's DROP-then-CREATE
+-- pattern again) and 0009's existing effect is unaffected either way.
 
 begin;
 
