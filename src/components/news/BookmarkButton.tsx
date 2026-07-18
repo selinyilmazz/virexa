@@ -65,13 +65,30 @@ export function BookmarkButton({ item, variant = "icon", className = "", onError
     );
   }
 
+  // No `position` utility here on purpose (product polishing phase, area
+  // 4: bookmark icon regression). Every icon-variant caller supplies its
+  // own `absolute right-*.5 top-*.5 ...` via `className` to pin this in a
+  // card's top-right corner - but Tailwind's compiled stylesheet emits
+  // `.relative` AFTER `.absolute` in its fixed utility-generation order,
+  // so a hardcoded `relative` here would silently win the cascade
+  // regardless of the HTML class order, leaving the button in normal
+  // document flow next to the left-aligned category badge instead of
+  // pinned to the corner. `z-10` alone is harmless without a position
+  // set and becomes active once the caller's `absolute` applies.
+  // Text color is deliberately owned entirely by this component (never
+  // pass a `text-*` class from a caller's `className`) - the
+  // bookmarked/unbookmarked color IS the "saved state should remain
+  // visually obvious" signal, so it can't be left to chance against
+  // whatever color class a caller's wrapper styling happens to also
+  // carry. `hover:scale-110`/`active:scale-95` is the "hover animations
+  // welcome" touch.
   return (
     <button
       type="button"
       onClick={handleClick}
       aria-pressed={bookmarked}
       aria-label={bookmarked ? "Remove bookmark" : "Add bookmark"}
-      className={`relative z-10 transition-colors ${
+      className={`z-10 transition-all duration-150 hover:scale-110 active:scale-95 ${
         bookmarked ? "text-[#2f67e8]" : "text-slate-400 hover:text-slate-600"
       } ${className}`}
     >

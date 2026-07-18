@@ -1,38 +1,54 @@
-import { PopularTags } from "@/components/category/PopularTags";
-import type { CategoryNewsItem, CategoryTag } from "@/data/categories";
+import { RelatedCategories } from "@/components/category/RelatedCategories";
+import type { RelatedCategoryItem } from "@/components/category/RelatedCategories";
+import { TopSources } from "@/components/category/TopSources";
+import { SidebarMiniCard } from "@/components/shared/SidebarMiniCard";
+import type { CategoryNewsItem } from "@/data/categories";
+import type { TopSourceStat } from "@/services/articles/article-read-service";
 
 type CategorySidebarProps = {
-  tags: CategoryTag[];
+  topSources: TopSourceStat[];
+  relatedCategories: RelatedCategoryItem[];
   recentNews: CategoryNewsItem[];
 };
 
-export function CategorySidebar({ tags, recentNews }: CategorySidebarProps) {
+/**
+ * Category sidebar, redesigned around navigation/discovery (product
+ * polishing phase, area 8) instead of the old Popular Tags (static,
+ * non-clickable pills) + a plain-text "Recently Added" list (no links,
+ * no thumbnails). Top Sources and Related Categories are both real
+ * paths to more content; Recently Added now uses `SidebarMiniCard` so
+ * every row is a genuinely clickable, thumbnail-bearing feed item.
+ */
+export function CategorySidebar({ topSources, relatedCategories, recentNews }: CategorySidebarProps) {
   return (
     <div className="space-y-6 xl:sticky xl:top-28">
-      <PopularTags tags={tags} />
+      <TopSources sources={topSources} />
+      <RelatedCategories categories={relatedCategories} />
 
-      <section
-        aria-labelledby="recent-news-title"
-        className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
-      >
-        <h2 id="recent-news-title" className="text-3xl font-bold tracking-tight text-slate-950">
-          Recently Added
-        </h2>
+      {recentNews.length > 0 && (
+        <section
+          aria-labelledby="recent-news-title"
+          className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+        >
+          <h2 id="recent-news-title" className="text-xl font-bold tracking-tight text-slate-950">
+            Recently Added
+          </h2>
 
-        <ol className="mt-4 space-y-4">
-          {recentNews.map((item, index) => (
-            <li key={item.slug} className="flex items-start gap-3">
-              <span className="w-5 shrink-0 text-base font-bold text-slate-950">{index + 1}</span>
-              <div className="min-w-0">
-                <p className="line-clamp-2 text-base font-semibold leading-snug text-slate-950">{item.title}</p>
-                <p className="mt-0.5 text-sm text-slate-500">
-                  {item.source} <span aria-hidden="true">•</span> {item.publishedDate}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </section>
+          <div className="mt-3 space-y-1">
+            {recentNews.map((item) => (
+              <SidebarMiniCard
+                key={item.slug}
+                slug={item.slug}
+                image={item.image}
+                category={item.category}
+                title={item.title}
+                source={item.source}
+                publishedDate={item.publishedDate}
+              />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

@@ -1,14 +1,13 @@
 import { Header } from "@/components/layout/Header";
 
-/** Matches the redesigned `NewsCard`'s footprint (16:9 image on top, text block below) so the loading state doesn't shift once real data arrives. */
-function NewsCardSkeleton() {
+/** Matches `CategoryCard`'s footprint (16:9 image on top, tighter text block below) so the loading state doesn't shift once real data arrives. */
+function CategoryCardSkeleton() {
   return (
-    <div className="animate-pulse overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+    <div className="animate-pulse overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="aspect-video w-full bg-slate-200" />
-      <div className="space-y-3 p-5">
-        <div className="h-6 w-3/4 rounded bg-slate-200" />
-        <div className="h-4 w-full rounded bg-slate-200" />
-        <div className="h-4 w-2/3 rounded bg-slate-200" />
+      <div className="space-y-2.5 p-4">
+        <div className="h-5 w-3/4 rounded bg-slate-200" />
+        <div className="h-3.5 w-2/3 rounded bg-slate-200" />
         <div className="h-3 w-1/3 rounded bg-slate-200" />
       </div>
     </div>
@@ -29,15 +28,16 @@ export default function CategoryLoading() {
           </div>
 
           <div className="mt-5 grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.42fr)]">
-            <div className="min-w-0 grid gap-6 md:grid-cols-2">
+            <div className="min-w-0 grid gap-5 md:grid-cols-2">
               {Array.from({ length: 8 }).map((_, index) => (
-                <NewsCardSkeleton key={index} />
+                <CategoryCardSkeleton key={index} />
               ))}
             </div>
 
             <aside className="min-w-0 space-y-6">
-              <div className="h-56 animate-pulse rounded-3xl bg-slate-200" />
-              <div className="h-72 animate-pulse rounded-3xl bg-slate-200" />
+              <div className="h-48 animate-pulse rounded-3xl bg-slate-200" />
+              <div className="h-40 animate-pulse rounded-3xl bg-slate-200" />
+              <div className="h-64 animate-pulse rounded-3xl bg-slate-200" />
             </aside>
           </div>
         </div>

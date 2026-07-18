@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { NewsCard } from "@/components/news/NewsCard";
 import { getFeaturedArticle, getLatestArticles } from "@/services/articles/article-read-service";
 
@@ -19,12 +20,12 @@ export async function LatestNews() {
             Latest News
           </h2>
         </div>
-        <a
-          href="/news"
+        <Link
+          href="/categories"
           className="shrink-0 text-base font-medium text-[#2f67e8] transition-colors hover:text-[#2556c9]"
         >
           View All →
-        </a>
+        </Link>
       </div>
       {latestNewsItems.length === 0 ? (
         <div className="mt-6 flex flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm">

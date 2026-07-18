@@ -69,7 +69,7 @@ export async function HeroSection() {
 
           <h1
             id="hero-title"
-            className="max-w-3xl text-3xl font-bold leading-[1.1] tracking-tight text-white sm:text-4xl lg:text-5xl"
+            className="max-w-3xl font-serif text-3xl font-bold leading-[1.08] tracking-tight text-white sm:text-4xl lg:text-[3.25rem]"
           >
             <Link href={articleHref} className="transition-opacity hover:opacity-90">
               {title}

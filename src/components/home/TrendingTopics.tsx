@@ -21,32 +21,37 @@ function TrendBadge({ direction, percent }: { direction: TrendingTopic["trendDir
   );
 }
 
+/**
+ * Simplified to a clear 3-row hierarchy (product polishing phase, area
+ * 5: "cards now feel slightly overcrowded" - the old layout crammed a
+ * rank badge, icon, name, count, AND trend badge into one single row).
+ * Top row: icon + name + growth badge. Middle: article count, alone on
+ * its own line. Bottom: sparkline + latest-article preview. The bottom
+ * two rows are indented to align under the name (not the icon), reading
+ * as "detail about this topic" rather than competing for the same
+ * visual weight as the header row. Same data as before (icon, count,
+ * trend badge, sparkline, latest article) - only the rank number was
+ * dropped, since the list's own top-to-bottom order already conveys
+ * rank without a second, redundant number badge.
+ */
 function TrendingTopicCard({ topic }: { topic: TrendingCategoryStat | TrendingTopic }) {
   const categoryHref = findCategoryHref(topic.name);
 
   return (
-    <li className="group rounded-2xl border border-slate-200 p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
-      <div className="flex items-center gap-3">
-        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-bold text-slate-500">
-          {topic.rank}
+    <li className="rounded-2xl border border-slate-200 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
+      <Link href={categoryHref} className="group flex items-center gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-lg">
+          {topic.icon}
         </span>
-
-        <Link href={categoryHref} className="flex min-w-0 flex-1 items-center gap-2.5">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-lg">
-            {topic.icon}
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-semibold text-slate-950 group-hover:text-[#2f67e8]">
-              {topic.name}
-            </span>
-            <span className="block text-xs text-slate-500">{topic.articleCount}</span>
-          </span>
-        </Link>
-
+        <span className="min-w-0 flex-1 truncate text-base font-semibold text-slate-950 group-hover:text-[#2f67e8]">
+          {topic.name}
+        </span>
         <TrendBadge direction={topic.trendDirection} percent={topic.trendPercent} />
-      </div>
+      </Link>
 
-      <div className="mt-3 flex items-center gap-3">
+      <p className="mt-2 pl-[52px] text-xs font-medium text-slate-500">{topic.articleCount}</p>
+
+      <div className="mt-3 flex items-center gap-3 pl-[52px]">
         <Sparkline values={topic.sparkline} trendDirection={topic.trendDirection} className="shrink-0" />
 
         {topic.latestArticle ? (
@@ -95,7 +100,7 @@ export async function TrendingTopics() {
         </h2>
         <p className="mt-1 text-sm text-slate-500">Most active categories this week</p>
       </div>
-      <ol className="mt-4 space-y-3">
+      <ol className="mt-4 space-y-3.5">
         {topics.map((topic) => (
           <TrendingTopicCard key={topic.rank} topic={topic} />
         ))}

@@ -1,5 +1,5 @@
-import { NewsCard } from "@/components/news/NewsCard";
 import { EmptySearchState } from "@/components/search/EmptySearchState";
+import { SearchResultCard } from "@/components/search/SearchResultCard";
 import type { SearchResultItem } from "@/services/articles/article-read-service";
 
 type SearchResultsProps = {
@@ -42,15 +42,15 @@ export function SearchResults({ query, items, hasFilters }: SearchResultsProps) 
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2.5">
       {items.map((item) => (
-        <div key={item.slug} className="space-y-2">
+        <div key={item.slug} className="relative">
           {item.matchedIn && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">
+            <span className="pointer-events-none absolute -top-2 left-4 z-10 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[11px] font-semibold text-slate-500 shadow-sm">
               Matched in {matchLabel(item.matchedIn)}
             </span>
           )}
-          <NewsCard {...item} />
+          <SearchResultCard {...item} />
         </div>
       ))}
     </div>

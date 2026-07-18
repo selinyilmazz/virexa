@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { NewsCard } from "@/components/news/NewsCard";
+import { BookmarkCard } from "@/components/bookmarks/BookmarkCard";
 import { AuthToast } from "@/components/auth/AuthToast";
 import { clearBookmarks, retryBookmarks, useBookmarks, useBookmarksError, useBookmarksStatus } from "@/lib/bookmarks";
 
@@ -81,9 +81,9 @@ export function BookmarksContent() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-3">
             {bookmarks.map((item) => (
-              <NewsCard key={item.slug} {...item} />
+              <BookmarkCard key={item.slug} {...item} />
             ))}
           </div>
         )}

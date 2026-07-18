@@ -1,14 +1,14 @@
 import { Header } from "@/components/layout/Header";
 
-/** Matches the redesigned `NewsCard`'s footprint (16:9 image on top, text block below) so the loading state doesn't shift once real data arrives. */
-function NewsCardSkeleton() {
+/** Matches `SearchResultCard`'s compact horizontal footprint (small thumbnail + text) so the loading state doesn't shift once real results arrive. */
+function SearchResultCardSkeleton() {
   return (
-    <div className="animate-pulse overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <div className="aspect-video w-full bg-slate-200" />
-      <div className="space-y-3 p-5">
-        <div className="h-6 w-3/4 rounded bg-slate-200" />
-        <div className="h-4 w-full rounded bg-slate-200" />
-        <div className="h-4 w-2/3 rounded bg-slate-200" />
+    <div className="flex animate-pulse gap-4 rounded-2xl border border-slate-200 bg-white p-3.5">
+      <div className="size-20 shrink-0 rounded-xl bg-slate-200 sm:size-24" />
+      <div className="flex-1 space-y-2.5 py-1">
+        <div className="h-3 w-16 rounded bg-slate-200" />
+        <div className="h-4 w-3/4 rounded bg-slate-200" />
+        <div className="h-3 w-full rounded bg-slate-200" />
         <div className="h-3 w-1/3 rounded bg-slate-200" />
       </div>
     </div>
@@ -33,9 +33,9 @@ export default function SearchLoading() {
               <div className="h-56 animate-pulse rounded-3xl bg-slate-200" />
             </aside>
 
-            <div className="min-w-0 space-y-6">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <NewsCardSkeleton key={index} />
+            <div className="min-w-0 space-y-2.5">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <SearchResultCardSkeleton key={index} />
               ))}
             </div>
 

@@ -2,7 +2,7 @@ import { cache } from "react";
 import { categories as categoryTaxonomy } from "@/data/categories";
 import type { CategoryNewsItem } from "@/data/categories";
 import type { ArticleContentBlock } from "@/data/article";
-import { formatPublishedDate, getSourceById, resolveArticleImage, SEARCH_CATEGORY_SLUGS } from "@/lib/news";
+import { formatPublishedDate, getSourceById, resolveArticleImage, searchStockImage, SEARCH_CATEGORY_SLUGS } from "@/lib/news";
 import { createClient } from "@/lib/supabase/server";
 import { createArticleAIRepository } from "@/repositories/article-ai-repository";
 import { createArticleMetricsRepository } from "@/repositories/article-metrics-repository";
@@ -125,6 +125,13 @@ export async function getLatestArticles(limit = 8, excludeSlug?: string): Promis
 
 export type FeaturedArticle = CategoryNewsItem & { hasAIInsights: boolean };
 
+/** Bounds the Hero's on-demand stock-photo lookup below (product polishing phase, area 1) so a slow/unresponsive provider chain can never hold up the whole homepage render - the Hero still renders with its existing (placeholder) image on timeout, same as if the search had simply found nothing. */
+const HERO_IMAGE_SEARCH_TIMEOUT_MS = 6000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | undefined> {
+  return Promise.race([promise, new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), ms))]);
+}
+
 /**
  * The single highest-`trending_score` article, flagged with whether it
  * already has AI enrichment (`article_ai`) - backs Home's Hero/"Featured"
@@ -132,6 +139,19 @@ export type FeaturedArticle = CategoryNewsItem & { hasAIInsights: boolean };
  * "AI Recommended" instead of just "Trending" when true, folding the
  * "Featured" and "AI Recommended" homepage requirements into the one
  * existing hero slot rather than adding a new section.
+ *
+ * Product polishing phase, area 1 ("never intentionally display the
+ * generic SVG for the Hero"): the ingestion-time and admin-backfill
+ * image pipelines only ever touch NEWLY-fetched or explicitly-backfilled
+ * rows, so it's possible for the CURRENT top-trending article to still
+ * be sitting on its local category placeholder. Since the Hero is the
+ * one slot on the whole site where that's most visible, this is the one
+ * place read-time falls through to a live `searchStockImage` call (by
+ * title/keywords, same stage-3 provider chain ingestion itself uses)
+ * before ever accepting the local SVG - bounded by
+ * `HERO_IMAGE_SEARCH_TIMEOUT_MS` so a slow provider can't stall the
+ * homepage, and persisted back via `updateImages` (fire-and-forget) so
+ * this lookup only ever happens once per article, not once per request.
  *
  * Wrapped in React's `cache()` (product polishing phase, area 5) so
  * `HeroSection`, `LatestNews`, and `MostRead` - three independent
@@ -146,7 +166,21 @@ export const getFeaturedArticle = cache(async (): Promise<FeaturedArticle | null
     const [top] = await articles.listTopByTrending(1);
     if (!top) return null;
     const insight = await ai.getLatest(top.id);
-    return { ...toCategoryNewsItem(top), hasAIInsights: insight !== null };
+
+    let image = resolveDisplayImage(top);
+    const stillOnPlaceholder = !top.image_source || top.image_source === "placeholder";
+    if (stillOnPlaceholder) {
+      const category = VALID_CATEGORIES.has(top.category as NewsCategory) ? (top.category as NewsCategory) : "Technology";
+      const stockResult = await withTimeout(searchStockImage(top.title, category), HERO_IMAGE_SEARCH_TIMEOUT_MS);
+      if (stockResult) {
+        image = stockResult.url;
+        articles.updateImages([{ id: top.id, imageUrl: stockResult.url, imageSource: `stock:${stockResult.provider}` }]).catch((error) => {
+          console.error("[article-read-service] getFeaturedArticle: failed to persist hero stock image:", error);
+        });
+      }
+    }
+
+    return { ...toCategoryNewsItem(top), image, hasAIInsights: insight !== null };
   } catch (error) {
     console.error("[article-read-service] getFeaturedArticle failed:", error);
     return null;
@@ -335,6 +369,43 @@ export async function getTrendingCategories(limit = 6): Promise<TrendingCategory
     }));
   } catch (error) {
     console.error("[article-read-service] getTrendingCategories failed:", error);
+    return [];
+  }
+}
+
+export type TopSourceStat = {
+  name: string;
+  count: number;
+};
+
+/**
+ * Which sources publish the most in this category, ranked by article
+ * count - backs the category sidebar's "Top Sources" widget (product
+ * polishing phase, area 7: the "Popular Tags" widget it replaces was a
+ * static list of non-clickable pills built straight from the taxonomy
+ * data, with no real discovery value). Counts across a bounded recent
+ * pool of the category's own articles (not a second full-table scan) so
+ * it reflects which sources are actively covering this category, and
+ * doubles as real navigation - the UI links each source through to a
+ * source-filtered search.
+ */
+export async function getTopSourcesForCategory(categoryName: string, limit = 5): Promise<TopSourceStat[]> {
+  try {
+    const { articles } = await getRepositories();
+    const result = await articles.search({ category: categoryName, page: 1, pageSize: 300 });
+
+    const counts = new Map<string, number>();
+    for (const row of result.items) {
+      const name = resolveSourceName(row.source_id);
+      counts.set(name, (counts.get(name) ?? 0) + 1);
+    }
+
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit);
+  } catch (error) {
+    console.error("[article-read-service] getTopSourcesForCategory failed:", error);
     return [];
   }
 }

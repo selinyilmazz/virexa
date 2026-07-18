@@ -5,7 +5,12 @@ import { CategoryNewsGrid } from "@/components/category/CategoryNewsGrid";
 import { CategorySidebar } from "@/components/category/CategorySidebar";
 import { Pagination } from "@/components/category/Pagination";
 import { categories, getCategoryBySlug } from "@/data/categories";
-import { getRecentArticlesForCategory, searchCategoryArticles } from "@/services/articles/article-read-service";
+import {
+  getRecentArticlesForCategory,
+  getTopSourcesForCategory,
+  getTrendingCategories,
+  searchCategoryArticles,
+} from "@/services/articles/article-read-service";
 
 const PAGE_SIZE = 8;
 
@@ -32,12 +37,18 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
   // Real, database-backed news + pagination for this category ("kategori
   // sayfası gerçek veritabanından beslenecek"). Taxonomy (name,
-  // description, breadcrumb, popular tags) still comes from the static
-  // registry above - only the article list and its pagination are live.
-  const [newsPage, recentNews] = await Promise.all([
+  // description, breadcrumb) still comes from the static registry above -
+  // the article list, pagination, and every sidebar widget are live.
+  const [newsPage, recentNews, topSources, allActiveCategories] = await Promise.all([
     searchCategoryArticles(category.name, currentPage, PAGE_SIZE),
     getRecentArticlesForCategory(category.name, 5),
+    getTopSourcesForCategory(category.name, 5),
+    getTrendingCategories(12),
   ]);
+  const relatedCategories = allActiveCategories
+    .filter((entry) => entry.name !== category.name)
+    .slice(0, 6)
+    .map((entry) => ({ name: entry.name, icon: entry.icon, count: entry.count }));
 
   return (
     <>
@@ -76,7 +87,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             </div>
 
             <aside className="min-w-0 xl:self-start">
-              <CategorySidebar tags={category.popularTags} recentNews={recentNews} />
+              <CategorySidebar topSources={topSources} relatedCategories={relatedCategories} recentNews={recentNews} />
             </aside>
           </div>
         </div>
