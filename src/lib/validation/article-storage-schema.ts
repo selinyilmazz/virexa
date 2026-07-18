@@ -74,8 +74,8 @@ export const articleSearchParamsSchema = z.object({
   country: z.string().trim().min(1).optional(),
   dateFrom: z.string().trim().min(1).optional(),
   dateTo: z.string().trim().min(1).optional(),
-  /** Defaults to newest-first by publish date; "trending_score" powers the paginated `/most-read` page. */
-  sortBy: z.enum(["published_at", "trending_score"]).default("published_at"),
+  /** Defaults to newest-first by publish date; "trending_score" powers the paginated `/most-read` page; "created_at" (when the row was ingested, not originally published) powers the homepage's "Recently Added" section. */
+  sortBy: z.enum(["published_at", "trending_score", "created_at"]).default("published_at"),
   /** Sort direction for `sortBy` - defaults to descending (newest/highest first). Set `true` for an ascending ("Oldest") sort, used by the /search page's filter-only browse path. */
   sortAscending: z.boolean().default(false),
   page: z.number().int().min(1).default(1),

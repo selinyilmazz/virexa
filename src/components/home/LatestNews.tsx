@@ -11,11 +11,14 @@ export async function LatestNews() {
   const latestNewsItems = await getLatestArticles(8, featured?.slug);
 
   return (
-    <section aria-labelledby="latest-news-title" className="mx-auto mt-10 max-w-[1280px]">
-      <div className="flex items-center justify-between gap-4">
-        <h2 id="latest-news-title" className="text-3xl font-bold tracking-tight text-slate-950">
-          Latest News
-        </h2>
+    <section aria-labelledby="latest-news-title" className="mx-auto mt-12 max-w-[1280px]">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2f67e8]">Newsroom</p>
+          <h2 id="latest-news-title" className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
+            Latest News
+          </h2>
+        </div>
         <a
           href="/news"
           className="shrink-0 text-base font-medium text-[#2f67e8] transition-colors hover:text-[#2556c9]"
@@ -34,7 +37,7 @@ export async function LatestNews() {
           </p>
         </div>
       ) : (
-        <div className="mt-6 grid gap-6 md:grid-cols-2">
+        <div className="mt-6 grid gap-6 sm:grid-cols-2">
           {latestNewsItems.map((item) => (
             <NewsCard key={item.slug} {...item} />
           ))}

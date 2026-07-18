@@ -56,6 +56,18 @@ export function RuntimeActionsPanel() {
         successMessage={(json) => (typeof json.message === "string" ? json.message : "Trust scores recalculated.")}
         variant="secondary"
       />
+      <AdminActionButton
+        label="Backfill Real Images"
+        endpoint="/api/admin/runtime/actions"
+        buildBody={() => ({ action: "backfill-images" })}
+        confirmTitle="Backfill real photos for older articles?"
+        confirmDescription="Searches Pexels/Unsplash/Pixabay/Wikimedia Commons for a real, topical photo for up to 40 already-stored articles still sitting on the local category placeholder. Runs immediately; click again to work through more of the table."
+        confirmLabel="Backfill Images"
+        successMessage={(json) =>
+          typeof json.message === "string" ? json.message : "Image backfill complete."
+        }
+        variant="secondary"
+      />
     </div>
   );
 }

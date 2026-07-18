@@ -432,6 +432,48 @@ export function createArticleRepository(supabase: SupabaseClient<Database>) {
       return data ?? [];
     },
 
+    /**
+     * Lightweight, columns-only update of `image_url`/`image_source` -
+     * the write side of Admin Runtime Operations' "Backfill Real
+     * Images" (see `admin-runtime-ops-service.ts`'s
+     * `backfillArticleImages`). Mirrors `updateTrendingScores`/
+     * `updateTrustScores` exactly: plain parallel `update()` calls, not
+     * an upsert - this path never has every other NOT NULL column an
+     * upsert would require.
+     */
+    async updateImages(updates: { id: string; imageUrl: string; imageSource: string }[]): Promise<void> {
+      if (updates.length === 0) return;
+      const results = await Promise.all(
+        updates.map(({ id, imageUrl, imageSource }) =>
+          supabase.from("articles").update({ image_url: imageUrl, image_source: imageSource }).eq("id", id)
+        )
+      );
+      const failed = results.find((result) => result.error);
+      if (failed?.error) throw failed.error;
+    },
+
+    /**
+     * Articles whose image still needs a real-photo backfill - either
+     * never classified (`image_source is null`, rows written before
+     * migration 0010 added that column) or already known to be sitting
+     * on the local category placeholder (`image_source = 'placeholder'`)
+     * because stock-photo search found nothing usable at ingestion time.
+     * Capped at `limit` (the caller, `backfillArticleImages`, bounds
+     * this the same way `MAX_STOCK_IMAGE_LOOKUPS_PER_RUN` bounds a
+     * single ingestion pass's stock-photo search budget) - an admin can
+     * click the action again to work through more of the table.
+     */
+    async listNeedingImageBackfill(limit: number): Promise<{ id: string; title: string; category: string }[]> {
+      const { data, error } = await supabase
+        .from("articles")
+        .select("id, title, category")
+        .or("image_source.is.null,image_source.eq.placeholder")
+        .order("trending_score", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return data ?? [];
+    },
+
     /** Total row count - a zero-row `head` request, so it's cheap regardless of table size. Backs the Admin Dashboard's "Total Articles" stat card. */
     async count(): Promise<number> {
       const { count, error } = await supabase.from("articles").select("*", { count: "exact", head: true });

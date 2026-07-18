@@ -1,16 +1,15 @@
 import { Header } from "@/components/layout/Header";
 
+/** Matches the redesigned `NewsCard`'s footprint (16:9 image on top, text block below) so the loading state doesn't shift once real data arrives. */
 function NewsCardSkeleton() {
   return (
-    <div className="animate-pulse rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-      <div className="flex flex-col gap-4 sm:flex-row">
-        <div className="aspect-[3/2] w-full shrink-0 rounded-2xl bg-slate-200 sm:w-36" />
-        <div className="min-w-0 flex-1 space-y-3 py-1">
-          <div className="h-5 w-20 rounded-full bg-slate-200" />
-          <div className="h-4 w-full rounded bg-slate-200" />
-          <div className="h-4 w-2/3 rounded bg-slate-200" />
-          <div className="h-3 w-1/3 rounded bg-slate-200" />
-        </div>
+    <div className="animate-pulse overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <div className="aspect-video w-full bg-slate-200" />
+      <div className="space-y-3 p-5">
+        <div className="h-6 w-3/4 rounded bg-slate-200" />
+        <div className="h-4 w-full rounded bg-slate-200" />
+        <div className="h-4 w-2/3 rounded bg-slate-200" />
+        <div className="h-3 w-1/3 rounded bg-slate-200" />
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAdminUserOrNull } from "@/lib/admin/authorization";
 import { runtimeEngine } from "@/runtime/engine";
-import { recalculateTrustScores } from "@/services/admin/admin-runtime-ops-service";
+import { backfillArticleImages, recalculateTrustScores } from "@/services/admin/admin-runtime-ops-service";
 import { recordAuditEvent } from "@/services/admin/admin-audit-service";
 
 /**
@@ -20,6 +20,10 @@ import { recordAuditEvent } from "@/services/admin/admin-audit-service";
  *                              job type exists for this one - see that
  *                              file's doc comment for why it's a direct
  *                              repository operation instead)
+ * - backfill-images        -> `admin-runtime-ops-service.ts`'s
+ *                              `backfillArticleImages` - same "no
+ *                              matching job type, plain repository
+ *                              operation" shape as recalculate-trust
  *
  * Every action `runtimeEngine.enqueueJob()` reaches the existing job
  * registry unmodified (`runtime/jobs/*`) - this route adds no new job
@@ -30,7 +34,14 @@ import { recordAuditEvent } from "@/services/admin/admin-audit-service";
  * this app already supports.
  */
 
-const ACTIONS = ["run-pipeline", "refresh-cache", "recalculate-trending", "retry-failed", "recalculate-trust"] as const;
+const ACTIONS = [
+  "run-pipeline",
+  "refresh-cache",
+  "recalculate-trending",
+  "retry-failed",
+  "recalculate-trust",
+  "backfill-images",
+] as const;
 
 const bodySchema = z.object({
   action: z.enum(ACTIONS),
@@ -82,6 +93,15 @@ export async function POST(request: Request) {
       case "recalculate-trust": {
         const result = await recalculateTrustScores();
         message = `Checked ${result.checked} article(s), updated ${result.updated}.`;
+        metadata = result;
+        break;
+      }
+      case "backfill-images": {
+        const result = await backfillArticleImages();
+        message =
+          result.checked === 0
+            ? "No articles needed a real-photo backfill."
+            : `Checked ${result.checked} article(s), found real photos for ${result.updated}.`;
         metadata = result;
         break;
       }

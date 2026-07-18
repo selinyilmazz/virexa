@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { categories as categoryTaxonomy } from "@/data/categories";
 import type { CategoryNewsItem } from "@/data/categories";
 import type { ArticleContentBlock } from "@/data/article";
 import { formatPublishedDate, getSourceById, resolveArticleImage, SEARCH_CATEGORY_SLUGS } from "@/lib/news";
@@ -10,6 +11,9 @@ import { createSourceRepository } from "@/repositories/source-repository";
 import type { FullTextSearchParams } from "@/lib/validation/article-storage-schema";
 import type { ArticleRow, StoredBias, StoredSentiment, StoredTldr } from "@/types/database";
 import type { Category as NewsCategory } from "@/types/news";
+
+/** Category name -> emoji icon, reusing `src/data/categories.ts`'s existing taxonomy (already has one per category for the `/category/[slug]` pages) instead of maintaining a second copy just for the homepage's Trending Topics widget. */
+const CATEGORY_ICON_BY_NAME = new Map(categoryTaxonomy.map((category) => [category.name, category.icon]));
 
 /**
  * Server-only read access to the Article Storage tables
@@ -211,13 +215,73 @@ export async function getMostReadPage(page: number, pageSize: number): Promise<A
   }
 }
 
-export type TrendingCategoryStat = { rank: number; name: string; articleCount: string };
+export type TrendingCategoryStat = {
+  rank: number;
+  name: string;
+  articleCount: string;
+  /** Emoji icon for this category, from `src/data/categories.ts`'s taxonomy - falls back to a generic newspaper icon for any category that somehow isn't in that list. */
+  icon: string;
+  /** Total stored articles in this category (the number `articleCount` is formatted from). */
+  count: number;
+  /** This-week-vs-last-week direction, computed from `sparkline`'s underlying 14-day window - see `buildCategoryTrendStats`. `"new"` means last week had zero articles but this week has at least one (a fresh/reactivated category, not yet meaningfully comparable as a percentage). */
+  trendDirection: "up" | "down" | "flat" | "new";
+  /** Absolute percent change, this week vs last week - 0 for "flat"/"new". */
+  trendPercent: number;
+  /** Daily article counts for the last 7 days, oldest to newest - the data behind the widget's mini sparkline. */
+  sparkline: number[];
+  /** The single newest article in this category, for the widget's inline preview - `null` only if the category somehow has a count but no rows returned (shouldn't happen, defensive). */
+  latestArticle: { slug: string; title: string; image: string } | null;
+};
 
 /**
- * Real per-category article counts across all 12 canonical categories
- * (`SEARCH_CATEGORY_SLUGS`), sorted by count descending - backs
- * "Trending Topics" (Home sidebar + Search sidebar) with the site's
- * actual category distribution instead of a static topic list.
+ * Buckets a pool of already-fetched rows into one category's last-14-days
+ * daily counts, then derives the 7-day sparkline and a this-week-vs-
+ * last-week trend direction/percent from it. Pure in-memory computation -
+ * no extra query per category - the caller (`getTrendingCategories`)
+ * fetches the whole 14-day window ONCE across every category and calls
+ * this once per category against that same shared pool, the same
+ * "caller buckets rows in application code" convention
+ * `listPublishedBetween`'s own doc comment establishes for Admin
+ * Analytics' Time Series chart.
+ */
+function buildCategoryTrendStats(
+  fourteenDayPool: ArticleRow[],
+  categoryName: string
+): Pick<TrendingCategoryStat, "sparkline" | "trendDirection" | "trendPercent"> {
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const dailyCounts = new Array(14).fill(0) as number[]; // index 0 = 13 days ago ... index 13 = today
+
+  for (const row of fourteenDayPool) {
+    if (row.category !== categoryName) continue;
+    const ageMs = now - new Date(row.published_at).getTime();
+    const dayIndex = 13 - Math.floor(ageMs / DAY_MS);
+    if (dayIndex >= 0 && dayIndex < 14) dailyCounts[dayIndex] += 1;
+  }
+
+  const sparkline = dailyCounts.slice(7, 14);
+  const thisWeek = sparkline.reduce((sum, value) => sum + value, 0);
+  const lastWeek = dailyCounts.slice(0, 7).reduce((sum, value) => sum + value, 0);
+
+  if (lastWeek === 0) {
+    return { sparkline, trendDirection: thisWeek > 0 ? "new" : "flat", trendPercent: 0 };
+  }
+
+  const diff = thisWeek - lastWeek;
+  return {
+    sparkline,
+    trendDirection: diff > 0 ? "up" : diff < 0 ? "down" : "flat",
+    trendPercent: Math.abs(Math.round((diff / lastWeek) * 100)),
+  };
+}
+
+/**
+ * Real per-category stats across all 12 canonical categories
+ * (`SEARCH_CATEGORY_SLUGS`), sorted by article count descending - backs
+ * the redesigned "Trending Topics" widget (Home) with the site's actual
+ * category distribution, trend direction, a 7-day sparkline, and each
+ * category's newest article, instead of a static topic list or a bare
+ * rank+count row.
  *
  * Previously this tallied category frequency across only the top-100
  * highest-`trending_score` articles (`listTopByTrending(100)`). That
@@ -225,42 +289,167 @@ export type TrendingCategoryStat = { rank: number; name: string; articleCount: s
  * `trending_score` regardless of category, so any category whose
  * articles hadn't yet accumulated enough score to crack that
  * fixed-size-100 pool was invisible to this widget - even once real
- * articles existed for it. In practice, since most of the historical
- * article base came from RSS feeds hardcoded to "Technology"/"AI"
- * (see `feed-sources.ts`), that pool of 100 was saturated almost
- * entirely by those two categories, and every other category (with
- * real, stored articles) never showed up in "Trending Topics" at all -
- * not a SQL bug or a UI limit, but this function's own choice of
- * candidate pool.
+ * articles existed for it. Fixed by running one small, count-only query
+ * per category in parallel (same pattern `getCategoryFilterCounts`
+ * already uses for the search sidebar's filter counts) instead of
+ * sampling a trending-score-ordered pool - every category with at least
+ * one stored article is counted correctly. That query already returns
+ * each category's newest article too (`search()` defaults to
+ * newest-first), so no separate "latest article" round trip is needed.
  *
- * Fixed by running one small, count-only query per category in
- * parallel (same pattern `getCategoryFilterCounts` already uses for
- * the search sidebar's filter counts) instead of sampling a
- * trending-score-ordered pool - every category with at least one
- * stored article is counted correctly and independently of its
- * articles' trending_score.
+ * The sparkline/trend numbers come from one ADDITIONAL query - a single
+ * 14-day window across every category at once (`listPublishedBetween`,
+ * capped at 3000 rows) - rather than a second per-category query each,
+ * bucketed in application code by `buildCategoryTrendStats`.
  */
 export async function getTrendingCategories(limit = 6): Promise<TrendingCategoryStat[]> {
   try {
     const { articles } = await getRepositories();
-    const counts = await Promise.all(
+
+    const perCategory = await Promise.all(
       SEARCH_CATEGORY_SLUGS.map(async ({ name }) => {
         const result = await articles.search({ category: name, page: 1, pageSize: 1 });
-        return { name, count: result.total };
+        return { name, count: result.total, latest: result.items[0] ?? null };
       })
     );
 
-    return counts
+    const active = perCategory
       .filter((entry) => entry.count > 0)
       .sort((a, b) => b.count - a.count)
-      .slice(0, limit)
-      .map((entry, index) => ({
-        rank: index + 1,
-        name: entry.name,
-        articleCount: `${entry.count} article${entry.count === 1 ? "" : "s"}`,
-      }));
+      .slice(0, limit);
+    if (active.length === 0) return [];
+
+    const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+    const fourteenDayPool = await articles.listPublishedBetween(fourteenDaysAgo, new Date().toISOString(), 3000);
+
+    return active.map((entry, index) => ({
+      rank: index + 1,
+      name: entry.name,
+      articleCount: `${entry.count} article${entry.count === 1 ? "" : "s"}`,
+      icon: CATEGORY_ICON_BY_NAME.get(entry.name) ?? "📰",
+      count: entry.count,
+      ...buildCategoryTrendStats(fourteenDayPool, entry.name),
+      latestArticle: entry.latest
+        ? { slug: entry.latest.slug, title: entry.latest.title, image: resolveDisplayImage(entry.latest) }
+        : null,
+    }));
   } catch (error) {
     console.error("[article-read-service] getTrendingCategories failed:", error);
+    return [];
+  }
+}
+
+export type EditorsPickArticle = CategoryNewsItem & { trustScore: number };
+
+/**
+ * The highest-`trust_score` articles, excluding whatever the caller
+ * already has on screen elsewhere on the homepage - backs the "Editor's
+ * Picks" section. There's no real editorial curation system yet (no
+ * "is_editors_pick" flag on `articles`), so this is the closest honest
+ * proxy available from existing data: the most editorially-trustworthy
+ * sources' stories, not a popularity or recency signal like the other
+ * homepage sections already cover.
+ */
+export async function getEditorsPicks(limit = 4, excludeSlugs: string[] = []): Promise<EditorsPickArticle[]> {
+  try {
+    const { articles } = await getRepositories();
+    const pool = await articles.listTopByTrustScore(limit + excludeSlugs.length);
+    const filtered = pool.filter((row) => !excludeSlugs.includes(row.slug));
+    return filtered.slice(0, limit).map((row) => ({ ...toCategoryNewsItem(row), trustScore: row.trust_score }));
+  } catch (error) {
+    console.error("[article-read-service] getEditorsPicks failed:", error);
+    return [];
+  }
+}
+
+export type BreakingNewsArticle = CategoryNewsItem & { isFresh: boolean };
+
+/**
+ * High-trending articles published within the last 48 hours - backs the
+ * "Breaking News" section. Falls back to the top-trending pool
+ * regardless of age when fewer than `limit` articles are actually fresh
+ * (a young or slow-moving dataset shouldn't render an empty "Breaking
+ * News" section) - `isFresh` tells the UI which is which, so a
+ * genuinely-recent story can still get a distinct "just in" treatment
+ * even when the section as a whole had to backfill with older items.
+ */
+export async function getBreakingNews(limit = 4, excludeSlugs: string[] = []): Promise<BreakingNewsArticle[]> {
+  try {
+    const { articles } = await getRepositories();
+    const pool = await articles.listTopByTrending(Math.max(limit * 5, 30) + excludeSlugs.length);
+    const filtered = pool.filter((row) => !excludeSlugs.includes(row.slug));
+
+    const freshCutoff = Date.now() - 48 * 60 * 60 * 1000;
+    const fresh = filtered.filter((row) => new Date(row.published_at).getTime() >= freshCutoff);
+    const chosen = (fresh.length >= limit ? fresh : filtered).slice(0, limit);
+    const freshIds = new Set(fresh.map((row) => row.id));
+
+    return chosen.map((row) => ({ ...toCategoryNewsItem(row), isFresh: freshIds.has(row.id) }));
+  } catch (error) {
+    console.error("[article-read-service] getBreakingNews failed:", error);
+    return [];
+  }
+}
+
+/**
+ * Newest articles by INGESTION time (`created_at` - when the row
+ * entered Virexa's database), not original publish time - backs the
+ * "Recently Added" section, deliberately distinct from "Latest News"
+ * (which sorts by `published_at`, i.e. when the SOURCE published it).
+ * A backfilled older story that Virexa only just ingested shows up here
+ * but not necessarily at the top of Latest News, and vice versa for a
+ * same-day story from a slow-to-sync feed.
+ */
+export async function getRecentlyAdded(limit = 6, excludeSlugs: string[] = []): Promise<CategoryNewsItem[]> {
+  try {
+    const { articles } = await getRepositories();
+    const result = await articles.search({ sortBy: "created_at", page: 1, pageSize: limit + excludeSlugs.length });
+    const filtered = result.items.filter((row) => !excludeSlugs.includes(row.slug));
+    return filtered.slice(0, limit).map(toCategoryNewsItem);
+  } catch (error) {
+    console.error("[article-read-service] getRecentlyAdded failed:", error);
+    return [];
+  }
+}
+
+export type AIExplainedArticle = CategoryNewsItem & { aiSummary: string | null };
+
+/**
+ * AI-category articles that already have real AI enrichment
+ * (`article_ai.summary`/`.tldr`), highest-trending first - backs the
+ * "AI Explained" section, which exists to surface Virexa's own AI
+ * analysis (not just AI-topic news) as a distinct, premium-feeling
+ * section. Falls back to AI-category articles without enrichment yet
+ * when fewer than `limit` have any (so the section isn't empty on a
+ * dataset where AI enrichment hasn't caught up with ingestion) -
+ * `aiSummary` is simply `null` for those, and the UI treats that as
+ * "no AI insight yet" rather than an error.
+ */
+export async function getAIExplained(limit = 4): Promise<AIExplainedArticle[]> {
+  try {
+    const { articles, ai } = await getRepositories();
+    const result = await articles.search({
+      category: "AI",
+      sortBy: "trending_score",
+      page: 1,
+      pageSize: Math.max(limit * 3, 12),
+    });
+    if (result.items.length === 0) return [];
+
+    const insightByArticleId = await ai.getLatestManyByArticleIds(result.items.map((row) => row.id));
+
+    const withInsight = result.items.filter((row) => insightByArticleId.has(row.id));
+    const chosenRows = withInsight.length >= limit ? withInsight : result.items;
+
+    return chosenRows.slice(0, limit).map((row) => {
+      const insight = insightByArticleId.get(row.id);
+      return {
+        ...toCategoryNewsItem(row),
+        aiSummary: insight?.summary ?? insight?.tldr?.title ?? null,
+      };
+    });
+  } catch (error) {
+    console.error("[article-read-service] getAIExplained failed:", error);
     return [];
   }
 }
