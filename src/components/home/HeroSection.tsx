@@ -38,7 +38,7 @@ export async function HeroSection() {
   const image = featured?.image ?? resolveFallbackImageForCategory(category);
 
   return (
-    <section aria-labelledby="hero-title" className="mx-auto max-w-[1280px]">
+    <section aria-labelledby="hero-title">
       <div className="relative aspect-video w-full overflow-hidden rounded-3xl shadow-lg shadow-slate-900/10 sm:aspect-[16/8] lg:aspect-[16/7]">
         <NewsImage
           src={image}
