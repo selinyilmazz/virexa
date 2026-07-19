@@ -11,6 +11,7 @@ function toInsert(input: ArticleAIInput): ArticleAIInsert {
     long_summary: input.longSummary ?? null,
     rewritten_article: input.rewrittenArticle ?? null,
     entities: input.entities ?? null,
+    key_takeaways: input.keyTakeaways ?? null,
     tags: input.tags,
     sentiment: input.sentiment ?? null,
     bias: input.bias ?? null,

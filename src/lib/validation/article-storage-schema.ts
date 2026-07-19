@@ -82,6 +82,12 @@ export const articleAIInputSchema = z.object({
     })
     .nullable()
     .optional(),
+  keyTakeaways: z
+    .object({
+      points: z.array(z.string()),
+    })
+    .nullable()
+    .optional(),
   tags: z.array(z.string().trim()).default([]),
   sentiment: z.object({ label: z.string(), confidence: z.number().min(0).max(1) }).nullable().optional(),
   bias: z.object({ level: z.string(), confidence: z.number().min(0).max(1) }).nullable().optional(),

@@ -43,18 +43,26 @@ function EntityChipList({ label, entities }: { label: string; entities: string[]
 /**
  * "AI verilerinin gösterimi" - a single additive card for everything the
  * AI layer produces for this article (product polishing phase, 4th
- * pass, item 8's expanded field set): Short Summary, TL;DR, Key Points,
- * Companies/Technologies/People Mentioned, Why This News Matters, Trust
- * Score, and Overall Sentiment Analysis. "Key Points" and "Why This
- * Matters" are sourced from the same AI rewrite (`rewrittenArticle`) the
- * article body itself renders, rather than a second, overlapping AI
- * capability - both are already grounded in the article's real content.
+ * pass, item 8's expanded field set; 5th pass: Key Points now shows for
+ * every article, not just trending ones): Short Summary, TL;DR, Key
+ * Points, Companies/Technologies/People Mentioned, Why This News
+ * Matters, Trust Score, and Overall Sentiment Analysis.
+ *
+ * "Key Points" prefers the standalone `ai.keyTakeaways` (broad tier -
+ * generated for every article a pipeline run touches) and falls back to
+ * `rewrittenArticle.keyHighlights` only when no standalone takeaways
+ * exist yet but a rewrite does (narrow, trending-only tier) - so this
+ * section shows for the widest possible set of articles rather than
+ * only ones that got the more expensive full rewrite. "Why This News
+ * Matters" only ever comes from `rewrittenArticle` (Key Takeaways has
+ * no equivalent field), so it's still trending-tier-only.
+ *
  * "AI sonucu yoksa boş kart gösterme, kartı tamamen gizle" - renders
  * nothing at all when there's no AI-generated content of ANY kind for
  * this article yet.
  */
 export function ArticleAIInsights({ ai, rewrittenArticle, trustScore, trendingScore }: ArticleAIInsightsProps) {
-  const keyPoints = rewrittenArticle?.keyHighlights ?? [];
+  const keyPoints = ai?.keyTakeaways?.points ?? rewrittenArticle?.keyHighlights ?? [];
   const whyItMatters = rewrittenArticle?.whyItMatters ?? "";
   const entities = ai?.entities;
   const hasEntities = Boolean(entities && (entities.companies.length > 0 || entities.technologies.length > 0 || entities.people.length > 0));

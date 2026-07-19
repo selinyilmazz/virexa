@@ -1,7 +1,11 @@
+import { hashArticleContent } from "@/lib/ai/content-hash";
 import { createServiceClient } from "@/lib/supabase/service-client";
 import { fetchArticleContent, searchStockImage } from "@/lib/news";
+import type { ArticleAIInput } from "@/lib/validation/article-storage-schema";
+import { createArticleAIRepository } from "@/repositories/article-ai-repository";
 import { createArticleRepository } from "@/repositories/article-repository";
 import { createSourceRepository } from "@/repositories/source-repository";
+import { aiService } from "@/services/ai";
 import type { Category } from "@/types/news";
 
 /**
@@ -190,4 +194,127 @@ export async function backfillArticleContent(): Promise<BackfillContentResult> {
   }
 
   return { checked: candidates.length, updated: updates.length };
+}
+
+/** Matches the pipeline's own broad-tier per-run cap (`MAX_BROAD_AI_ARTICLES_PER_RUN` in `runtime/pipeline/steps/ai-steps.ts`) - an admin-triggered backfill batch shouldn't cost more per click than a single live pipeline run already spends on Summary + Key Takeaways. */
+const AI_ENRICHMENT_BACKFILL_BATCH_SIZE = 60;
+
+export type BackfillAIEnrichmentResult = {
+  checked: number;
+  updated: number;
+};
+
+/**
+ * Retroactively runs the pipeline's broad-tier AI capabilities (Summary +
+ * Key Takeaways, `runtime/pipeline/steps/ai-steps.ts`'s `aiSummaryStep`/
+ * `keyTakeawaysStep`) for already-stored articles that never got either
+ * one - the retroactive counterpart to that broad tier, which only ever
+ * runs for articles a live pipeline run's own `MAX_BROAD_AI_ARTICLES_PER_RUN`
+ * window touches going forward. Product polishing phase, 5th pass:
+ * "mevcut veritabanındaki eski haberler için de toplu (backfill) AI
+ * enrichment işlemi ekle; böylece eski makaleler de kısa içerikle
+ * kalmasın" - without this, articles ingested before Key Takeaways (or
+ * even Summary) existed, or ones that simply fell outside a run's cap at
+ * the time, would keep thin/missing AI insights forever.
+ *
+ * Same shape as `backfillArticleContent`/`backfillArticleImages` above: a
+ * plain Repository-Pattern read + bulk write triggered directly from an
+ * admin action, ordered by `trending_score` so the backfill prioritizes
+ * the articles readers are most likely to actually open. Scans a wider
+ * trending-score window than the batch size and filters in application
+ * code for articles missing a `summary` or `key_takeaways` (no
+ * `article_ai` row at all, or a row that predates one of those two
+ * fields), same "scan wide, cap the result" tradeoff as
+ * `listNeedingContentBackfill`.
+ *
+ * Deliberately does NOT touch `rewritten_article` here - the full
+ * article rewrite stays a trending-only, narrow-tier capability by
+ * design (`articlesForTrendingRewrite`); an old, non-trending article
+ * getting Summary + Key Takeaways for the first time is exactly this
+ * backfill's job, not also getting the full rewrite.
+ *
+ * Carries forward any AI fields THIS backfill doesn't touch (tldr,
+ * long_summary, rewritten_article, entities, tags, sentiment, bias) from
+ * the article's existing latest `article_ai` row when that row's
+ * `cache_key` still matches the article's current content - otherwise
+ * the upsert (keyed on `article_id, provider, cache_key`) would silently
+ * overwrite and lose that earlier work whenever the same version row is
+ * hit again. If the content has since changed, nothing is carried
+ * forward (a stale version's fields don't belong on a new one) and a
+ * fresh row is written with just Summary + Key Takeaways, exactly like
+ * the pipeline's own database step would.
+ */
+export async function backfillArticleAIEnrichment(): Promise<BackfillAIEnrichmentResult> {
+  const supabase = createServiceClient();
+  if (!supabase) {
+    throw new Error("Storage is not configured.");
+  }
+
+  const articleRepository = createArticleRepository(supabase);
+  const aiRepository = createArticleAIRepository(supabase);
+
+  const SCAN_WINDOW = Math.max(AI_ENRICHMENT_BACKFILL_BATCH_SIZE * 5, 300);
+  const candidates = await articleRepository.listTopByTrending(SCAN_WINDOW);
+  if (candidates.length === 0) {
+    return { checked: 0, updated: 0 };
+  }
+
+  const existingAI = await aiRepository.getLatestManyByArticleIds(candidates.map((article) => article.id));
+  const needsEnrichment = candidates
+    .filter((article) => {
+      const existing = existingAI.get(article.id);
+      return !existing || !existing.summary || !existing.key_takeaways;
+    })
+    .slice(0, AI_ENRICHMENT_BACKFILL_BATCH_SIZE);
+
+  if (needsEnrichment.length === 0) {
+    return { checked: candidates.length, updated: 0 };
+  }
+
+  const results = await Promise.allSettled(
+    needsEnrichment.map(async (article) => {
+      const content = article.content ?? article.description;
+      const input = { id: article.id, title: article.title, content };
+      const [summary, takeaways] = await Promise.all([aiService.getSummary(input), aiService.getKeyTakeaways(input)]);
+      return { article, content, summary, takeaways };
+    })
+  );
+
+  const aiInputs: ArticleAIInput[] = [];
+  results.forEach((result, index) => {
+    if (result.status === "rejected") {
+      console.error(`[admin-runtime-ops-service] AI enrichment backfill failed for "${needsEnrichment[index].title}":`, result.reason);
+      return;
+    }
+
+    const { article, content, summary, takeaways } = result.value;
+    if (!summary && !takeaways) return;
+
+    const cacheKey = hashArticleContent(article.title, content);
+    const existing = existingAI.get(article.id);
+    const sameVersion = existing?.cache_key === cacheKey;
+
+    aiInputs.push({
+      articleId: article.id,
+      summary: summary?.summary ?? (sameVersion ? existing?.summary ?? null : null),
+      tldr: sameVersion ? existing?.tldr ?? null : null,
+      longSummary: sameVersion ? existing?.long_summary ?? null : null,
+      rewrittenArticle: sameVersion ? existing?.rewritten_article ?? null : null,
+      entities: sameVersion ? existing?.entities ?? null : null,
+      keyTakeaways: takeaways ? { points: takeaways.points } : sameVersion ? existing?.key_takeaways ?? null : null,
+      tags: sameVersion ? existing?.tags ?? [] : [],
+      sentiment: sameVersion ? existing?.sentiment ?? null : null,
+      bias: sameVersion ? existing?.bias ?? null : null,
+      provider: summary?.provider ?? takeaways?.provider ?? existing?.provider ?? "unknown",
+      model: existing?.model ?? "",
+      promptVersion: summary?.version ?? takeaways?.version ?? existing?.prompt_version ?? "",
+      cacheKey,
+    });
+  });
+
+  if (aiInputs.length > 0) {
+    await aiRepository.bulkUpsert(aiInputs);
+  }
+
+  return { checked: needsEnrichment.length, updated: aiInputs.length };
 }

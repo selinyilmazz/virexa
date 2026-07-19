@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAdminUserOrNull } from "@/lib/admin/authorization";
 import { runtimeEngine } from "@/runtime/engine";
-import { backfillArticleContent, backfillArticleImages, recalculateTrustScores } from "@/services/admin/admin-runtime-ops-service";
+import {
+  backfillArticleAIEnrichment,
+  backfillArticleContent,
+  backfillArticleImages,
+  recalculateTrustScores,
+} from "@/services/admin/admin-runtime-ops-service";
 import { recordAuditEvent } from "@/services/admin/admin-audit-service";
 
 /**
@@ -27,6 +32,12 @@ import { recordAuditEvent } from "@/services/admin/admin-audit-service";
  * - backfill-content       -> `admin-runtime-ops-service.ts`'s
  *                              `backfillArticleContent` - same shape,
  *                              for thin/missing article body text
+ * - backfill-ai-enrichment -> `admin-runtime-ops-service.ts`'s
+ *                              `backfillArticleAIEnrichment` - same
+ *                              shape, retroactively generates Summary +
+ *                              Key Takeaways for old articles that never
+ *                              got either (product polishing phase, 5th
+ *                              pass)
  *
  * Every action `runtimeEngine.enqueueJob()` reaches the existing job
  * registry unmodified (`runtime/jobs/*`) - this route adds no new job
@@ -45,6 +56,7 @@ const ACTIONS = [
   "recalculate-trust",
   "backfill-images",
   "backfill-content",
+  "backfill-ai-enrichment",
 ] as const;
 
 const bodySchema = z.object({
@@ -115,6 +127,15 @@ export async function POST(request: Request) {
           result.checked === 0
             ? "No articles needed a content backfill."
             : `Checked ${result.checked} article(s), extracted fuller content for ${result.updated}.`;
+        metadata = result;
+        break;
+      }
+      case "backfill-ai-enrichment": {
+        const result = await backfillArticleAIEnrichment();
+        message =
+          result.checked === 0
+            ? "No articles needed an AI enrichment backfill."
+            : `Checked ${result.checked} article(s), generated Summary/Key Takeaways for ${result.updated}.`;
         metadata = result;
         break;
       }

@@ -80,6 +80,18 @@ export function RuntimeActionsPanel() {
         }
         variant="secondary"
       />
+      <AdminActionButton
+        label="Backfill AI Enrichment"
+        endpoint="/api/admin/runtime/actions"
+        buildBody={() => ({ action: "backfill-ai-enrichment" })}
+        confirmTitle="Backfill AI Summary + Key Takeaways for older articles?"
+        confirmDescription="Generates AI Summary and Key Takeaways for up to 60 already-stored articles that are still missing one or both - the same broad-tier AI capabilities a live pipeline run generates for new articles. Runs immediately; click again to work through more of the table."
+        confirmLabel="Backfill AI Enrichment"
+        successMessage={(json) =>
+          typeof json.message === "string" ? json.message : "AI enrichment backfill complete."
+        }
+        variant="secondary"
+      />
     </div>
   );
 }

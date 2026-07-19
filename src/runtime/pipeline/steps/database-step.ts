@@ -13,6 +13,7 @@ import type {
   ArticleEntitiesResult,
   ArticleRewriteResult,
   BiasResult,
+  KeyTakeawaysResult,
   LongSummaryResult,
   SentimentResult,
   TLDRResult,
@@ -21,6 +22,7 @@ import type { NewsArticle } from "@/types/news";
 
 export type PipelineAIResults = {
   summaries: Map<string, AISummaryResult>;
+  takeaways: Map<string, KeyTakeawaysResult>;
   tldrs: Map<string, TLDRResult>;
   longSummaries: Map<string, LongSummaryResult>;
   rewrites: Map<string, ArticleRewriteResult>;
@@ -96,6 +98,7 @@ function toAIInputs(articles: NewsArticle[], results: PipelineAIResults): Articl
 
   for (const article of articles) {
     const summary = results.summaries.get(article.id);
+    const takeaways = results.takeaways.get(article.id);
     const tldr = results.tldrs.get(article.id);
     const longSummary = results.longSummaries.get(article.id);
     const rewrite = results.rewrites.get(article.id);
@@ -104,10 +107,11 @@ function toAIInputs(articles: NewsArticle[], results: PipelineAIResults): Articl
     const sentiment = results.sentiments.get(article.id);
     const bias = results.biases.get(article.id);
 
-    if (!summary && !tldr && !longSummary && !rewrite && !entities && !tags && !sentiment && !bias) continue;
+    if (!summary && !takeaways && !tldr && !longSummary && !rewrite && !entities && !tags && !sentiment && !bias) continue;
 
     const provider =
       summary?.provider ??
+      takeaways?.provider ??
       tldr?.provider ??
       longSummary?.provider ??
       rewrite?.provider ??
@@ -118,6 +122,7 @@ function toAIInputs(articles: NewsArticle[], results: PipelineAIResults): Articl
       "unknown";
     const promptVersion =
       summary?.version ??
+      takeaways?.version ??
       tldr?.version ??
       longSummary?.version ??
       rewrite?.version ??
@@ -154,6 +159,7 @@ function toAIInputs(articles: NewsArticle[], results: PipelineAIResults): Articl
       entities: entities
         ? { companies: entities.companies, technologies: entities.technologies, people: entities.people }
         : null,
+      keyTakeaways: takeaways ? { points: takeaways.points } : null,
       tags: tags?.tags ?? [],
       sentiment: sentiment ? { label: sentiment.label, confidence: sentiment.confidence } : null,
       bias: bias ? { level: bias.level, confidence: bias.confidence } : null,

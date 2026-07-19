@@ -22,6 +22,7 @@ import type {
   StoredArticleRewrite,
   StoredBias,
   StoredEntities,
+  StoredKeyTakeaways,
   StoredLongSummary,
   StoredSentiment,
   StoredTldr,
@@ -702,6 +703,8 @@ function blocksToPlainText(blocks: ArticleContentBlock[]): string {
 
 export type ArticleAIInsights = {
   summary: string | null;
+  /** Standalone Key Takeaways bullets (product polishing phase, 5th pass) - broad-tier, generated for every article a run touches, independent of whether that article also got a full `rewrittenArticle`. `null` only when no AI provider is configured, or this specific article fell outside even the broad tier's per-run cap. */
+  keyTakeaways: StoredKeyTakeaways | null;
   tldr: StoredTldr | null;
   tags: string[];
   sentiment: StoredSentiment | null;
@@ -850,6 +853,7 @@ export async function getArticleDetail(slug: string): Promise<ArticleDetail | nu
       ai: aiRow
         ? {
             summary: aiRow.summary,
+            keyTakeaways: aiRow.key_takeaways,
             tldr: aiRow.tldr,
             tags: aiRow.tags,
             sentiment: aiRow.sentiment,

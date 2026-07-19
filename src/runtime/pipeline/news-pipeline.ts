@@ -3,6 +3,7 @@ import {
   articleRewriteStep,
   biasStep,
   entitiesStep,
+  keyTakeawaysStep,
   longSummaryStep,
   sentimentStep,
   tagsStep,
@@ -33,9 +34,9 @@ export type NewsPipelineResult = {
 /**
  * Runs the full news-processing pipeline in the exact order requested:
  * RSS -> NewsAPI -> GNews -> Hacker News -> Normalize -> Duplicate
- * Detection -> Trust Score -> AI Summary -> TLDR -> Long Summary ->
- * Article Rewrite -> Entities -> Tags -> Sentiment -> Bias -> Trending
- * Score -> Database -> Cache Refresh.
+ * Detection -> Trust Score -> AI Summary -> Key Takeaways -> TLDR ->
+ * Long Summary -> Article Rewrite -> Entities -> Tags -> Sentiment ->
+ * Bias -> Trending Score -> Database -> Cache Refresh.
  *
  * Every step is independently callable (see `pipeline/steps/*`) and
  * never throws - each returns a `PipelineStepResult` with its own
@@ -73,6 +74,8 @@ export async function runNewsPipeline(): Promise<NewsPipelineResult> {
 
   const summaries = await aiSummaryStep(articles);
   steps.push(summaries);
+  const takeaways = await keyTakeawaysStep(articles);
+  steps.push(takeaways);
   const tldrs = await tldrStep(articles);
   steps.push(tldrs);
   const longSummaries = await longSummaryStep(articles);
@@ -95,6 +98,7 @@ export async function runNewsPipeline(): Promise<NewsPipelineResult> {
 
   const database = await databaseStep(finalArticles, {
     summaries: summaries.data ?? new Map(),
+    takeaways: takeaways.data ?? new Map(),
     tldrs: tldrs.data ?? new Map(),
     longSummaries: longSummaries.data ?? new Map(),
     rewrites: rewrites.data ?? new Map(),

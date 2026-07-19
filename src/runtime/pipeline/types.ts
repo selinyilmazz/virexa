@@ -25,6 +25,7 @@ export type PipelineStepName =
   | "long-summary"
   | "article-rewrite"
   | "entities"
+  | "key-takeaways"
   | "tags"
   | "sentiment"
   | "bias"

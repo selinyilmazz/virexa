@@ -192,6 +192,9 @@ export type StoredArticleRewrite = {
 /** Stored shape of `article_ai.entities` (jsonb) - a slimmed-down `ArticleEntitiesResult` (product polishing phase, 4th pass, item 8). */
 export type StoredEntities = { companies: string[]; technologies: string[]; people: string[] };
 
+/** Stored shape of `article_ai.key_takeaways` (jsonb) - a slimmed-down `KeyTakeawaysResult` (product polishing phase, 5th pass - the broad-tier "every article" counterpart to `rewritten_article`'s narrow trending-only tier). */
+export type StoredKeyTakeaways = { points: string[] };
+
 export type ArticleAIRow = {
   id: string;
   article_id: string;
@@ -200,6 +203,7 @@ export type ArticleAIRow = {
   long_summary: StoredLongSummary | null;
   rewritten_article: StoredArticleRewrite | null;
   entities: StoredEntities | null;
+  key_takeaways: StoredKeyTakeaways | null;
   tags: string[];
   sentiment: StoredSentiment | null;
   bias: StoredBias | null;
