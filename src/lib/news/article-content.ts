@@ -2,25 +2,25 @@ import { fetchWithTimeout } from "@/lib/news/fetch-with-timeout";
 
 /**
  * Real full-article-text extraction, run at ingestion time (never per
- * page view) for articles whose provider/RSS-supplied content is too
- * thin to actually read (product polishing phase, 2nd pass, area 8:
- * "haber detay sayfasını güçlendir" - most RSS feeds only ever supply a
- * 1-2 sentence blurb, not the real article body, which is what made
- * some article pages read as almost empty).
+ * page view) for every article whose provider/RSS-supplied content is
+ * too thin to actually read (product polishing phase, 4th pass, item 9:
+ * "veritabanında sadece RSS başlığı/açıklaması yeterli değil - her
+ * makale için orijinal URL'ye gidilip ana metin çıkarılıp
+ * kaydedilmeli"). This extracted text is the grounding material the AI
+ * article-rewrite capability (`article-rewrite.prompt.ts`) is built
+ * from, so it needs to capture close to the REAL article body, not just
+ * a short lead-in - a 700-1500 word rewrite grounded in a 500-word
+ * extraction would either run thin or start inventing details that
+ * were never in the source.
  *
  * Deliberately dependency-free (no Readability/jsdom - this sandbox has
  * no npm registry access, and those are heavy for what's needed here):
  * a pragmatic heuristic that strips obvious non-article chrome
  * (`<script>`/`<style>`/`<nav>`/`<header>`/`<footer>`/`<aside>`/`<form>`),
- * pulls every `<p>` block, keeps only paragraphs long enough to be real
- * prose (filters out nav links, bylines, cookie-banner text - the same
- * "quality gate" spirit `isAcceptableImageUrl` already applies to
- * images), and caps the result to a substantial LEAD portion of the
- * article rather than the whole piece - "amacımız haberi tamamen
- * kopyalamak değil... kullanıcı haberi anlayabilecek kadar bilgi
- * sunmak" (the goal isn't to fully reproduce the article, just enough
- * for the reader to understand it before optionally following the
- * "Read on {source}" link to the original).
+ * pulls every `<p>` block, and keeps only paragraphs long enough to be
+ * real prose (filters out nav links, bylines, cookie-banner text - the
+ * same "quality gate" spirit `isAcceptableImageUrl` already applies to
+ * images).
  */
 
 const CONTENT_FETCH_TIMEOUT_MS = 8000;
@@ -31,9 +31,9 @@ const MAX_HTML_SCAN_BYTES = 500_000;
 /** Below this, extracted text isn't meaningfully better than the RSS blurb it would replace - treated as "extraction failed" so the caller falls through to its own next fallback rather than persisting a marginal improvement. */
 export const MIN_ACCEPTABLE_CONTENT_LENGTH = 400;
 
-/** Caps how much of the article is kept - a generous lead-in (roughly 500-700 words), not the full piece. */
-const MAX_EXTRACTED_PARAGRAPHS = 8;
-const MAX_EXTRACTED_CHARACTERS = 3000;
+/** Caps how much of the article is kept - generous enough (roughly 1800-2200 words) to capture the real body of almost any news article, while still bounding pathologically long pages. */
+const MAX_EXTRACTED_PARAGRAPHS = 60;
+const MAX_EXTRACTED_CHARACTERS = 12_000;
 
 /** Same capped-read approach `og-image.ts`'s `readCappedText` uses, duplicated here (not shared) so this module has no dependency on that one - each is a small, self-contained ~15 lines and the two are conceptually independent enrichment stages. */
 async function readCappedText(response: Response, maxBytes: number): Promise<string> {

@@ -16,7 +16,6 @@ export type { UserSettings } from "@/types/settings";
  * real row has loaded and as the seed for a brand-new account.
  */
 export const defaultSettings: UserSettings = {
-  darkMode: false,
   language: "en",
   summaryLength: "medium",
   preferredCategories: ["Technology", "AI"],
@@ -27,15 +26,8 @@ export const defaultSettings: UserSettings = {
   },
   emailPreferences: {
     productUpdates: true,
-    marketingEmails: false,
     accountActivity: true,
   },
-  privacy: {
-    publicProfile: true,
-    showReadingActivity: false,
-  },
-  autoPlayVideos: false,
-  compactView: false,
   openLinksInNewTab: true,
 };
 

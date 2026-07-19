@@ -4,30 +4,22 @@ import type { UserSettings } from "@/types/settings";
 
 function toUserSettings(row: UserSettingsRow): UserSettings {
   return {
-    darkMode: row.dark_mode,
     language: row.language,
     summaryLength: row.summary_length,
     preferredCategories: row.preferred_categories,
     notifications: row.notifications,
     emailPreferences: row.email_preferences,
-    privacy: row.privacy,
-    autoPlayVideos: row.auto_play_videos,
-    compactView: row.compact_view,
     openLinksInNewTab: row.open_links_in_new_tab,
   };
 }
 
 function toRowUpdate(settings: Partial<UserSettings>): UserSettingsUpdate {
   const update: UserSettingsUpdate = {};
-  if (settings.darkMode !== undefined) update.dark_mode = settings.darkMode;
   if (settings.language !== undefined) update.language = settings.language;
   if (settings.summaryLength !== undefined) update.summary_length = settings.summaryLength;
   if (settings.preferredCategories !== undefined) update.preferred_categories = settings.preferredCategories;
   if (settings.notifications !== undefined) update.notifications = settings.notifications;
   if (settings.emailPreferences !== undefined) update.email_preferences = settings.emailPreferences;
-  if (settings.privacy !== undefined) update.privacy = settings.privacy;
-  if (settings.autoPlayVideos !== undefined) update.auto_play_videos = settings.autoPlayVideos;
-  if (settings.compactView !== undefined) update.compact_view = settings.compactView;
   if (settings.openLinksInNewTab !== undefined) update.open_links_in_new_tab = settings.openLinksInNewTab;
   return update;
 }

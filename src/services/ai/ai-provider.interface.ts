@@ -2,7 +2,9 @@ import type {
   AIProviderId,
   AnalyzeBiasInput,
   AnalyzeSentimentInput,
+  ArticleRewriteInput,
   BiasLevel,
+  ExtractEntitiesInput,
   GenerateTagsInput,
   SentimentLabel,
   SummarizeInput,
@@ -44,6 +46,24 @@ export interface AIProvider {
     keyPoints: string[];
     technicalDetails: string;
     whyItMatters: string;
+  }>;
+
+  /** Full 700-1500 word structured rewrite of the article - the article detail page's primary reading content (see `ArticleRewriteResult`). */
+  generateArticleRewrite(input: ArticleRewriteInput): Promise<{
+    intro: string;
+    mainContent: string;
+    background: string;
+    whyItMatters: string;
+    technicalDetails: string | null;
+    keyHighlights: string[];
+    conclusion: string;
+  }>;
+
+  /** Companies/technologies/people actually named in the article - the expanded AI Insights card's entity lists. */
+  extractEntities(input: ExtractEntitiesInput): Promise<{
+    companies: string[];
+    technologies: string[];
+    people: string[];
   }>;
 
   /** 3-6 short topical tags. */

@@ -1,7 +1,9 @@
 import { AICache, buildCacheKey, hashArticleContent } from "@/lib/ai";
 import { findSimilarArticlesHeuristic } from "@/lib/ai/similar-articles";
 import {
+  ARTICLE_REWRITE_PROMPT_VERSION,
   BIAS_PROMPT_VERSION,
+  ENTITIES_PROMPT_VERSION,
   LONG_SUMMARY_PROMPT_VERSION,
   SENTIMENT_PROMPT_VERSION,
   SUMMARY_PROMPT_VERSION,
@@ -13,6 +15,8 @@ import type { AIProvider } from "@/services/ai/ai-provider.interface";
 import type {
   AISummaryResult,
   AITagResult,
+  ArticleEntitiesResult,
+  ArticleRewriteResult,
   BiasResult,
   FindSimilarArticlesInput,
   KeyTakeawaysResult,
@@ -21,6 +25,28 @@ import type {
   SimilarArticleMatch,
   TLDRResult,
 } from "@/types/ai";
+
+/** Word count across every prose field of a rewrite result - `ArticleRewriteResult.wordCount`'s source of truth, computed once here rather than re-derived by every caller. */
+function countRewriteWords(sections: {
+  intro: string;
+  mainContent: string;
+  background: string;
+  whyItMatters: string;
+  technicalDetails: string | null;
+  keyHighlights: string[];
+  conclusion: string;
+}): number {
+  const prose = [
+    sections.intro,
+    sections.mainContent,
+    sections.background,
+    sections.whyItMatters,
+    sections.technicalDetails ?? "",
+    ...sections.keyHighlights,
+    sections.conclusion,
+  ].join(" ");
+  return prose.split(/\s+/).filter(Boolean).length;
+}
 
 /** The minimal article shape every cached AI operation needs. */
 type ArticleAIInput = {
@@ -145,6 +171,65 @@ export class AIService {
         generatedAt: new Date().toISOString(),
         provider: provider.id,
         version: LONG_SUMMARY_PROMPT_VERSION,
+      };
+    });
+  }
+
+  /**
+   * The full 700-1500 word structured rewrite (product polishing phase,
+   * 4th pass, items 6-7) - `article-read-service.ts`'s PRIMARY reading
+   * content for the article detail page, ahead of raw extracted content
+   * or the older `getLongSummary` fallback (see that service's content
+   * precedence). `source` is passed through for tone/context only - the
+   * prompt is explicit that it must never become a source of invented
+   * facts.
+   */
+  async getArticleRewrite(article: ArticleAIInput & { source?: string }): Promise<ArticleRewriteResult | null> {
+    const provider = this.provider;
+    if (!provider) return null;
+
+    const contentHash = hashArticleContent(article.title, article.content);
+    return this.runCached(
+      "article-rewrite",
+      article.id,
+      contentHash,
+      provider.id,
+      ARTICLE_REWRITE_PROMPT_VERSION,
+      async () => {
+        const sections = await provider.generateArticleRewrite({
+          title: article.title,
+          content: article.content,
+          sourceName: article.source,
+        });
+        return {
+          ...sections,
+          wordCount: countRewriteWords(sections),
+          generatedAt: new Date().toISOString(),
+          provider: provider.id,
+          version: ARTICLE_REWRITE_PROMPT_VERSION,
+        };
+      }
+    );
+  }
+
+  /** Companies/technologies/people actually named in the article (product polishing phase, 4th pass, item 8) - the expanded AI Insights card's entity lists. */
+  async getEntities(article: ArticleAIInput): Promise<ArticleEntitiesResult | null> {
+    const provider = this.provider;
+    if (!provider) return null;
+
+    const contentHash = hashArticleContent(article.title, article.content);
+    return this.runCached("entities", article.id, contentHash, provider.id, ENTITIES_PROMPT_VERSION, async () => {
+      const { companies, technologies, people } = await provider.extractEntities({
+        title: article.title,
+        content: article.content,
+      });
+      return {
+        companies,
+        technologies,
+        people,
+        generatedAt: new Date().toISOString(),
+        provider: provider.id,
+        version: ENTITIES_PROMPT_VERSION,
       };
     });
   }

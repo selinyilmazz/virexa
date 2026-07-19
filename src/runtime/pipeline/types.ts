@@ -23,6 +23,8 @@ export type PipelineStepName =
   | "ai-summary"
   | "tldr"
   | "long-summary"
+  | "article-rewrite"
+  | "entities"
   | "tags"
   | "sentiment"
   | "bias"

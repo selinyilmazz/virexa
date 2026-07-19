@@ -30,6 +30,20 @@ const summaryLengthOptions: { value: UserSettings["summaryLength"]; label: strin
   { value: "long", label: "Long", description: "Detailed multi-paragraph summary" },
 ];
 
+/**
+ * Product polishing phase, 4th pass ("premium SaaS feel, only
+ * news-platform-relevant settings retained"): dropped Dark Mode, Compact
+ * View, Auto Play Videos, Public Profile, and Show Reading Activity -
+ * every one of these was a purely decorative toggle wired to nothing
+ * (no theme system, no compact layout variant, no video content
+ * anywhere in the product, and no public-facing profile or activity
+ * page for Privacy to actually govern). Shipping controls with no
+ * effect is exactly what made this page read as a generic admin-panel
+ * template rather than a page built for Virexa. What remains are only
+ * settings that change something real: language, AI summary length,
+ * preferred categories, notification/email preferences, and link
+ * behavior.
+ */
 export function SettingsForm() {
   const [activeCategory, setActiveCategory] = useState<SettingsCategoryId>("general");
   const savedSettings = useSettings();
@@ -143,12 +157,6 @@ export function SettingsForm() {
               <h2 className="text-2xl font-bold tracking-tight text-slate-950">Browsing</h2>
               <div className="mt-2 divide-y divide-slate-100">
                 <ToggleSwitch
-                  label="Auto Play Videos"
-                  description="Automatically play video previews in your feed."
-                  checked={settings.autoPlayVideos}
-                  onChange={(checked) => setSettings((prev) => ({ ...prev, autoPlayVideos: checked }))}
-                />
-                <ToggleSwitch
                   label="Open Links in New Tab"
                   description="Article and source links open in a new browser tab."
                   checked={settings.openLinksInNewTab}
@@ -157,26 +165,6 @@ export function SettingsForm() {
               </div>
             </section>
           </>
-        )}
-
-        {activeCategory === "appearance" && (
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-950">Appearance</h2>
-            <div className="mt-2 divide-y divide-slate-100">
-              <ToggleSwitch
-                label="Dark Mode"
-                description="Switch to a darker color theme."
-                checked={settings.darkMode}
-                onChange={(checked) => setSettings((prev) => ({ ...prev, darkMode: checked }))}
-              />
-              <ToggleSwitch
-                label="Compact View"
-                description="Show more content with tighter spacing."
-                checked={settings.compactView}
-                onChange={(checked) => setSettings((prev) => ({ ...prev, compactView: checked }))}
-              />
-            </div>
-          </section>
         )}
 
         {activeCategory === "reading" && (
@@ -286,17 +274,6 @@ export function SettingsForm() {
                   }
                 />
                 <ToggleSwitch
-                  label="Marketing Emails"
-                  description="Offers, tips and partner announcements."
-                  checked={settings.emailPreferences.marketingEmails}
-                  onChange={(checked) =>
-                    setSettings((prev) => ({
-                      ...prev,
-                      emailPreferences: { ...prev.emailPreferences, marketingEmails: checked },
-                    }))
-                  }
-                />
-                <ToggleSwitch
                   label="Account Activity"
                   description="Sign-ins and security-related alerts."
                   checked={settings.emailPreferences.accountActivity}
@@ -310,30 +287,6 @@ export function SettingsForm() {
               </div>
             </section>
           </>
-        )}
-
-        {activeCategory === "privacy" && (
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-950">Privacy</h2>
-            <div className="mt-2 divide-y divide-slate-100">
-              <ToggleSwitch
-                label="Public Profile"
-                description="Allow others to view your profile page."
-                checked={settings.privacy.publicProfile}
-                onChange={(checked) =>
-                  setSettings((prev) => ({ ...prev, privacy: { ...prev.privacy, publicProfile: checked } }))
-                }
-              />
-              <ToggleSwitch
-                label="Show Reading Activity"
-                description="Display your saved and read articles to others."
-                checked={settings.privacy.showReadingActivity}
-                onChange={(checked) =>
-                  setSettings((prev) => ({ ...prev, privacy: { ...prev.privacy, showReadingActivity: checked } }))
-                }
-              />
-            </div>
-          </section>
         )}
 
         <button

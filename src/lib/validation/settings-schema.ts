@@ -8,7 +8,6 @@ import { z } from "zod";
  * or vice versa) keeps both files independently readable.
  */
 export const settingsSchema = z.object({
-  darkMode: z.boolean(),
   language: z.string().min(2, "Select a language.").max(10),
   summaryLength: z.enum(["short", "medium", "long"]),
   preferredCategories: z.array(z.string()).max(20, "Too many categories selected."),
@@ -19,15 +18,8 @@ export const settingsSchema = z.object({
   }),
   emailPreferences: z.object({
     productUpdates: z.boolean(),
-    marketingEmails: z.boolean(),
     accountActivity: z.boolean(),
   }),
-  privacy: z.object({
-    publicProfile: z.boolean(),
-    showReadingActivity: z.boolean(),
-  }),
-  autoPlayVideos: z.boolean(),
-  compactView: z.boolean(),
   openLinksInNewTab: z.boolean(),
 });
 

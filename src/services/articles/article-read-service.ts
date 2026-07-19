@@ -17,7 +17,15 @@ import { createArticleMetricsRepository } from "@/repositories/article-metrics-r
 import { createArticleRepository } from "@/repositories/article-repository";
 import { createSourceRepository } from "@/repositories/source-repository";
 import type { FullTextSearchParams } from "@/lib/validation/article-storage-schema";
-import type { ArticleRow, StoredBias, StoredLongSummary, StoredSentiment, StoredTldr } from "@/types/database";
+import type {
+  ArticleRow,
+  StoredArticleRewrite,
+  StoredBias,
+  StoredEntities,
+  StoredLongSummary,
+  StoredSentiment,
+  StoredTldr,
+} from "@/types/database";
 import type { Category as NewsCategory } from "@/types/news";
 
 /** Category name -> emoji icon, reusing `src/data/categories.ts`'s existing taxonomy (already has one per category for the `/category/[slug]` pages) instead of maintaining a second copy just for the homepage's Trending Topics widget. */
@@ -199,10 +207,7 @@ export const getFeaturedArticle = cache(async (): Promise<FeaturedArticle | null
  * Exact, paginated "most read" listing for the dedicated `/most-read`
  * page - sorted by `trending_score` via `ArticleRepository.search()`'s
  * `sortBy` option, using the same `count: "exact"` pagination as every
- * other real listing (category, search). The homepage no longer has its
- * own "Most Read" widget (product polishing phase, 2nd pass:
- * "sadeleştir" - it was dropped along with the sidebar layout), so this
- * dedicated page is the only remaining consumer of most-read data.
+ * other real listing (category, search).
  */
 export async function getMostReadPage(page: number, pageSize: number): Promise<ArticlesPage> {
   try {
@@ -218,6 +223,27 @@ export async function getMostReadPage(page: number, pageSize: number): Promise<A
   } catch (error) {
     console.error("[article-read-service] getMostReadPage failed:", error);
     return emptyPage(page, pageSize);
+  }
+}
+
+/**
+ * Top-N "most read" items for the homepage's Most Read sidebar widget
+ * (product polishing phase, 3rd pass, layout correction #3 - restores a
+ * homepage Most Read widget, paired with Breaking News in the page's
+ * second section). A lightweight, non-paginated counterpart to
+ * `getMostReadPage` - same `trending_score` sort, just the first page
+ * only and no total-count query, since the widget only ever shows a
+ * fixed handful of items and links out to the full `/most-read` page
+ * for anyone who wants more.
+ */
+export async function getMostRead(limit = 5): Promise<CategoryNewsItem[]> {
+  try {
+    const { articles } = await getRepositories();
+    const result = await articles.search({ sortBy: "trending_score", page: 1, pageSize: limit });
+    return result.items.map(toCategoryNewsItem);
+  } catch (error) {
+    console.error("[article-read-service] getMostRead failed:", error);
+    return [];
   }
 }
 
@@ -680,16 +706,21 @@ export type ArticleAIInsights = {
   tags: string[];
   sentiment: StoredSentiment | null;
   bias: StoredBias | null;
+  /** Companies/technologies/people actually named in the article (product polishing phase, 4th pass, item 8) - `null` when entity extraction hasn't run for this article yet (no AI provider configured, or it fell outside a pipeline run's per-run cap). */
+  entities: StoredEntities | null;
 };
 
 /**
- * The article detail page's Priority-2 content fallback (product
+ * The article detail page's Priority-3 content fallback (product
  * polishing phase, 3rd pass, item 5) - only ever set when the article's
  * real content is still too thin after ingestion-time extraction AND an
  * AI-generated `long_summary` exists for it (`ai-steps.ts`'s
  * `longSummaryStep` only runs for exactly those articles). `null` means
  * the page should keep showing `content` (the real/description-based
- * blocks) as-is instead.
+ * blocks) as-is instead. Superseded as the PRIMARY fallback by
+ * `rewrittenArticle` below (product polishing phase, 4th pass) - this
+ * now only matters when no AI provider is configured at all, or this
+ * specific article hasn't been rewritten yet.
  */
 export type StructuredSummary = StoredLongSummary;
 
@@ -708,11 +739,36 @@ export type ArticleDetail = {
   content: ArticleContentBlock[];
   /** Set only when `content` is still thin and an AI long summary is available for this article - see `StructuredSummary`'s doc comment. */
   structuredSummary: StructuredSummary | null;
+  /**
+   * The full 700-1500 word AI rewrite (product polishing phase, 4th
+   * pass, items 6-7) - the article detail page's PRIMARY reading
+   * content whenever it's available, ahead of both `content` and
+   * `structuredSummary`. See `getArticleDetail`'s content-precedence
+   * doc comment for the full fallback chain. `null` when no AI provider
+   * is configured, or this article hasn't been rewritten yet (outside a
+   * pipeline run's per-run cap) - callers fall back to `content`.
+   */
+  rewrittenArticle: StoredArticleRewrite | null;
   tags: string[];
   trustScore: number;
   trendingScore: number;
   ai: ArticleAIInsights | null;
 };
+
+/** Flattens a `StoredArticleRewrite` back to plain text - used only to feed `estimateReadingTime` when the rewrite is the resolved primary content (see `getArticleDetail`). */
+function rewriteToPlainText(rewrite: StoredArticleRewrite): string {
+  return [
+    rewrite.intro,
+    rewrite.mainContent,
+    rewrite.background,
+    rewrite.whyItMatters,
+    rewrite.technicalDetails ?? "",
+    ...rewrite.keyHighlights,
+    rewrite.conclusion,
+  ]
+    .join(" ")
+    .trim();
+}
 
 /**
  * Full article detail for `/article/[slug]` - the row itself plus its
@@ -721,6 +777,29 @@ export type ArticleDetail = {
  * into the one shape the page needs. Returns `null` for a missing or
  * deleted article so the page can call `notFound()` instead of
  * crashing.
+ *
+ * Content precedence (product polishing phase, 4th pass, item 6 -
+ * "Virexa sadece bir RSS okuyucu gibi hissettirmemeli"):
+ *
+ *  1. `rewrittenArticle` - the full AI rewrite, when available. This is
+ *     what item 6/7 actually asks for: a natural-reading, fully
+ *     organized article a reader can finish inside Virexa, never just
+ *     the raw RSS description. `ArticleContent.tsx` renders this ahead
+ *     of everything else.
+ *  2. `content` (real extracted article text, via `buildContentBlocks`)
+ *     - used when no rewrite exists yet for this article (no AI
+ *     provider configured, or it fell outside a pipeline run's cap) but
+ *     the real extracted body is substantial.
+ *  3. `structuredSummary` (the older Overview/Key Points/Technical
+ *     Details/Why It Matters fallback) - only reached when BOTH the
+ *     rewrite and the raw content are unavailable/thin.
+ *  4. `buildContentBlocks`'s own last-resort blend of description + AI
+ *     summary/TLDR - the final safety net for an article with no AI
+ *     enrichment at all.
+ *
+ * `readingTime` is derived from whichever of these actually ends up as
+ * the resolved primary content, so it always reflects what a reader
+ * will actually see, not a value stamped once at ingestion time.
  */
 export async function getArticleDetail(slug: string): Promise<ArticleDetail | null> {
   try {
@@ -731,20 +810,16 @@ export async function getArticleDetail(slug: string): Promise<ArticleDetail | nu
     const aiRow = await ai.getLatest(row.id);
     const content = buildContentBlocks(row.content, row.description, aiRow?.summary ?? null, aiRow?.tldr ?? null);
 
-    // Product polishing phase, 3rd pass: "İçerik uzunluğuna göre otomatik
-    // hesapla" - recomputed here from the FINAL resolved content (real
-    // extracted body, or the description+AI-summary fallback above)
-    // rather than trusting `row.reading_time`, which was only ever
-    // stamped once at ingestion time from whatever thin content the
-    // provider originally supplied and never revisited afterwards.
-    const resolvedContentText = blocksToPlainText(content);
-
-    // Priority-2 fallback (product polishing phase, 3rd pass, item 5):
-    // only offered when the article's raw `content` is still thin - a
-    // full/real body always wins, the structured summary never replaces
-    // actual article text, only ever stands in for it.
     const isRawContentThin = (row.content?.trim().length ?? 0) < MIN_ACCEPTABLE_CONTENT_LENGTH;
     const structuredSummary = isRawContentThin && aiRow?.long_summary ? aiRow.long_summary : null;
+    const rewrittenArticle = aiRow?.rewritten_article ?? null;
+
+    // Reading time is recomputed here from the FINAL resolved content
+    // (the rewrite when present, otherwise the same resolved blocks used
+    // before) rather than trusting `row.reading_time`, which was only
+    // ever stamped once at ingestion time from whatever thin content the
+    // provider originally supplied and never revisited afterwards.
+    const resolvedContentText = rewrittenArticle ? rewriteToPlainText(rewrittenArticle) : blocksToPlainText(content);
 
     return {
       id: row.id,
@@ -768,6 +843,7 @@ export async function getArticleDetail(slug: string): Promise<ArticleDetail | nu
       readingTime: `${estimateReadingTime(resolvedContentText, row.description)} min read`,
       content,
       structuredSummary,
+      rewrittenArticle,
       tags: row.tags,
       trustScore: row.trust_score,
       trendingScore: row.trending_score,
@@ -778,6 +854,7 @@ export async function getArticleDetail(slug: string): Promise<ArticleDetail | nu
             tags: aiRow.tags,
             sentiment: aiRow.sentiment,
             bias: aiRow.bias,
+            entities: aiRow.entities,
           }
         : null,
     };

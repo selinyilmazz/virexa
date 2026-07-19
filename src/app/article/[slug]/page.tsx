@@ -130,12 +130,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           <div className="mt-6 grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.42fr)]">
             <div className="min-w-0 space-y-6">
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-                <ArticleHero
-                  image={article.image}
-                  category={article.category}
-                  title={article.title}
-                  summary={article.description}
-                />
+                <ArticleHero image={article.image} category={article.category} title={article.title} />
 
                 <div className="mt-6 flex flex-col gap-4 border-y border-slate-200 py-5 sm:flex-row sm:items-center sm:justify-between">
                   <ArticleMeta
@@ -162,6 +157,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   <ArticleContent
                     blocks={article.content}
                     structuredSummary={article.structuredSummary}
+                    rewrittenArticle={article.rewrittenArticle}
                     sourceLabel={article.source}
                     sourceUrl={article.sourceUrl}
                   />
@@ -174,7 +170,12 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 )}
               </div>
 
-              <ArticleAIInsights ai={article.ai} trustScore={article.trustScore} trendingScore={article.trendingScore} />
+              <ArticleAIInsights
+                ai={article.ai}
+                rewrittenArticle={article.rewrittenArticle}
+                trustScore={article.trustScore}
+                trendingScore={article.trendingScore}
+              />
             </div>
 
             <aside className="min-w-0">

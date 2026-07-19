@@ -2,7 +2,16 @@ import { MIN_ACCEPTABLE_CONTENT_LENGTH } from "@/lib/news";
 import { runPipelineStep } from "@/runtime/pipeline/types";
 import type { PipelineStepResult } from "@/runtime/pipeline/types";
 import { aiService } from "@/services/ai";
-import type { AISummaryResult, AITagResult, BiasResult, LongSummaryResult, SentimentResult, TLDRResult } from "@/types/ai";
+import type {
+  AISummaryResult,
+  AITagResult,
+  ArticleEntitiesResult,
+  ArticleRewriteResult,
+  BiasResult,
+  LongSummaryResult,
+  SentimentResult,
+  TLDRResult,
+} from "@/types/ai";
 import type { NewsArticle } from "@/types/news";
 
 /**
@@ -73,6 +82,44 @@ export async function longSummaryStep(articles: NewsArticle[]): Promise<Pipeline
     const results = new Map<string, LongSummaryResult>();
     for (const article of articlesNeedingLongSummary(articles)) {
       const result = await aiService.getLongSummary({ id: article.id, title: article.title, content: articleContent(article) });
+      if (result) results.set(article.id, result);
+    }
+    return results;
+  });
+}
+
+/**
+ * The full article-rewrite capability (product polishing phase, 4th
+ * pass, items 6-7) - unlike `longSummaryStep`, this is NOT restricted to
+ * thin-content articles: the rewrite is now the article detail page's
+ * PRIMARY reading content for every article (see `article-read-service.ts`'s
+ * content precedence), not just a thin-content fallback. Uses the same
+ * top-N-of-the-run selection (`articlesForAI`) as every other broad AI
+ * step, for the same per-run cost predictability.
+ */
+export async function articleRewriteStep(
+  articles: NewsArticle[]
+): Promise<PipelineStepResult<Map<string, ArticleRewriteResult>>> {
+  return runPipelineStep("article-rewrite", async () => {
+    const results = new Map<string, ArticleRewriteResult>();
+    for (const article of articlesForAI(articles)) {
+      const result = await aiService.getArticleRewrite({
+        id: article.id,
+        title: article.title,
+        content: articleContent(article),
+        source: article.source.name,
+      });
+      if (result) results.set(article.id, result);
+    }
+    return results;
+  });
+}
+
+export async function entitiesStep(articles: NewsArticle[]): Promise<PipelineStepResult<Map<string, ArticleEntitiesResult>>> {
+  return runPipelineStep("entities", async () => {
+    const results = new Map<string, ArticleEntitiesResult>();
+    for (const article of articlesForAI(articles)) {
+      const result = await aiService.getEntities({ id: article.id, title: article.title, content: articleContent(article) });
       if (result) results.set(article.id, result);
     }
     return results;

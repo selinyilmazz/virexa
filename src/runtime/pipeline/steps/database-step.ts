@@ -7,13 +7,24 @@ import { createArticleAIRepository } from "@/repositories/article-ai-repository"
 import { createArticleMetricsRepository } from "@/repositories/article-metrics-repository";
 import { createArticleRepository } from "@/repositories/article-repository";
 import { createSourceRepository } from "@/repositories/source-repository";
-import type { AISummaryResult, AITagResult, BiasResult, LongSummaryResult, SentimentResult, TLDRResult } from "@/types/ai";
+import type {
+  AISummaryResult,
+  AITagResult,
+  ArticleEntitiesResult,
+  ArticleRewriteResult,
+  BiasResult,
+  LongSummaryResult,
+  SentimentResult,
+  TLDRResult,
+} from "@/types/ai";
 import type { NewsArticle } from "@/types/news";
 
 export type PipelineAIResults = {
   summaries: Map<string, AISummaryResult>;
   tldrs: Map<string, TLDRResult>;
   longSummaries: Map<string, LongSummaryResult>;
+  rewrites: Map<string, ArticleRewriteResult>;
+  entities: Map<string, ArticleEntitiesResult>;
   tags: Map<string, AITagResult>;
   sentiments: Map<string, SentimentResult>;
   biases: Map<string, BiasResult>;
@@ -87,16 +98,34 @@ function toAIInputs(articles: NewsArticle[], results: PipelineAIResults): Articl
     const summary = results.summaries.get(article.id);
     const tldr = results.tldrs.get(article.id);
     const longSummary = results.longSummaries.get(article.id);
+    const rewrite = results.rewrites.get(article.id);
+    const entities = results.entities.get(article.id);
     const tags = results.tags.get(article.id);
     const sentiment = results.sentiments.get(article.id);
     const bias = results.biases.get(article.id);
 
-    if (!summary && !tldr && !longSummary && !tags && !sentiment && !bias) continue;
+    if (!summary && !tldr && !longSummary && !rewrite && !entities && !tags && !sentiment && !bias) continue;
 
     const provider =
-      summary?.provider ?? tldr?.provider ?? longSummary?.provider ?? tags?.provider ?? sentiment?.provider ?? bias?.provider ?? "unknown";
+      summary?.provider ??
+      tldr?.provider ??
+      longSummary?.provider ??
+      rewrite?.provider ??
+      entities?.provider ??
+      tags?.provider ??
+      sentiment?.provider ??
+      bias?.provider ??
+      "unknown";
     const promptVersion =
-      summary?.version ?? tldr?.version ?? longSummary?.version ?? tags?.version ?? sentiment?.version ?? bias?.version ?? "";
+      summary?.version ??
+      tldr?.version ??
+      longSummary?.version ??
+      rewrite?.version ??
+      entities?.version ??
+      tags?.version ??
+      sentiment?.version ??
+      bias?.version ??
+      "";
 
     inputs.push({
       articleId: article.id,
@@ -109,6 +138,21 @@ function toAIInputs(articles: NewsArticle[], results: PipelineAIResults): Articl
             technicalDetails: longSummary.technicalDetails,
             whyItMatters: longSummary.whyItMatters,
           }
+        : null,
+      rewrittenArticle: rewrite
+        ? {
+            intro: rewrite.intro,
+            mainContent: rewrite.mainContent,
+            background: rewrite.background,
+            whyItMatters: rewrite.whyItMatters,
+            technicalDetails: rewrite.technicalDetails,
+            keyHighlights: rewrite.keyHighlights,
+            conclusion: rewrite.conclusion,
+            wordCount: rewrite.wordCount,
+          }
+        : null,
+      entities: entities
+        ? { companies: entities.companies, technologies: entities.technologies, people: entities.people }
         : null,
       tags: tags?.tags ?? [],
       sentiment: sentiment ? { label: sentiment.label, confidence: sentiment.confidence } : null,

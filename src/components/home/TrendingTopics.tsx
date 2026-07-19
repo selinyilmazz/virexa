@@ -55,23 +55,23 @@ function TrendingTopicCard({ topic }: { topic: TrendingCategoryStat | TrendingTo
 }
 
 /**
- * "Trending Topics" - back in the right sidebar (product polishing
- * phase, 3rd pass reverts the 2nd pass's single-column experiment: "bu
- * çalışma yeniden tasarım değildir... sağ sidebar'a taşı"), rendered as
- * a compact top-to-bottom list inside its own card rather than a grid.
- * Real data via `getTrendingCategories` (`article-read-service.ts`);
- * falls back to the curated static list (`data/trendingTopics.ts`) only
- * when the database has no articles yet.
+ * "Trending Topics" - the top section of the homepage's unified right
+ * sidebar card (product polishing phase, 3rd pass, layout correction
+ * #3: "Sağ sütun tek bir bütün gibi görünmeli" - Trending Topics and
+ * Trending Companies now live inside ONE shared bordered card, rendered
+ * together by `app/page.tsx` with a divider between them, so this
+ * component itself carries no border/padding/shadow of its own -
+ * whoever composes it is responsible for the shared card chrome). Real
+ * data via `getTrendingCategories` (`article-read-service.ts`); falls
+ * back to the curated static list (`data/trendingTopics.ts`) only when
+ * the database has no articles yet.
  */
 export async function TrendingTopics() {
   const realTopics = await getTrendingCategories(6);
   const topics: (TrendingCategoryStat | TrendingTopic)[] = realTopics.length > 0 ? realTopics : trendingTopics;
 
   return (
-    <section
-      aria-labelledby="trending-topics-title"
-      className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
-    >
+    <section aria-labelledby="trending-topics-title">
       <div className="px-1">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2f67e8]">This Week</p>
         <h2 id="trending-topics-title" className="mt-1 text-xl font-bold tracking-tight text-slate-950">

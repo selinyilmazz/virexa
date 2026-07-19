@@ -7,7 +7,6 @@
  * layer) can import it without depending on each other.
  */
 export type UserSettings = {
-  darkMode: boolean;
   language: string;
   summaryLength: "short" | "medium" | "long";
   preferredCategories: string[];
@@ -18,14 +17,7 @@ export type UserSettings = {
   };
   emailPreferences: {
     productUpdates: boolean;
-    marketingEmails: boolean;
     accountActivity: boolean;
   };
-  privacy: {
-    publicProfile: boolean;
-    showReadingActivity: boolean;
-  };
-  autoPlayVideos: boolean;
-  compactView: boolean;
   openLinksInNewTab: boolean;
 };

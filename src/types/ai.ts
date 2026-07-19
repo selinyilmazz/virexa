@@ -82,6 +82,68 @@ export type LongSummaryResult = {
   version: string;
 };
 
+/**
+ * Input for the full article-rewrite capability (product polishing
+ * phase, 4th pass, items 6-7): turns the real extracted source content
+ * into a natural-reading, structured news article so a reader never
+ * needs to leave Virexa to understand a story. `sourceName` is passed
+ * through only to give the model a sense of the outlet's voice/context -
+ * it is never allowed to be the basis for facts not present in `content`.
+ */
+export type ArticleRewriteInput = {
+  title: string;
+  content: string;
+  sourceName?: string;
+};
+
+/**
+ * A full, structured 700-1500 word rewrite of an article, grounded
+ * strictly in the extracted source content - never fabricated. Maps 1:1
+ * onto the article detail page's required section order (item 6):
+ * Hero image / Title (both already exist outside this result) -> intro
+ * -> mainContent -> background -> whyItMatters -> technicalDetails (only
+ * when the story actually has a technical dimension - `null` otherwise,
+ * so the section can be omitted rather than padded with filler) ->
+ * keyHighlights -> conclusion -> Source / CTA (rendered separately, not
+ * part of this result).
+ */
+export type ArticleRewriteResult = {
+  intro: string;
+  mainContent: string;
+  background: string;
+  whyItMatters: string;
+  technicalDetails: string | null;
+  keyHighlights: string[];
+  conclusion: string;
+  /** Word count of every prose field combined - lets the UI show a real reading-time/length signal without re-deriving it. */
+  wordCount: number;
+  generatedAt: string;
+  provider: AIProviderId;
+  version: string;
+};
+
+export type ExtractEntitiesInput = {
+  title: string;
+  content: string;
+};
+
+/**
+ * Named entities actually mentioned in an article - companies,
+ * technologies/products, and people (product polishing phase, 4th pass,
+ * item 8's expanded AI Insights card). Grounded strictly in the article's
+ * own content; an empty array means "genuinely none mentioned", not "not
+ * generated yet" (that distinction is `AIArticleInsights.entities` being
+ * `undefined` vs. a result with empty arrays).
+ */
+export type ArticleEntitiesResult = {
+  companies: string[];
+  technologies: string[];
+  people: string[];
+  generatedAt: string;
+  provider: AIProviderId;
+  version: string;
+};
+
 export type AITagResult = {
   tags: string[];
   generatedAt: string;
@@ -148,6 +210,8 @@ export type AIArticleInsights = {
   tldr?: TLDRResult;
   keyTakeaways?: KeyTakeawaysResult;
   longSummary?: LongSummaryResult;
+  rewrittenArticle?: ArticleRewriteResult;
+  entities?: ArticleEntitiesResult;
   tags?: AITagResult;
   sentiment?: SentimentResult;
   bias?: BiasResult;

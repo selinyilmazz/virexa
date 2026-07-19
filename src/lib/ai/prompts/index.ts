@@ -7,3 +7,5 @@ export { buildTagsPrompt, TAGS_PROMPT_VERSION } from "@/lib/ai/prompts/tags.prom
 export { buildSentimentPrompt, SENTIMENT_PROMPT_VERSION } from "@/lib/ai/prompts/sentiment.prompt";
 export { buildBiasPrompt, BIAS_PROMPT_VERSION } from "@/lib/ai/prompts/bias.prompt";
 export { buildLongSummaryPrompt, LONG_SUMMARY_PROMPT_VERSION } from "@/lib/ai/prompts/long-summary.prompt";
+export { buildArticleRewritePrompt, ARTICLE_REWRITE_PROMPT_VERSION } from "@/lib/ai/prompts/article-rewrite.prompt";
+export { buildEntitiesPrompt, ENTITIES_PROMPT_VERSION } from "@/lib/ai/prompts/entities.prompt";

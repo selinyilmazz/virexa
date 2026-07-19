@@ -136,8 +136,8 @@ export async function backfillArticleImages(): Promise<BackfillImagesResult> {
   return { checked: candidates.length, updated: updates.length };
 }
 
-/** Same order of magnitude as `IMAGE_BACKFILL_BATCH_SIZE`, kept lower since this action does a full page fetch + HTML scan per candidate (`fetchArticleContent`), not a single API lookup. */
-const CONTENT_BACKFILL_BATCH_SIZE = 15;
+/** Matches `news-aggregator.ts`'s `MAX_CONTENT_EXTRACTIONS_PER_RUN` (product polishing phase, 4th pass, item 9 - "her makale için tam içerik çıkarılsın") so an admin-triggered backfill can catch up already-persisted thin articles at the same rate new ones get extracted at ingestion time. */
+const CONTENT_BACKFILL_BATCH_SIZE = 60;
 
 export type BackfillContentResult = {
   checked: number;

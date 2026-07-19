@@ -44,15 +44,18 @@ const MAX_STOCK_IMAGE_LOOKUPS_PER_RUN = 40;
  * Cap on how many articles get a full-content extraction attempt (stage
  * "content resolution", sibling to `resolveMissingImages` below) in one
  * `fetchArticles()` call - same amortized-cost/budget shape as
- * `MAX_STOCK_IMAGE_LOOKUPS_PER_RUN`, just lower, since this stage does a
- * full page fetch + HTML scan (`fetchArticleContent`) rather than a
- * single API lookup. Articles beyond this cap that are still thin simply
- * keep their provider-supplied `content`/`summary` for this run;
+ * `MAX_STOCK_IMAGE_LOOKUPS_PER_RUN`. Raised well above the old cap of 15
+ * (product polishing phase, 4th pass, item 9 - "her makale için tam
+ * içerik çıkarılsın", not just a handful per run) so that in practice
+ * every thin article a normal ingestion pass encounters gets a real
+ * extraction attempt, not just a small sample of it. Articles beyond
+ * this cap that are still thin simply keep their provider-supplied
+ * `content`/`summary` for this run and get picked up on the next one;
  * `article-read-service.ts`'s `buildContentBlocks` has its own further
  * fallback (description + AI summary) for whatever is still thin by the
  * time a reader opens the article.
  */
-const MAX_CONTENT_EXTRACTIONS_PER_RUN = 15;
+const MAX_CONTENT_EXTRACTIONS_PER_RUN = 60;
 
 /**
  * Normalizes one raw provider item into the final `NewsArticle` shape:

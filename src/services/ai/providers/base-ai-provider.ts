@@ -1,6 +1,8 @@
 import { parseJsonResponse } from "@/lib/ai/http";
 import {
+  buildArticleRewritePrompt,
   buildBiasPrompt,
+  buildEntitiesPrompt,
   buildLongSummaryPrompt,
   buildSentimentPrompt,
   buildSummaryPrompt,
@@ -14,7 +16,9 @@ import type {
   AIProviderId,
   AnalyzeBiasInput,
   AnalyzeSentimentInput,
+  ArticleRewriteInput,
   BiasLevel,
+  ExtractEntitiesInput,
   GenerateTagsInput,
   SentimentLabel,
   SummarizeInput,
@@ -61,6 +65,26 @@ export abstract class BaseAIProvider implements AIProvider {
     input: SummarizeInput
   ): Promise<{ overview: string; keyPoints: string[]; technicalDetails: string; whyItMatters: string }> {
     return this.runJsonTask(buildLongSummaryPrompt(input));
+  }
+
+  async generateArticleRewrite(input: ArticleRewriteInput): Promise<{
+    intro: string;
+    mainContent: string;
+    background: string;
+    whyItMatters: string;
+    technicalDetails: string | null;
+    keyHighlights: string[];
+    conclusion: string;
+  }> {
+    return this.runJsonTask(buildArticleRewritePrompt(input));
+  }
+
+  async extractEntities(input: ExtractEntitiesInput): Promise<{
+    companies: string[];
+    technologies: string[];
+    people: string[];
+  }> {
+    return this.runJsonTask(buildEntitiesPrompt(input));
   }
 
   async generateTags(input: GenerateTagsInput): Promise<string[]> {

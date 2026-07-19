@@ -1,4 +1,13 @@
-import { aiSummaryStep, biasStep, longSummaryStep, sentimentStep, tagsStep, tldrStep } from "@/runtime/pipeline/steps/ai-steps";
+import {
+  aiSummaryStep,
+  articleRewriteStep,
+  biasStep,
+  entitiesStep,
+  longSummaryStep,
+  sentimentStep,
+  tagsStep,
+  tldrStep,
+} from "@/runtime/pipeline/steps/ai-steps";
 import { databaseStep } from "@/runtime/pipeline/steps/database-step";
 import {
   duplicateDetectionStep,
@@ -24,8 +33,9 @@ export type NewsPipelineResult = {
 /**
  * Runs the full news-processing pipeline in the exact order requested:
  * RSS -> NewsAPI -> GNews -> Hacker News -> Normalize -> Duplicate
- * Detection -> Trust Score -> AI Summary -> TLDR -> Long Summary -> Tags
- * -> Sentiment -> Bias -> Trending Score -> Database -> Cache Refresh.
+ * Detection -> Trust Score -> AI Summary -> TLDR -> Long Summary ->
+ * Article Rewrite -> Entities -> Tags -> Sentiment -> Bias -> Trending
+ * Score -> Database -> Cache Refresh.
  *
  * Every step is independently callable (see `pipeline/steps/*`) and
  * never throws - each returns a `PipelineStepResult` with its own
@@ -67,6 +77,10 @@ export async function runNewsPipeline(): Promise<NewsPipelineResult> {
   steps.push(tldrs);
   const longSummaries = await longSummaryStep(articles);
   steps.push(longSummaries);
+  const rewrites = await articleRewriteStep(articles);
+  steps.push(rewrites);
+  const entities = await entitiesStep(articles);
+  steps.push(entities);
   const tags = await tagsStep(articles);
   steps.push(tags);
   const sentiments = await sentimentStep(articles);
@@ -83,6 +97,8 @@ export async function runNewsPipeline(): Promise<NewsPipelineResult> {
     summaries: summaries.data ?? new Map(),
     tldrs: tldrs.data ?? new Map(),
     longSummaries: longSummaries.data ?? new Map(),
+    rewrites: rewrites.data ?? new Map(),
+    entities: entities.data ?? new Map(),
     tags: tags.data ?? new Map(),
     sentiments: sentiments.data ?? new Map(),
     biases: biases.data ?? new Map(),

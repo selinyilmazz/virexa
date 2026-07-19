@@ -11,20 +11,16 @@ const searchQueryByCompany: Record<string, string> = {
 };
 
 /**
- * "Trending Companies" - moved from a full-width horizontal row into the
- * right sidebar, directly under Trending Topics (product polishing
- * phase, 3rd pass: "aynı sidebar mantığında yukarıdan aşağı liste halinde
- * göster... kart tasarımını değiştirme, sadece dikey liste yap"). Same
- * card content/links/hover treatment as before, just stacked
- * top-to-bottom (`space-y-2`) instead of a `grid`, and sized to fit a
- * ~360px sidebar column rather than the full content width.
+ * "Trending Companies" - the bottom section of the homepage's unified
+ * right sidebar card, directly under Trending Topics inside the same
+ * shared bordered card (product polishing phase, 3rd pass, layout
+ * correction #3 - see `TrendingTopics.tsx`'s doc comment for why this
+ * component carries no border/padding of its own). Same card content/
+ * links/hover treatment as before, stacked top-to-bottom (`space-y-2`).
  */
 export function CompanyTicker() {
   return (
-    <section
-      aria-labelledby="trending-companies-title"
-      className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
-    >
+    <section aria-labelledby="trending-companies-title">
       <div className="px-1">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2f67e8]">Markets</p>
         <h2 id="trending-companies-title" className="mt-1 text-xl font-bold tracking-tight text-slate-950">

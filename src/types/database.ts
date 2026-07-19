@@ -22,13 +22,7 @@ export type NotificationSettings = {
 
 export type EmailPreferenceSettings = {
   productUpdates: boolean;
-  marketingEmails: boolean;
   accountActivity: boolean;
-};
-
-export type PrivacySettings = {
-  publicProfile: boolean;
-  showReadingActivity: boolean;
 };
 
 export type ProfileRow = {
@@ -87,15 +81,11 @@ export type ReadingHistoryUpdate = Partial<Omit<ReadingHistoryRow, "id" | "user_
 
 export type UserSettingsRow = {
   id: string;
-  dark_mode: boolean;
   language: string;
   summary_length: SummaryLength;
   preferred_categories: string[];
   notifications: NotificationSettings;
   email_preferences: EmailPreferenceSettings;
-  privacy: PrivacySettings;
-  auto_play_videos: boolean;
-  compact_view: boolean;
   open_links_in_new_tab: boolean;
   created_at: string;
   updated_at: string;
@@ -181,12 +171,35 @@ export type StoredBias = { level: string; confidence: number };
  */
 export type StoredLongSummary = { overview: string; keyPoints: string[]; technicalDetails: string; whyItMatters: string };
 
+/**
+ * Stored shape of `article_ai.rewritten_article` (jsonb) - a slimmed-down
+ * `ArticleRewriteResult` (product polishing phase, 4th pass, items 6-7:
+ * the full 700-1500 word structured rewrite that's now the article
+ * detail page's PRIMARY reading content, not just a thin-content
+ * fallback like `long_summary`).
+ */
+export type StoredArticleRewrite = {
+  intro: string;
+  mainContent: string;
+  background: string;
+  whyItMatters: string;
+  technicalDetails: string | null;
+  keyHighlights: string[];
+  conclusion: string;
+  wordCount: number;
+};
+
+/** Stored shape of `article_ai.entities` (jsonb) - a slimmed-down `ArticleEntitiesResult` (product polishing phase, 4th pass, item 8). */
+export type StoredEntities = { companies: string[]; technologies: string[]; people: string[] };
+
 export type ArticleAIRow = {
   id: string;
   article_id: string;
   summary: string | null;
   tldr: StoredTldr | null;
   long_summary: StoredLongSummary | null;
+  rewritten_article: StoredArticleRewrite | null;
+  entities: StoredEntities | null;
   tags: string[];
   sentiment: StoredSentiment | null;
   bias: StoredBias | null;

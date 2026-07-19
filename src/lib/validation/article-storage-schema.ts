@@ -61,6 +61,27 @@ export const articleAIInputSchema = z.object({
     })
     .nullable()
     .optional(),
+  rewrittenArticle: z
+    .object({
+      intro: z.string(),
+      mainContent: z.string(),
+      background: z.string(),
+      whyItMatters: z.string(),
+      technicalDetails: z.string().nullable(),
+      keyHighlights: z.array(z.string()),
+      conclusion: z.string(),
+      wordCount: z.number().int().min(0),
+    })
+    .nullable()
+    .optional(),
+  entities: z
+    .object({
+      companies: z.array(z.string()),
+      technologies: z.array(z.string()),
+      people: z.array(z.string()),
+    })
+    .nullable()
+    .optional(),
   tags: z.array(z.string().trim()).default([]),
   sentiment: z.object({ label: z.string(), confidence: z.number().min(0).max(1) }).nullable().optional(),
   bias: z.object({ level: z.string(), confidence: z.number().min(0).max(1) }).nullable().optional(),
