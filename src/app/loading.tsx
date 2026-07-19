@@ -45,38 +45,32 @@ function SidebarListSkeleton({ count }: { count: number }) {
  * Automatic Suspense fallback for `/` (Next.js's `loading.tsx`
  * convention) while the homepage's real database reads resolve -
  * "hiçbir zaman boş ekran gösterilmeyecek". Mirrors the homepage's
- * actual 3-section layout (product polishing phase, 3rd pass, layout
- * correction #3): Hero+sidebar, then Breaking News+Most Read, then
- * Latest News full width. `Header` is included so the page chrome
- * doesn't disappear/reflow during loading.
+ * actual layout (product polishing phase, 4th pass, layout correction
+ * #4): one 12-column grid, left column (Hero/Breaking News/Latest News
+ * skeletons stacked) independent from the right sidebar column
+ * (Trending Topics+Companies card, then Most Read). `Header` is
+ * included so the page chrome doesn't disappear/reflow during loading.
  */
 export default function HomeLoading() {
   return (
     <>
       <Header />
       <main className="bg-[#f8fafc] px-5 py-8 sm:px-8">
-        <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-8 xl:grid-cols-12">
-          <div className="min-w-0 xl:col-span-8">
+        <div className="mx-auto grid max-w-[1820px] grid-cols-1 gap-8 xl:grid-cols-12">
+          <div className="min-w-0 space-y-10 xl:col-span-8">
             <div className="aspect-video w-full animate-pulse rounded-3xl bg-slate-200 sm:aspect-[16/8] lg:aspect-[16/7]" />
+            <StripSkeleton count={4} cardWidth="w-[280px] sm:w-[320px]" />
+            <div className="grid gap-6 sm:grid-cols-2">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <NewsCardSkeleton key={index} />
+              ))}
+            </div>
           </div>
+
           <div className="min-w-0 space-y-6 xl:col-span-4">
             <SidebarListSkeleton count={6} />
-          </div>
-        </div>
-
-        <div className="mx-auto mt-8 grid max-w-[1280px] grid-cols-1 gap-8 xl:grid-cols-12">
-          <div className="min-w-0 xl:col-span-8">
-            <StripSkeleton count={4} cardWidth="w-[280px] sm:w-[320px]" />
-          </div>
-          <div className="min-w-0 xl:col-span-4">
             <SidebarListSkeleton count={5} />
           </div>
-        </div>
-
-        <div className="mx-auto mt-8 grid max-w-[1280px] gap-6 sm:grid-cols-2">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <NewsCardSkeleton key={index} />
-          ))}
         </div>
       </main>
     </>
