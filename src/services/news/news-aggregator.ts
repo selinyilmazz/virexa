@@ -183,16 +183,33 @@ export class NewsAggregator {
 
     // Image resolution, stages 3-5 (stages 1-2 - the provider's own feed/
     // API image and any upstream og:image lookup - already happened
-    // in normalizeProviderItem above). Deliberately run AFTER dedupe, not
-    // before, so a duplicate copy of the same story never burns its own
-    // stock-photo search budget - only the one surviving copy does.
-    const withImages = await resolveMissingImages(deduped);
-
-    // Content resolution (product polishing phase, 2nd pass, area 8:
-    // "haber detay sayfasını güçlendir"). Also run after dedupe, for the
-    // same reason images are: no point burning an extraction fetch on a
-    // duplicate copy of a story that's about to be dropped.
-    const withContent = await resolveMissingContent(withImages);
+    // in normalizeProviderItem above), and content resolution (product
+    // polishing phase, 2nd pass, area 8: "haber detay sayfasını
+    // güçlendir"). Both deliberately run AFTER dedupe, not before, so a
+    // duplicate copy of the same story never burns its own stock-photo-
+    // search/extraction budget - only the one surviving copy does.
+    //
+    // Run in PARALLEL, not sequentially (production root-cause fix for
+    // "news-fetch" timing out after 30s): the two stages read/write
+    // disjoint fields (`image`/`imageSource` vs `content`) off the same
+    // `deduped` input, so there's no ordering dependency between them -
+    // `resolveMissingContent` never looks at `.image`, and
+    // `resolveMissingImages` never looks at `.content`. Content
+    // resolution alone can take up to ~16s in the worst case (a 10s
+    // fetch attempt + a 6s retry - see `article-content.ts`'s
+    // `CONTENT_FETCH_TIMEOUT_MS`/`CONTENT_RETRY_TIMEOUT_MS`), so running
+    // it back-to-back after image resolution's own up-to-~8s worst case
+    // (`OG_IMAGE_TIMEOUT_MS`/`STOCK_IMAGE_TIMEOUT_MS`) meant a single
+    // provider's `fetchArticles()` alone could take ~24s before this
+    // fix - now it's the slower of the two, ~16s.
+    const [withImages, contentResolved] = await Promise.all([
+      resolveMissingImages(deduped),
+      resolveMissingContent(deduped),
+    ]);
+    const withContent = withImages.map((article, index) => ({
+      ...article,
+      content: contentResolved[index].content,
+    }));
 
     return withContent.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
   }

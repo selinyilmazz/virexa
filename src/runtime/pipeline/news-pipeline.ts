@@ -52,14 +52,21 @@ export async function runNewsPipeline(): Promise<NewsPipelineResult> {
   const startedAtMs = Date.now();
   const steps: PipelineStepResult<unknown>[] = [];
 
-  const rss = await fetchRssStep();
-  steps.push(rss);
-  const newsApi = await fetchNewsApiStep();
-  steps.push(newsApi);
-  const gNews = await fetchGNewsStep();
-  steps.push(gNews);
-  const hn = await fetchHnStep();
-  steps.push(hn);
+  // Production root-cause fix ("news-fetch" timing out after 30s): these
+  // four fetch steps are fully independent - each builds its own scoped
+  // `NewsAggregator` around exactly one provider (see fetch-steps.ts's
+  // doc comment) - but used to run sequentially, one full RSS/NewsAPI/
+  // GNews/HN fetch-plus-image-plus-content-resolution pass after
+  // another. Running them in parallel turns the total wait into the
+  // slowest ONE of the four instead of the sum of all four, which alone
+  // accounted for most of the pipeline's excess runtime.
+  const [rss, newsApi, gNews, hn] = await Promise.all([
+    fetchRssStep(),
+    fetchNewsApiStep(),
+    fetchGNewsStep(),
+    fetchHnStep(),
+  ]);
+  steps.push(rss, newsApi, gNews, hn);
 
   const normalized = await normalizeStep([rss.data ?? [], newsApi.data ?? [], gNews.data ?? [], hn.data ?? []]);
   steps.push(normalized);

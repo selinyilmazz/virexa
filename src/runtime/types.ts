@@ -107,4 +107,20 @@ export type JobDefinition = {
   type: JobType;
   description: string;
   run: JobHandler;
+  /**
+   * Per-job-type override for the queue's per-attempt timeout
+   * (`RuntimeQueue`'s `timeoutMs`, raced via `withTimeout` in
+   * `runtime/retry.ts`). Falls back to the single global
+   * `runtimeConfig.jobTimeoutMs` (`JOB_TIMEOUT` env var, default 30s)
+   * when absent - production root-cause fix: every job type used to
+   * share that one 30s default regardless of how much work it actually
+   * does, which is fine for `health-check`/`cache-refresh` but far too
+   * short for `news-fetch` (RSS/NewsAPI/GNews/HN fetch + image/content
+   * extraction + AI enrichment + database writes) - it was timing out
+   * and being retried 3x (`RuntimeJobError: "news-fetch" timed out
+   * after 30000ms`) even after the pipeline's own bottlenecks were
+   * parallelized. Stay safely under `vercel.json`'s cron route
+   * `maxDuration` (300s) for any job triggered that way.
+   */
+  timeoutMs?: number;
 };

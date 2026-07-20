@@ -13,6 +13,8 @@ import { createRuntimeJobRunRepository } from "@/repositories/runtime-job-run-re
 export type EnqueueJobOptions = {
   priority?: JobPriority;
   delayMs?: number;
+  /** One-off override, takes priority over the job's own `JobDefinition.timeoutMs` and the global default - see `enqueueJob`'s doc comment for the full resolution order. */
+  timeoutMs?: number;
 };
 
 /**
@@ -115,14 +117,28 @@ export class RuntimeEngine {
     return this.scheduler.isRunning;
   }
 
-  /** Enqueues one job type by name and returns its queue id immediately (doesn't wait for it to finish). This is the manual-trigger surface the task requires - call it directly, no API route needed. */
+  /**
+   * Enqueues one job type by name and returns its queue id immediately
+   * (doesn't wait for it to finish). This is the manual-trigger surface
+   * the task requires - call it directly, no API route needed.
+   *
+   * `timeoutMs` resolution (production root-cause fix): an explicit
+   * per-call `options.timeoutMs` wins first (kept for callers that need
+   * a one-off override), then the job type's own `JobDefinition.timeoutMs`
+   * (see that type's doc comment - `news-fetch` sets one, most job types
+   * don't and fall through), then the single global
+   * `runtimeConfig.jobTimeoutMs` default. Previously this always used
+   * the global default for every job type with no way to give a
+   * genuinely heavier job (`news-fetch`) more time without raising the
+   * timeout for every lightweight job too.
+   */
   enqueueJob(jobType: JobType, options: EnqueueJobOptions = {}): string {
     const definition = this.registry[jobType];
     return this.queue.enqueue(jobType, definition.run, {
       priority: options.priority,
       delayMs: options.delayMs,
       maxAttempts: runtimeConfig.maxRetry,
-      timeoutMs: runtimeConfig.jobTimeoutMs,
+      timeoutMs: options.timeoutMs ?? definition.timeoutMs ?? runtimeConfig.jobTimeoutMs,
     });
   }
 

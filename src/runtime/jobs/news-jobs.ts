@@ -53,6 +53,18 @@ import { getLiveArticlesSync } from "@/services/news";
 export const newsFetchJob: JobDefinition = {
   type: "news-fetch",
   description: "Runs the full news pipeline: fetch, normalize, dedupe, trust score, AI enrichment, trending, database, cache refresh.",
+  // Production root-cause fix: this job used to inherit the global
+  // 30s default (`runtimeConfig.jobTimeoutMs`) like every other job
+  // type, and was timing out and being retried 3x in production
+  // (`RuntimeJobError: "news-fetch" timed out after 30000ms`) even
+  // after the pipeline fetch steps and image/content resolution were
+  // parallelized (see `news-pipeline.ts` and `news-aggregator.ts`) -
+  // four independent provider fetches, each with its own bounded
+  // image/content extraction, simply don't fit in 30s even at their
+  // fastest. 180s stays safely under `vercel.json`'s cron route
+  // `maxDuration` (300s) for the one caller that actually matters in
+  // production, with real margin for degraded network conditions.
+  timeoutMs: 180_000,
   run: async () => {
     const result = await runNewsPipeline();
 
