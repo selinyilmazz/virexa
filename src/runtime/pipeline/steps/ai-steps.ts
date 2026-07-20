@@ -26,31 +26,25 @@ import type { NewsArticle } from "@/types/news";
  * article's content hash + provider + prompt version haven't changed.
  *
  * Two cost tiers (product polishing phase, 5th + 6th pass - "Her haber
- * için: Summary, Long Summary, Key Takeaways üretilsin. Trend haberler
- * için ayrıca ... Rewrite ... oluşturulsun"):
+ * için: Summary, Long Summary, Key Takeaways üretilsin"; automated-
+ * rewrite phase - "her future article... rewritten automatically"):
  *
  *  - BROAD (`MAX_BROAD_AI_ARTICLES_PER_RUN`, `articlesForBroadAI`) -
  *    every article a normal run touches gets Summary + Key Takeaways +
- *    Long Summary, the three capabilities cheap enough (short-to-medium
- *    prompts, bounded outputs) to run at this scale. Matches
- *    `news-aggregator.ts`'s `MAX_CONTENT_EXTRACTIONS_PER_RUN` (also 60)
- *    for consistency - "her haber" in practice means every article a
- *    run's own size already bounds, not a literal unbounded loop.
- *    Long Summary was previously a narrow, content-thinness-gated
- *    fallback (only generated for articles whose real content was too
- *    short to read) - moved to the broad tier and ungated so it's a
- *    first-class field for every article, not just a rescue path for
- *    thin ones, per the explicit "her haber için ... Long Summary"
- *    requirement.
+ *    Long Summary + the full Article Rewrite, the capabilities cheap
+ *    enough (bounded outputs, one call per article) to run at this
+ *    scale. Matches `news-aggregator.ts`'s `MAX_CONTENT_EXTRACTIONS_PER_RUN`
+ *    (also 60) for consistency - "her haber"/"every article" in practice
+ *    means every article a run's own size already bounds, not a literal
+ *    unbounded loop. `articleRewriteStep` moved onto this tier
+ *    (previously its own narrow, trending-only `articlesForTrendingRewrite`
+ *    selection - see git history) once the rewrite became a
+ *    for-every-article requirement rather than a "trend haberler"-only
+ *    one.
  *  - NARROW (`MAX_AI_ARTICLES_PER_RUN`, `articlesForAI`) - TL;DR,
  *    Tags, Sentiment, Bias, and Entities stay at the smaller, original
  *    per-run cap; these are either heavier or lower-priority than the
- *    broad tier's three capabilities.
- *
- * `articleRewriteStep` uses neither of the above - it has its own
- * `articlesForTrendingRewrite` selection (trending-score-sorted, same
- * narrow cap) since the full 700-1500 word rewrite is explicitly a
- * "trend haberler" capability, not a broad or plain-run-order one.
+ *    broad tier's four capabilities.
  */
 const MAX_AI_ARTICLES_PER_RUN = 20;
 
@@ -63,11 +57,6 @@ function articlesForAI(articles: NewsArticle[]): NewsArticle[] {
 
 function articlesForBroadAI(articles: NewsArticle[]): NewsArticle[] {
   return articles.slice(0, MAX_BROAD_AI_ARTICLES_PER_RUN);
-}
-
-/** Selects the top `MAX_AI_ARTICLES_PER_RUN` articles by `trendingScore` - `articleRewriteStep`'s own selection, distinct from `articlesForAI`'s plain top-N-of-whatever-order-it-arrived-in, since the full rewrite is explicitly meant for "trend haberler", not just this run's first N articles. */
-function articlesForTrendingRewrite(articles: NewsArticle[]): NewsArticle[] {
-  return [...articles].sort((a, b) => b.trendingScore - a.trendingScore).slice(0, MAX_AI_ARTICLES_PER_RUN);
 }
 
 function articleContent(article: NewsArticle): string {
@@ -123,24 +112,25 @@ export async function longSummaryStep(articles: NewsArticle[]): Promise<Pipeline
 
 /**
  * The full article-rewrite capability (product polishing phase, 4th
- * pass, items 6-7; narrowed to explicitly trending articles in the 5th
- * pass - "Trend haberler için ise 700-1500 kelimelik rewritten_article
- * oluştur"). Unlike `longSummaryStep`, this is NOT restricted to
- * thin-content articles - the rewrite is the article detail page's
- * PRIMARY reading content whenever it exists (see
- * `article-read-service.ts`'s content precedence) - but unlike the
- * broad tier's Summary/Key Takeaways, it's deliberately kept to a
- * trending-score-sorted top-N (`articlesForTrendingRewrite`), not every
- * article: it's the single most expensive capability here (long prompt,
- * long generation), so it's reserved for the stories actually worth
- * that cost.
+ * pass, items 6-7; broadened to every article in the automated-rewrite
+ * phase - "every future article processed by the pipeline is rewritten
+ * automatically before it is displayed"). Now on the BROAD tier
+ * (`articlesForBroadAI`, same as `aiSummaryStep`/`keyTakeawaysStep`/
+ * `longSummaryStep`), not a trending-only narrow selection - the
+ * rewrite is the article detail page's PRIMARY reading content whenever
+ * it exists (see `article-read-service.ts`'s content precedence), so
+ * every article a run touches should get one, not just the top-N
+ * trending stories. Strict grounding is enforced entirely in the
+ * prompt itself (`lib/ai/prompts/article-rewrite.prompt.ts`) - never
+ * invents facts/quotes/numbers, omits what the source doesn't cover,
+ * and doesn't pad an already-detailed source past what it supports.
  */
 export async function articleRewriteStep(
   articles: NewsArticle[]
 ): Promise<PipelineStepResult<Map<string, ArticleRewriteResult>>> {
   return runPipelineStep("article-rewrite", async () => {
     const results = new Map<string, ArticleRewriteResult>();
-    for (const article of articlesForTrendingRewrite(articles)) {
+    for (const article of articlesForBroadAI(articles)) {
       const result = await aiService.getArticleRewrite({
         id: article.id,
         title: article.title,

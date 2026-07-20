@@ -715,16 +715,15 @@ export type ArticleAIInsights = {
 };
 
 /**
- * The article detail page's Priority-3 content fallback (product
- * polishing phase, 3rd pass, item 5) - only ever set when the article's
- * real content is still too thin after ingestion-time extraction AND an
- * AI-generated `long_summary` exists for it (`ai-steps.ts`'s
- * `longSummaryStep` only runs for exactly those articles). `null` means
- * the page should keep showing `content` (the real/description-based
- * blocks) as-is instead. Superseded as the PRIMARY fallback by
- * `rewrittenArticle` below (product polishing phase, 4th pass) - this
- * now only matters when no AI provider is configured at all, or this
- * specific article hasn't been rewritten yet.
+ * The article detail page's Priority-2 content ("Frontend priority:
+ * 1. rewritten_article, 2. long_summary, 3. original content" -
+ * automated-rewrite phase). Set whenever an AI-generated `long_summary`
+ * exists for this article - `longSummaryStep` runs on the broad tier
+ * (`ai-steps.ts`), so this is generated for every article a pipeline
+ * run touches, not gated on the raw content being thin. `null` means no
+ * `long_summary` has been generated yet (no AI provider configured, or
+ * this article fell outside a run's broad-tier cap), in which case the
+ * page falls through to `content` (the real/description-based blocks).
  */
 export type StructuredSummary = StoredLongSummary;
 
@@ -741,7 +740,7 @@ export type ArticleDetail = {
   publishedAtIso: string;
   readingTime: string;
   content: ArticleContentBlock[];
-  /** Set only when `content` is still thin and an AI long summary is available for this article - see `StructuredSummary`'s doc comment. */
+  /** Set whenever an AI long summary is available for this article, regardless of whether raw `content` is thin - see `StructuredSummary`'s doc comment for the full priority ordering. */
   structuredSummary: StructuredSummary | null;
   /**
    * The full 700-1500 word AI rewrite (product polishing phase, 4th
@@ -774,6 +773,13 @@ function rewriteToPlainText(rewrite: StoredArticleRewrite): string {
     .trim();
 }
 
+/** Flattens a `StructuredSummary` (AI long summary) back to plain text - the same `estimateReadingTime` feed as `rewriteToPlainText`, used when the long summary (not the rewrite) is the resolved primary content (see `getArticleDetail`'s priority-2 case). */
+function structuredSummaryToPlainText(summary: StructuredSummary): string {
+  return [summary.overview, ...summary.keyPoints, summary.technicalDetails ?? "", summary.whyItMatters ?? ""]
+    .join(" ")
+    .trim();
+}
+
 /**
  * Full article detail for `/article/[slug]` - the row itself plus its
  * latest AI enrichment (`article_ai`), never merged together at the
@@ -782,24 +788,25 @@ function rewriteToPlainText(rewrite: StoredArticleRewrite): string {
  * deleted article so the page can call `notFound()` instead of
  * crashing.
  *
- * Content precedence (product polishing phase, 4th pass, item 6 -
- * "Virexa sadece bir RSS okuyucu gibi hissettirmemeli"):
+ * Content precedence (automated-rewrite phase - "Frontend priority:
+ * 1. rewritten_article, 2. long_summary, 3. original content"):
  *
  *  1. `rewrittenArticle` - the full AI rewrite, when available. This is
- *     what item 6/7 actually asks for: a natural-reading, fully
- *     organized article a reader can finish inside Virexa, never just
- *     the raw RSS description. `ArticleContent.tsx` renders this ahead
- *     of everything else.
- *  2. `content` (real extracted article text, via `buildContentBlocks`)
- *     - used when no rewrite exists yet for this article (no AI
- *     provider configured, or it fell outside a pipeline run's cap) but
- *     the real extracted body is substantial.
- *  3. `structuredSummary` (the older Overview/Key Points/Technical
- *     Details/Why It Matters fallback) - only reached when BOTH the
- *     rewrite and the raw content are unavailable/thin.
- *  4. `buildContentBlocks`'s own last-resort blend of description + AI
- *     summary/TLDR - the final safety net for an article with no AI
- *     enrichment at all.
+ *     the natural-reading, fully organized article a reader can finish
+ *     inside Virexa, never just the raw RSS description.
+ *     `ArticleContent.tsx` renders this ahead of everything else.
+ *  2. `structuredSummary` (the AI-generated long summary) - used
+ *     whenever a rewrite isn't available yet (no AI provider
+ *     configured, or this article fell outside a pipeline run's broad-
+ *     tier cap) but a long summary exists, REGARDLESS of whether the
+ *     raw extracted `content` is thin or substantial - long_summary is
+ *     generated for every article the broad tier touches, so it's a
+ *     strictly better default reading experience than raw content
+ *     whenever it exists, not just a thin-content rescue path.
+ *  3. `content` (real extracted article text, via `buildContentBlocks`,
+ *     or that function's own last-resort blend of description + AI
+ *     summary/TLDR) - the final fallback for an article with neither a
+ *     rewrite nor a long summary yet.
  *
  * `readingTime` is derived from whichever of these actually ends up as
  * the resolved primary content, so it always reflects what a reader
@@ -814,16 +821,20 @@ export async function getArticleDetail(slug: string): Promise<ArticleDetail | nu
     const aiRow = await ai.getLatest(row.id);
     const content = buildContentBlocks(row.content, row.description, aiRow?.summary ?? null, aiRow?.tldr ?? null);
 
-    const isRawContentThin = (row.content?.trim().length ?? 0) < MIN_ACCEPTABLE_CONTENT_LENGTH;
-    const structuredSummary = isRawContentThin && aiRow?.long_summary ? aiRow.long_summary : null;
+    const structuredSummary = aiRow?.long_summary ?? null;
     const rewrittenArticle = aiRow?.rewritten_article ?? null;
 
     // Reading time is recomputed here from the FINAL resolved content
-    // (the rewrite when present, otherwise the same resolved blocks used
-    // before) rather than trusting `row.reading_time`, which was only
-    // ever stamped once at ingestion time from whatever thin content the
-    // provider originally supplied and never revisited afterwards.
-    const resolvedContentText = rewrittenArticle ? rewriteToPlainText(rewrittenArticle) : blocksToPlainText(content);
+    // (following the same rewrittenArticle -> structuredSummary ->
+    // content priority as the page itself renders) rather than trusting
+    // `row.reading_time`, which was only ever stamped once at ingestion
+    // time from whatever thin content the provider originally supplied
+    // and never revisited afterwards.
+    const resolvedContentText = rewrittenArticle
+      ? rewriteToPlainText(rewrittenArticle)
+      : structuredSummary
+        ? structuredSummaryToPlainText(structuredSummary)
+        : blocksToPlainText(content);
 
     return {
       id: row.id,

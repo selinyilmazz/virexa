@@ -227,11 +227,12 @@ export type BackfillAIEnrichmentResult = {
  * fields), same "scan wide, cap the result" tradeoff as
  * `listNeedingContentBackfill`.
  *
- * Deliberately does NOT touch `rewritten_article` here - the full
- * article rewrite stays a trending-only, narrow-tier capability by
- * design (`articlesForTrendingRewrite`); an old, non-trending article
- * getting Summary + Key Takeaways for the first time is exactly this
- * backfill's job, not also getting the full rewrite.
+ * Deliberately does NOT touch `rewritten_article` here - this backfill
+ * is scoped to Summary + Key Takeaways only (the two fields this
+ * function name promises); an old article getting the full rewrite too
+ * is a separate concern, even though `articleRewriteStep` now runs on
+ * the same broad tier as Summary/Key Takeaways for newly-processed
+ * articles going forward (see `ai-steps.ts`).
  *
  * Carries forward any AI fields THIS backfill doesn't touch (tldr,
  * long_summary, rewritten_article, entities, tags, sentiment, bias) from
