@@ -8,6 +8,7 @@ import {
 } from "@/runtime/pipeline/steps/fetch-steps";
 import { trendingScoreStep } from "@/runtime/pipeline/steps/finalize-steps";
 import { runNewsPipeline } from "@/runtime/pipeline/news-pipeline";
+import type { DatabaseStepData } from "@/runtime/pipeline/steps/database-step";
 import type { JobDefinition } from "@/runtime/types";
 import { createArticleRepository } from "@/repositories/article-repository";
 import { getLiveArticlesSync } from "@/services/news";
@@ -20,15 +21,61 @@ import { getLiveArticlesSync } from "@/services/news";
  * itself stays simple.
  */
 
-/** Runs the complete pipeline end to end (RSS -> NewsAPI -> GNews -> Hacker News -> ... -> Cache Refresh, including persistence to the Article Storage tables). Only fails the job outright if every single step failed - a partial failure (e.g. GNews down, everything else fine) is still a successful run, already logged step-by-step. */
+/**
+ * Runs the complete pipeline end to end (RSS -> NewsAPI -> GNews ->
+ * Hacker News -> ... -> Cache Refresh, including persistence to the
+ * Article Storage tables).
+ *
+ * Failure semantics (root-cause fix - "Yeni haberler veritabanına
+ * gerçekten yazılıyor mu?"): `runNewsPipeline()` never throws - every
+ * step, including `database`, catches its own errors and reports
+ * `success: false` instead. Previously this job only failed when EVERY
+ * step failed, which meant a pipeline that fetched articles fine but
+ * silently failed to WRITE them (misconfigured `SUPABASE_SERVICE_ROLE_KEY`
+ * in production, an RLS policy rejecting the service role, a schema
+ * validation error) still reported `status: "completed"` - the exact
+ * "site never updates but nothing looks broken" failure mode this app
+ * has actually hit. Two additional checks turn that into a real,
+ * visible failure (surfaces in Admin > Runtime's Last Error, the
+ * `runtime_job_runs` history, and `/api/cron/news-fetch`'s JSON
+ * response) instead of a silently-successful no-op:
+ *
+ *  1. The `database` step itself reported `success: false`.
+ *  2. The `database` step reported `success: true` (e.g. the
+ *     "Supabase not configured, no-op" case) but articles WERE fetched
+ *     this run and zero of them were saved - a healthy run should never
+ *     fetch >0 and persist 0.
+ *
+ * A partial fetch-provider failure (e.g. GNews down, RSS/NewsAPI/HN
+ * fine) is still a successful run, exactly as before - only the
+ * database step's outcome gates the news-fetch job's own success now.
+ */
 export const newsFetchJob: JobDefinition = {
   type: "news-fetch",
   description: "Runs the full news pipeline: fetch, normalize, dedupe, trust score, AI enrichment, trending, database, cache refresh.",
   run: async () => {
     const result = await runNewsPipeline();
+
     if (result.steps.length > 0 && result.steps.every((step) => !step.success)) {
       throw new Error("Every pipeline step failed - see individual step errors in the result.");
     }
+
+    const databaseStep = result.steps.find((step) => step.step === "database");
+    if (databaseStep && !databaseStep.success) {
+      throw new Error(
+        `Database persistence step failed: ${databaseStep.error ?? "unknown error"}. Fetched articles were NOT saved to the database this run.`
+      );
+    }
+
+    const articlesFetched = result.articles.length;
+    const articlesSaved = (databaseStep?.data as DatabaseStepData | undefined)?.articlesSaved ?? 0;
+    if (articlesFetched > 0 && articlesSaved === 0) {
+      throw new Error(
+        `Pipeline fetched ${articlesFetched} article(s) but saved 0 to the database this run. ` +
+          `Check that SUPABASE_SERVICE_ROLE_KEY is configured in this environment (Admin > Settings > Environment) and that RLS policies allow the service role to write.`
+      );
+    }
+
     return result;
   },
 };

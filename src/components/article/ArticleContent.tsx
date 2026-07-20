@@ -1,6 +1,7 @@
 import type { ArticleContentBlock } from "@/data/article";
 import type { StoredArticleRewrite } from "@/types/database";
 import type { StructuredSummary } from "@/services/articles/article-read-service";
+import { splitIntoParagraphs } from "@/lib/news";
 
 type ArticleContentProps = {
   blocks: ArticleContentBlock[];
@@ -17,11 +18,9 @@ function SectionLabel({ children }: { children: string }) {
   return <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-[#2f67e8]">{children}</h3>;
 }
 
+/** Delegates to the shared `splitIntoParagraphs` (see `lib/news/paragraph-split.ts`) so the AI rewrite view gets the same real-breaks -> single-newline -> sentence-grouped fallback chain as raw scraped content, instead of silently collapsing into one block on the rare AI output with no blank-line separators. */
 function paragraphsOf(text: string): string[] {
-  return text
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter((paragraph) => paragraph.length > 0);
+  return splitIntoParagraphs(text);
 }
 
 /**

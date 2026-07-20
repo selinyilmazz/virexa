@@ -1,4 +1,3 @@
-import { MIN_ACCEPTABLE_CONTENT_LENGTH } from "@/lib/news";
 import { runPipelineStep } from "@/runtime/pipeline/types";
 import type { PipelineStepResult } from "@/runtime/pipeline/types";
 import { aiService } from "@/services/ai";
@@ -26,27 +25,32 @@ import type { NewsArticle } from "@/types/news";
  * configured, and already skip regeneration via `AICache` when an
  * article's content hash + provider + prompt version haven't changed.
  *
- * Two cost tiers (product polishing phase, 5th pass - "AI yeniden
- * yazımını yalnızca ilk 20 haberle sınırlama; bunun yerine en azından
- * her haber için AI Summary + Key Takeaways üret. Trend haberler için
- * ise ... rewritten_article oluştur"):
+ * Two cost tiers (product polishing phase, 5th + 6th pass - "Her haber
+ * için: Summary, Long Summary, Key Takeaways üretilsin. Trend haberler
+ * için ayrıca ... Rewrite ... oluşturulsun"):
  *
  *  - BROAD (`MAX_BROAD_AI_ARTICLES_PER_RUN`, `articlesForBroadAI`) -
- *    every article a normal run touches gets Summary + Key Takeaways,
- *    the two capabilities cheap enough (short prompts, small outputs)
- *    to run at this scale. Matches `news-aggregator.ts`'s
- *    `MAX_CONTENT_EXTRACTIONS_PER_RUN` (also 60) for consistency - "her
- *    haber" in practice means every article a run's own size already
- *    bounds, not a literal unbounded loop.
+ *    every article a normal run touches gets Summary + Key Takeaways +
+ *    Long Summary, the three capabilities cheap enough (short-to-medium
+ *    prompts, bounded outputs) to run at this scale. Matches
+ *    `news-aggregator.ts`'s `MAX_CONTENT_EXTRACTIONS_PER_RUN` (also 60)
+ *    for consistency - "her haber" in practice means every article a
+ *    run's own size already bounds, not a literal unbounded loop.
+ *    Long Summary was previously a narrow, content-thinness-gated
+ *    fallback (only generated for articles whose real content was too
+ *    short to read) - moved to the broad tier and ungated so it's a
+ *    first-class field for every article, not just a rescue path for
+ *    thin ones, per the explicit "her haber için ... Long Summary"
+ *    requirement.
  *  - NARROW (`MAX_AI_ARTICLES_PER_RUN`, `articlesForAI`) - TL;DR,
  *    Tags, Sentiment, Bias, and Entities stay at the smaller, original
  *    per-run cap; these are either heavier or lower-priority than the
- *    broad tier's two capabilities.
+ *    broad tier's three capabilities.
  *
  * `articleRewriteStep` uses neither of the above - it has its own
  * `articlesForTrendingRewrite` selection (trending-score-sorted, same
- * narrow cap) since the full rewrite is explicitly a "trend haberler"
- * capability, not a broad or plain-run-order one.
+ * narrow cap) since the full 700-1500 word rewrite is explicitly a
+ * "trend haberler" capability, not a broad or plain-run-order one.
  */
 const MAX_AI_ARTICLES_PER_RUN = 20;
 
@@ -68,21 +72,6 @@ function articlesForTrendingRewrite(articles: NewsArticle[]): NewsArticle[] {
 
 function articleContent(article: NewsArticle): string {
   return article.content ?? article.summary;
-}
-
-/**
- * A separate, content-thinness-based selection (rather than
- * `articlesForAI`'s plain top-N-of-the-run cap) - the structured long
- * summary is only useful as a fallback for articles whose real content
- * is too short to read (`article-read-service.ts`'s
- * `MIN_ACCEPTABLE_CONTENT_LENGTH` bar, same one `fetchArticleContent`
- * enforces at ingestion time), so generating it for an already-thick
- * article would just waste provider budget on a result nothing will
- * ever render. Still capped at `MAX_AI_ARTICLES_PER_RUN` for the same
- * per-run cost predictability the other narrow-tier steps have.
- */
-function articlesNeedingLongSummary(articles: NewsArticle[]): NewsArticle[] {
-  return articles.filter((article) => articleContent(article).trim().length < MIN_ACCEPTABLE_CONTENT_LENGTH).slice(0, MAX_AI_ARTICLES_PER_RUN);
 }
 
 /** Broad tier (product polishing phase, 5th pass) - "en azından her haber için AI Summary ... üret". */
@@ -120,10 +109,11 @@ export async function tldrStep(articles: NewsArticle[]): Promise<PipelineStepRes
   });
 }
 
+/** Broad tier (product polishing phase, 6th pass) - "en azından her haber için ... Long Summary üret". Previously narrow and content-thinness-gated (see this module's doc comment) - now runs for every article the broad tier touches, the same way `aiSummaryStep`/`keyTakeawaysStep` already did. */
 export async function longSummaryStep(articles: NewsArticle[]): Promise<PipelineStepResult<Map<string, LongSummaryResult>>> {
   return runPipelineStep("long-summary", async () => {
     const results = new Map<string, LongSummaryResult>();
-    for (const article of articlesNeedingLongSummary(articles)) {
+    for (const article of articlesForBroadAI(articles)) {
       const result = await aiService.getLongSummary({ id: article.id, title: article.title, content: articleContent(article) });
       if (result) results.set(article.id, result);
     }

@@ -10,6 +10,7 @@ import {
   resolveArticleImage,
   searchStockImage,
   SEARCH_CATEGORY_SLUGS,
+  splitIntoParagraphs,
 } from "@/lib/news";
 import { createClient } from "@/lib/supabase/server";
 import { createArticleAIRepository } from "@/repositories/article-ai-repository";
@@ -660,11 +661,11 @@ function buildContentBlocks(
 ): ArticleContentBlock[] {
   const trimmedContent = content?.trim() ?? "";
   if (trimmedContent.length >= MIN_ACCEPTABLE_CONTENT_LENGTH) {
-    return trimmedContent
-      .split(/\n{2,}/)
-      .map((paragraph) => paragraph.trim())
-      .filter((paragraph) => paragraph.length > 0)
-      .map((text) => ({ type: "paragraph" as const, text }));
+    // `splitIntoParagraphs` (not a plain `\n{2,}` split) so rows stored
+    // before the extraction-time paragraph normalization fix - or any
+    // future content source that doesn't preserve blank-line breaks -
+    // still render as real paragraphs instead of one unbroken block.
+    return splitIntoParagraphs(trimmedContent).map((text) => ({ type: "paragraph" as const, text }));
   }
 
   const blocks: ArticleContentBlock[] = [];

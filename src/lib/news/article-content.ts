@@ -1,4 +1,5 @@
 import { fetchWithTimeout } from "@/lib/news/fetch-with-timeout";
+import { splitIntoParagraphs } from "@/lib/news/paragraph-split";
 
 /**
  * Real full-article-text extraction, run at ingestion time (never per
@@ -253,7 +254,16 @@ export async function fetchArticleContent(pageUrl: string): Promise<string | und
 
     const jsonLdBody = extractJsonLdArticleBody(html);
     if (jsonLdBody && jsonLdBody.length >= MIN_ACCEPTABLE_CONTENT_LENGTH) {
-      return jsonLdBody.length > MAX_EXTRACTED_CHARACTERS ? jsonLdBody.slice(0, MAX_EXTRACTED_CHARACTERS).trim() : jsonLdBody;
+      // schema.org `articleBody` is just "a string" - many CMSs embed
+      // the whole article with no blank-line paragraph separators at
+      // all. Re-flowed through `splitIntoParagraphs` (real breaks if
+      // present, otherwise sentence-grouped) and rejoined with `\n\n` so
+      // what gets stored already has real paragraph structure, rather
+      // than persisting one giant unbroken string that every downstream
+      // reader (`buildContentBlocks`, CSV export, etc.) would need to
+      // re-normalize itself.
+      const normalized = splitIntoParagraphs(jsonLdBody).join("\n\n");
+      return normalized.length > MAX_EXTRACTED_CHARACTERS ? normalized.slice(0, MAX_EXTRACTED_CHARACTERS).trim() : normalized;
     }
 
     const cleanedHtml = stripBoilerplateBlocks(html);
