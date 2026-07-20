@@ -351,9 +351,23 @@ export function createArticleRepository(supabase: SupabaseClient<Database>) {
      * Every input is validated with `articleInputSchema` first - a
      * malformed article never reaches either round trip ("Eksik haber
      * database'e yazılmasın").
+     *
+     * Returns `idMap` (original input id -> the id actually persisted to
+     * `articles.id`, identical for every non-remapped input) alongside
+     * the summary counts - production root-cause fix: `databaseStep`
+     * used to pass the pipeline's original, pre-remap article ids
+     * straight through to `article_ai`/`article_metrics` (both
+     * `references articles (id)`), so any article that got silently
+     * remapped here (its `url`/`slug` already existed under a different
+     * id) produced AI/metrics rows pointing at an id that was NEVER
+     * actually written to `articles` - surfacing as
+     * `article_metrics_article_id_fkey` foreign key violations
+     * (23503) on the very next step. Callers MUST resolve every
+     * downstream article id through this map instead of reusing the
+     * original id blindly.
      */
-    async bulkUpsert(inputs: ArticleInput[]): Promise<{ saved: number; remapped: number }> {
-      if (inputs.length === 0) return { saved: 0, remapped: 0 };
+    async bulkUpsert(inputs: ArticleInput[]): Promise<{ saved: number; remapped: number; idMap: Map<string, string> }> {
+      if (inputs.length === 0) return { saved: 0, remapped: 0, idMap: new Map() };
 
       const validated = inputs.map((input) => articleInputSchema.parse(input));
       const urls = validated.map((article) => article.url);
@@ -368,19 +382,19 @@ export function createArticleRepository(supabase: SupabaseClient<Database>) {
       const idBySlug = new Map(bySlugRows.map((row) => [row.slug, row.id]));
 
       let remapped = 0;
+      const idMap = new Map<string, string>();
       const rows = validated.map((input) => {
         const existingId = idByUrl.get(input.url) ?? idBySlug.get(input.slug);
-        if (existingId && existingId !== input.id) {
-          remapped += 1;
-          return toInsert({ ...input, id: existingId });
-        }
-        return toInsert(input);
+        const finalId = existingId && existingId !== input.id ? existingId : input.id;
+        if (finalId !== input.id) remapped += 1;
+        idMap.set(input.id, finalId);
+        return toInsert({ ...input, id: finalId });
       });
 
       const { error } = await supabase.from("articles").upsert(rows, { onConflict: "id" });
       if (error) throw error;
 
-      return { saved: rows.length, remapped };
+      return { saved: rows.length, remapped, idMap };
     },
 
     /**

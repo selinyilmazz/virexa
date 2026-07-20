@@ -92,8 +92,19 @@ function toArticleInput(article: NewsArticle): ArticleInput {
  * doc for why that hash IS the version key. Articles with no AI result
  * at all (no provider configured, or this run's `MAX_AI_ARTICLES_PER_RUN`
  * cap excluded them) are skipped - nothing to persist for them yet.
+ *
+ * `idMap` (original pipeline article id -> the id actually persisted to
+ * `articles.id` by `articleRepository.bulkUpsert`) resolves the emitted
+ * `articleId` - `article_ai.article_id` has `references articles (id)`,
+ * so a remapped article's AI row must point at the SAME id its article
+ * row actually landed under, not the original pre-remap id (see
+ * `article-repository.ts`'s `bulkUpsert` doc for the full root-cause
+ * explanation - this was the exact class of bug that produced the
+ * `article_metrics_article_id_fkey` violation). AI results are still
+ * looked up by the original id, since `ai-steps.ts` computed them
+ * against the pipeline's in-memory (pre-remap) `NewsArticle` objects.
  */
-function toAIInputs(articles: NewsArticle[], results: PipelineAIResults): ArticleAIInput[] {
+function toAIInputs(articles: NewsArticle[], results: PipelineAIResults, idMap: Map<string, string>): ArticleAIInput[] {
   const inputs: ArticleAIInput[] = [];
 
   for (const article of articles) {
@@ -133,7 +144,7 @@ function toAIInputs(articles: NewsArticle[], results: PipelineAIResults): Articl
       "";
 
     inputs.push({
-      articleId: article.id,
+      articleId: idMap.get(article.id) ?? article.id,
       summary: summary?.summary ?? null,
       tldr: tldr ? { title: tldr.title, bullets: tldr.bullets } : null,
       longSummary: longSummary
@@ -215,14 +226,22 @@ export async function databaseStep(
     const uniqueSources = new Map(articles.map((article) => [article.source.id, toSourceInput(article)]));
     await sourceRepository.bulkUpsert([...uniqueSources.values()]);
 
-    const { saved: articlesSaved, remapped: articlesRemapped } = await articleRepository.bulkUpsert(
+    const { saved: articlesSaved, remapped: articlesRemapped, idMap } = await articleRepository.bulkUpsert(
       articles.map(toArticleInput)
     );
 
-    const aiInputs = toAIInputs(articles, aiResults);
+    const aiInputs = toAIInputs(articles, aiResults, idMap);
     await aiRepository.bulkUpsert(aiInputs);
 
-    const articleIds = articles.map((article) => article.id);
+    // Resolve every article through `idMap` - a remapped article's row
+    // lives under a different id than the pipeline's original
+    // `article.id` (see `article-repository.ts`'s `bulkUpsert` doc), and
+    // `article_metrics.article_id` has `references articles (id)`. Using
+    // the original id here for a remapped article is exactly what
+    // produced the `article_metrics_article_id_fkey` violation (23503):
+    // this ensured a metrics row against an id that was never actually
+    // written to `articles`.
+    const articleIds = articles.map((article) => idMap.get(article.id) ?? article.id);
     await metricsRepository.ensureExists(articleIds);
 
     return {
