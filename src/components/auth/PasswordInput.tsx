@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 type PasswordInputProps = {
   id: string;
@@ -25,6 +26,7 @@ export function PasswordInput({
   helperText,
   showStrengthMeter,
 }: PasswordInputProps) {
+  const t = useTranslations();
   const [showPassword, setShowPassword] = useState(false);
 
   return (
@@ -64,7 +66,7 @@ export function PasswordInput({
           <button
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
-            aria-label={showPassword ? "Hide password" : "Show password"}
+            aria-label={showPassword ? t("auth.fields.hidePassword") : t("auth.fields.showPassword")}
             className="flex items-center justify-center text-slate-400 transition-colors hover:text-slate-600"
           >
             <svg

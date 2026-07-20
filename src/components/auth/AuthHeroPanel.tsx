@@ -1,42 +1,51 @@
 import Image from "next/image";
+import type { TFunction } from "@/i18n/translate";
 
 type AuthHeroPanelProps = {
   title: string;
   description: string;
+  /**
+   * Passed down from the (Server Component) page rather than resolved
+   * internally: `AuthHeroPanel` has no "use client" directive, so it
+   * renders as part of the same server-only tree as `getServerTranslations()`
+   * - taking `t` as a prop avoids every call site needing its own
+   * `getServerTranslations()` call for just this one panel.
+   */
+  t: TFunction;
 };
 
-const heroFeatures = [
-  {
-    icon: (
-      <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" strokeLinejoin="round" />
-      </svg>
-    ),
-    title: "AI Summaries",
-    description: "Get key insights from long articles in seconds.",
-  },
-  {
-    icon: (
-      <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z" strokeLinejoin="round" />
-      </svg>
-    ),
-    title: "Save & Organize",
-    description: "Bookmark your favorite articles and read them later.",
-  },
-  {
-    icon: (
-      <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M12 2 4 5v6c0 5 3.4 8.9 8 11 4.6-2.1 8-6 8-11V5l-8-3Z" strokeLinejoin="round" />
-        <path d="m9 12 2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-    title: "Trusted Sources",
-    description: "News from verified sources you can rely on.",
-  },
-];
+export function AuthHeroPanel({ title, description, t }: AuthHeroPanelProps) {
+  const heroFeatures = [
+    {
+      icon: (
+        <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" strokeLinejoin="round" />
+        </svg>
+      ),
+      title: t("auth.hero.feature1Title"),
+      description: t("auth.hero.feature1Description"),
+    },
+    {
+      icon: (
+        <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z" strokeLinejoin="round" />
+        </svg>
+      ),
+      title: t("auth.hero.feature2Title"),
+      description: t("auth.hero.feature2Description"),
+    },
+    {
+      icon: (
+        <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M12 2 4 5v6c0 5 3.4 8.9 8 11 4.6-2.1 8-6 8-11V5l-8-3Z" strokeLinejoin="round" />
+          <path d="m9 12 2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ),
+      title: t("auth.hero.feature3Title"),
+      description: t("auth.hero.feature3Description"),
+    },
+  ];
 
-export function AuthHeroPanel({ title, description }: AuthHeroPanelProps) {
   return (
     <div className="relative hidden flex-col justify-center overflow-hidden bg-slate-50 p-10 lg:flex lg:p-12">
       <h1 className="text-4xl font-bold tracking-tight text-slate-950">{title}</h1>
@@ -52,7 +61,7 @@ export function AuthHeroPanel({ title, description }: AuthHeroPanelProps) {
 
         <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-lg">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-[#2f67e8]">
-            ✦ AI-Summary
+            ✦ {t("auth.hero.aiSummaryBadge")}
           </span>
 
           <div className="mt-4 flex items-start gap-3">
@@ -86,7 +95,7 @@ export function AuthHeroPanel({ title, description }: AuthHeroPanelProps) {
           <svg aria-hidden="true" viewBox="0 0 24 24" className="size-3.5 text-[#2f67e8]" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M12 2 4 5v6c0 5 3.4 8.9 8 11 4.6-2.1 8-6 8-11V5l-8-3Z" strokeLinejoin="round" />
           </svg>
-          Trusted Sources
+          {t("auth.hero.trustedSourcesBadge")}
         </span>
       </div>
 

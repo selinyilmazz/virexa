@@ -6,11 +6,12 @@ import Link from "next/link";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { useAuth } from "@/hooks/useAuth";
 import { getAvatarUrl, getDisplayName } from "@/lib/supabase/utils";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 const dropdownLinks = [
   {
     href: "/profile",
-    label: "Profile",
+    labelKey: "nav.profile",
     icon: (
       <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
         <circle cx="12" cy="8" r="4" />
@@ -20,7 +21,7 @@ const dropdownLinks = [
   },
   {
     href: "/bookmarks",
-    label: "Bookmarks",
+    labelKey: "nav.bookmarks",
     icon: (
       <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
         <path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-3.75L6 21V4.5Z" />
@@ -29,7 +30,7 @@ const dropdownLinks = [
   },
   {
     href: "/settings",
-    label: "Settings",
+    labelKey: "nav.settings",
     icon: (
       <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
         <circle cx="12" cy="12" r="3" />
@@ -44,6 +45,7 @@ const dropdownLinks = [
 ];
 
 export function HeaderAuthArea() {
+  const t = useTranslations();
   const { user, isLoading } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -76,13 +78,13 @@ export function HeaderAuthArea() {
           href="/signin"
           className="rounded-2xl border-2 border-[#2f67e8] px-6 py-2 text-xl font-semibold text-[#2f67e8] transition-colors hover:bg-blue-50"
         >
-          Sign In
+          {t("nav.signIn")}
         </Link>
         <Link
           href="/signup"
           className="rounded-2xl bg-[#2f67e8] px-6 py-2 text-xl font-semibold text-white transition-colors hover:bg-[#2556c9]"
         >
-          Sign Up
+          {t("nav.signUp")}
         </Link>
       </div>
     );
@@ -126,7 +128,7 @@ export function HeaderAuthArea() {
               className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50"
             >
               {item.icon}
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           ))}
 
@@ -143,7 +145,7 @@ export function HeaderAuthArea() {
                 strokeLinejoin="round"
               />
             </svg>
-            Logout
+            {t("nav.logout")}
           </LogoutButton>
         </div>
       )}

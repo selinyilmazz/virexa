@@ -4,21 +4,25 @@ import { AuthLayout } from "@/components/auth/AuthLayout";
 import { AuthHeroPanel } from "@/components/auth/AuthHeroPanel";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 export const metadata: Metadata = {
   title: "Forgot Password | Virexa",
 };
 
-export default function ForgotPasswordPage() {
+export default async function ForgotPasswordPage() {
+  const { t } = await getServerTranslations();
+
   return (
     <>
       <Header />
       <AuthLayout>
         <AuthHeroPanel
-          title="Reset Your Password"
-          description="Enter your email and we'll help you get back into your account with a secure reset link."
+          title={t("auth.forgotPassword.heroTitle")}
+          description={t("auth.forgotPassword.heroDescription")}
+          t={t}
         />
-        <AuthCard title="Forgot Password?">
+        <AuthCard title={t("auth.forgotPassword.cardTitle")}>
           <ForgotPasswordForm />
         </AuthCard>
       </AuthLayout>

@@ -1,0 +1,185 @@
+{
+  "nav": {
+    "logoAria": "Virexa home",
+    "searchAria": "Search news, topics or sources",
+    "searchPlaceholder": "Search news, topics or sources...",
+    "searchButtonAria": "Search",
+    "categories": {
+      "technology": "Technology",
+      "business": "Business",
+      "ai": "AI",
+      "games": "Games",
+      "world": "World"
+    },
+    "more": "More",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "profile": "Profile",
+    "bookmarks": "Bookmarks",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "footer": {
+    "tagline": "Modern AI news aggregation and newsletter platform covering technology, business, AI, games and world news.",
+    "categoriesHeading": "Categories",
+    "viewAll": "View All →",
+    "resourcesHeading": "Resources",
+    "latestNews": "Latest News",
+    "search": "Search",
+    "allCategories": "All Categories",
+    "companyHeading": "Company",
+    "about": "About",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "cookiePolicy": "Cookie Policy",
+    "contactHeading": "Contact",
+    "supportCenter": "Support Center",
+    "advertise": "Advertise",
+    "copyright": "© {year} Virexa. All rights reserved."
+  },
+  "common": {
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "retry": "Retry",
+    "close": "Close",
+    "readMore": "Read More",
+    "home": "Home"
+  },
+  "auth": {
+    "signIn": {
+      "metaTitle": "Sign In | Virexa",
+      "heroTitle": "Welcome Back!",
+      "heroDescription": "Sign in to your account and continue discovering the latest tech and gaming news with AI-powered summaries.",
+      "cardTitle": "Sign In",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot Password?",
+      "submit": "Sign In",
+      "submitting": "Signing in...",
+      "footerText": "Don't have an account?",
+      "footerLink": "Sign Up",
+      "termsAction": "signing in",
+      "successToast": "Signed in successfully! Redirecting..."
+    },
+    "signUp": {
+      "metaTitle": "Sign Up | Virexa",
+      "heroTitle": "Create Your Account!",
+      "heroDescription": "Join Virexa and get access to the latest AI, technology and gaming news with smart summaries tailored for you.",
+      "cardTitle": "Sign Up",
+      "fullNameLabel": "Full Name",
+      "fullNamePlaceholder": "Your full name",
+      "passwordHelper": "At least 8 characters",
+      "confirmPasswordLabel": "Confirm Password",
+      "confirmPasswordPlaceholder": "Re-enter your password",
+      "agreeToTerms": "I agree to the {terms} and {privacy}",
+      "submit": "Create Account",
+      "submitting": "Creating account...",
+      "footerText": "Already have an account?",
+      "footerLink": "Sign In",
+      "termsAction": "signing up",
+      "successToast": "Account created successfully! Redirecting...",
+      "confirmEmailToast": "Account created! Please check your email to confirm your account."
+    },
+    "forgotPassword": {
+      "metaTitle": "Forgot Password | Virexa",
+      "heroTitle": "Reset Your Password",
+      "heroDescription": "Enter your email and we'll help you get back into your account with a secure reset link.",
+      "cardTitle": "Forgot Password?",
+      "submit": "Reset Password",
+      "submitting": "Sending...",
+      "footerText": "Remember your password?",
+      "footerLink": "Back to Sign In",
+      "successToast": "Reset link sent! Redirecting..."
+    },
+    "fields": {
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password"
+    },
+    "hero": {
+      "aiSummaryBadge": "AI-Summary",
+      "trustedSourcesBadge": "Trusted Sources",
+      "feature1Title": "AI Summaries",
+      "feature1Description": "Get key insights from long articles in seconds.",
+      "feature2Title": "Save & Organize",
+      "feature2Description": "Bookmark your favorite articles and read them later.",
+      "feature3Title": "Trusted Sources",
+      "feature3Description": "News from verified sources you can rely on."
+    },
+    "divider": "or continue with",
+    "google": "Continue with Google",
+    "googleUnavailable": "Google sign-in isn't available yet. Please use email and password.",
+    "termsNotice": "By {action}, you agree to our {terms} and {privacy}",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "errors": {
+      "emailRequired": "Email is required.",
+      "emailInvalid": "Enter a valid email address.",
+      "passwordRequired": "Password is required.",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "nameRequired": "Name is required.",
+      "confirmPasswordRequired": "Please confirm your password.",
+      "passwordsDoNotMatch": "Passwords do not match.",
+      "mustAgreeToTerms": "You must agree to the Terms of Service and Privacy Policy."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your Virexa preferences.",
+    "loading": "Loading your settings...",
+    "loadError": "Couldn't load your settings.",
+    "language": {
+      "sectionTitle": "Language",
+      "label": "Display Language",
+      "helper": "Changes take effect immediately across the whole site and are remembered on every device you sign in on."
+    },
+    "browsing": {
+      "sectionTitle": "Browsing",
+      "openLinksLabel": "Open Links in New Tab",
+      "openLinksDescription": "Article and source links open in a new browser tab."
+    },
+    "reading": {
+      "summaryLengthTitle": "AI Summary Length",
+      "summaryShort": "Short",
+      "summaryShortDescription": "1-2 sentence highlights",
+      "summaryMedium": "Medium",
+      "summaryMediumDescription": "A short paragraph",
+      "summaryLong": "Long",
+      "summaryLongDescription": "Detailed multi-paragraph summary",
+      "categoriesTitle": "Preferred Categories",
+      "categoriesDescription": "Choose the topics you want to see more of."
+    },
+    "notifications": {
+      "sectionTitle": "Notifications",
+      "emailLabel": "Email Notifications",
+      "emailDescription": "Get important updates in your inbox.",
+      "pushLabel": "Push Notifications",
+      "pushDescription": "Get notified about breaking news.",
+      "weeklyDigestLabel": "Weekly Digest",
+      "weeklyDigestDescription": "A weekly summary of top stories."
+    },
+    "emailPreferences": {
+      "sectionTitle": "Email Preferences",
+      "productUpdatesLabel": "Product Updates",
+      "productUpdatesDescription": "News about new Virexa features.",
+      "accountActivityLabel": "Account Activity",
+      "accountActivityDescription": "Sign-ins and security-related alerts."
+    },
+    "saveButton": "Save Changes",
+    "savedToast": "Settings saved.",
+    "saveErrorToast": "Couldn't save your settings. Please try again."
+  },
+  "errors": {
+    "pageTitle": "Something went wrong",
+    "pageDescription": "An unexpected error occurred while loading this page. You can try again, or head back to the homepage.",
+    "tryAgain": "Try again",
+    "backToHome": "Back to Home",
+    "notFoundTitle": "Page not found",
+    "notFoundDescription": "The page you're looking for doesn't exist, or may have been moved.",
+    "notFoundBack": "Back to Home"
+  }
+}

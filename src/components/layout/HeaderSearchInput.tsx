@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 const DEBOUNCE_MS = 400;
 
@@ -21,6 +22,7 @@ const DEBOUNCE_MS = 400;
  * back/forward). This avoids syncing state via a `useEffect`.
  */
 export function HeaderSearchInput() {
+  const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -57,7 +59,7 @@ export function HeaderSearchInput() {
       type="search"
       defaultValue={currentQuery}
       onChange={(event) => handleChange(event.target.value)}
-      placeholder="Search news, topics or sources..."
+      placeholder={t("nav.searchPlaceholder")}
       autoComplete="off"
       className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-900 outline-none placeholder:text-slate-500"
     />

@@ -1,0 +1,185 @@
+{
+  "nav": {
+    "logoAria": "Virexa startpagina",
+    "searchAria": "Zoek nieuws, onderwerpen of bronnen",
+    "searchPlaceholder": "Zoek nieuws, onderwerpen of bronnen...",
+    "searchButtonAria": "Zoeken",
+    "categories": {
+      "technology": "Technologie",
+      "business": "Zakelijk",
+      "ai": "AI",
+      "games": "Games",
+      "world": "Wereld"
+    },
+    "more": "Meer",
+    "signIn": "Inloggen",
+    "signUp": "Registreren",
+    "profile": "Profiel",
+    "bookmarks": "Bladwijzers",
+    "settings": "Instellingen",
+    "logout": "Uitloggen"
+  },
+  "footer": {
+    "tagline": "Modern AI-nieuwsplatform en nieuwsbrief met dekking van technologie, zakelijk nieuws, AI, games en wereldnieuws.",
+    "categoriesHeading": "Categorieën",
+    "viewAll": "Alles bekijken →",
+    "resourcesHeading": "Bronnen",
+    "latestNews": "Laatste Nieuws",
+    "search": "Zoeken",
+    "allCategories": "Alle Categorieën",
+    "companyHeading": "Bedrijf",
+    "about": "Over ons",
+    "privacyPolicy": "Privacybeleid",
+    "termsOfService": "Gebruiksvoorwaarden",
+    "cookiePolicy": "Cookiebeleid",
+    "contactHeading": "Contact",
+    "supportCenter": "Ondersteuning",
+    "advertise": "Adverteren",
+    "copyright": "© {year} Virexa. Alle rechten voorbehouden."
+  },
+  "common": {
+    "home": "Home",
+    "save": "Opslaan",
+    "saving": "Bezig met opslaan...",
+    "cancel": "Annuleren",
+    "loading": "Laden...",
+    "retry": "Opnieuw proberen",
+    "close": "Sluiten",
+    "readMore": "Lees meer"
+  },
+  "auth": {
+    "signIn": {
+      "metaTitle": "Inloggen | Virexa",
+      "heroTitle": "Welkom terug!",
+      "heroDescription": "Log in op je account en ontdek het laatste tech- en gamenieuws met AI-samenvattingen.",
+      "cardTitle": "Inloggen",
+      "rememberMe": "Onthoud mij",
+      "forgotPassword": "Wachtwoord vergeten?",
+      "submit": "Inloggen",
+      "submitting": "Bezig met inloggen...",
+      "footerText": "Nog geen account?",
+      "footerLink": "Registreren",
+      "termsAction": "met inloggen",
+      "successToast": "Succesvol ingelogd! Je wordt doorgestuurd..."
+    },
+    "signUp": {
+      "metaTitle": "Registreren | Virexa",
+      "heroTitle": "Maak je account aan!",
+      "heroDescription": "Word lid van Virexa en krijg toegang tot het laatste AI-, technologie- en gamenieuws met slimme samenvattingen op maat.",
+      "cardTitle": "Registreren",
+      "fullNameLabel": "Volledige naam",
+      "fullNamePlaceholder": "Je volledige naam",
+      "passwordHelper": "Minimaal 8 tekens",
+      "confirmPasswordLabel": "Bevestig wachtwoord",
+      "confirmPasswordPlaceholder": "Voer je wachtwoord opnieuw in",
+      "agreeToTerms": "Ik ga akkoord met de {terms} en het {privacy}",
+      "submit": "Account aanmaken",
+      "submitting": "Account wordt aangemaakt...",
+      "footerText": "Heb je al een account?",
+      "footerLink": "Inloggen",
+      "termsAction": "met registreren",
+      "successToast": "Account succesvol aangemaakt! Je wordt doorgestuurd...",
+      "confirmEmailToast": "Account aangemaakt! Controleer je e-mail om je account te bevestigen."
+    },
+    "forgotPassword": {
+      "metaTitle": "Wachtwoord vergeten | Virexa",
+      "heroTitle": "Wachtwoord opnieuw instellen",
+      "heroDescription": "Voer je e-mailadres in en we helpen je met een beveiligde link om weer toegang te krijgen tot je account.",
+      "cardTitle": "Wachtwoord vergeten?",
+      "submit": "Wachtwoord opnieuw instellen",
+      "submitting": "Bezig met verzenden...",
+      "footerText": "Weet je je wachtwoord weer?",
+      "footerLink": "Terug naar inloggen",
+      "successToast": "Reset-link verzonden! Je wordt doorgestuurd..."
+    },
+    "fields": {
+      "email": "E-mail",
+      "emailPlaceholder": "jij@voorbeeld.com",
+      "password": "Wachtwoord",
+      "passwordPlaceholder": "Voer je wachtwoord in",
+      "showPassword": "Wachtwoord tonen",
+      "hidePassword": "Wachtwoord verbergen"
+    },
+    "hero": {
+      "aiSummaryBadge": "AI-samenvatting",
+      "trustedSourcesBadge": "Betrouwbare bronnen",
+      "feature1Title": "AI-samenvattingen",
+      "feature1Description": "Krijg in seconden de belangrijkste inzichten uit lange artikelen.",
+      "feature2Title": "Opslaan & organiseren",
+      "feature2Description": "Bewaar je favoriete artikelen en lees ze later.",
+      "feature3Title": "Betrouwbare bronnen",
+      "feature3Description": "Nieuws van geverifieerde bronnen waarop je kunt vertrouwen."
+    },
+    "divider": "of ga verder met",
+    "google": "Doorgaan met Google",
+    "googleUnavailable": "Inloggen met Google is nog niet beschikbaar. Gebruik e-mail en wachtwoord.",
+    "termsNotice": "Door {action} ga je akkoord met onze {terms} en ons {privacy}",
+    "termsOfService": "Gebruiksvoorwaarden",
+    "privacyPolicy": "Privacybeleid",
+    "errors": {
+      "emailRequired": "E-mail is verplicht.",
+      "emailInvalid": "Voer een geldig e-mailadres in.",
+      "passwordRequired": "Wachtwoord is verplicht.",
+      "passwordTooShort": "Wachtwoord moet minimaal 8 tekens bevatten.",
+      "nameRequired": "Naam is verplicht.",
+      "confirmPasswordRequired": "Bevestig je wachtwoord.",
+      "passwordsDoNotMatch": "Wachtwoorden komen niet overeen.",
+      "mustAgreeToTerms": "Je moet akkoord gaan met de Gebruiksvoorwaarden en het Privacybeleid."
+    }
+  },
+  "settings": {
+    "title": "Instellingen",
+    "subtitle": "Beheer je Virexa-voorkeuren.",
+    "loading": "Je instellingen worden geladen...",
+    "loadError": "Je instellingen konden niet worden geladen.",
+    "language": {
+      "sectionTitle": "Taal",
+      "label": "Weergavetaal",
+      "helper": "Wijzigingen worden direct op de hele site toegepast en onthouden op elk apparaat waarop je inlogt."
+    },
+    "browsing": {
+      "sectionTitle": "Navigatie",
+      "openLinksLabel": "Links openen in nieuw tabblad",
+      "openLinksDescription": "Artikel- en bronlinks openen in een nieuw browsertabblad."
+    },
+    "reading": {
+      "summaryLengthTitle": "Lengte van AI-samenvatting",
+      "summaryShort": "Kort",
+      "summaryShortDescription": "Hoogtepunten in 1-2 zinnen",
+      "summaryMedium": "Gemiddeld",
+      "summaryMediumDescription": "Een korte alinea",
+      "summaryLong": "Lang",
+      "summaryLongDescription": "Uitgebreide samenvatting met meerdere alinea's",
+      "categoriesTitle": "Voorkeurscategorieën",
+      "categoriesDescription": "Kies de onderwerpen waar je meer van wilt zien."
+    },
+    "notifications": {
+      "sectionTitle": "Meldingen",
+      "emailLabel": "E-mailmeldingen",
+      "emailDescription": "Ontvang belangrijke updates in je inbox.",
+      "pushLabel": "Pushmeldingen",
+      "pushDescription": "Ontvang meldingen over breaking news.",
+      "weeklyDigestLabel": "Wekelijks overzicht",
+      "weeklyDigestDescription": "Een wekelijkse samenvatting van topverhalen."
+    },
+    "emailPreferences": {
+      "sectionTitle": "E-mailvoorkeuren",
+      "productUpdatesLabel": "Productupdates",
+      "productUpdatesDescription": "Nieuws over nieuwe Virexa-functies.",
+      "accountActivityLabel": "Accountactiviteit",
+      "accountActivityDescription": "Meldingen over inloggen en beveiliging."
+    },
+    "saveButton": "Wijzigingen opslaan",
+    "savedToast": "Instellingen opgeslagen.",
+    "saveErrorToast": "Je instellingen konden niet worden opgeslagen. Probeer het opnieuw."
+  },
+  "errors": {
+    "pageTitle": "Er is iets misgegaan",
+    "pageDescription": "Er is een onverwachte fout opgetreden bij het laden van deze pagina. Probeer het opnieuw of ga terug naar de homepage.",
+    "tryAgain": "Opnieuw proberen",
+    "backToHome": "Terug naar Home",
+    "notFoundTitle": "Pagina niet gevonden",
+    "notFoundDescription": "De pagina die je zoekt bestaat niet, of is mogelijk verplaatst.",
+    "notFoundBack": "Terug naar Home"
+  }
+}

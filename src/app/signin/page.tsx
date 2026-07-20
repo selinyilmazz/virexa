@@ -4,6 +4,7 @@ import { AuthLayout } from "@/components/auth/AuthLayout";
 import { AuthHeroPanel } from "@/components/auth/AuthHeroPanel";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { SignInForm } from "@/components/auth/SignInForm";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 export const metadata: Metadata = {
   title: "Sign In | Virexa",
@@ -15,16 +16,14 @@ type SignInPageProps = {
 
 export default async function SignInPage({ searchParams }: SignInPageProps) {
   const { redirect } = await searchParams;
+  const { t } = await getServerTranslations();
 
   return (
     <>
       <Header />
       <AuthLayout>
-        <AuthHeroPanel
-          title="Welcome Back!"
-          description="Sign in to your account and continue discovering the latest tech and gaming news with AI-powered summaries."
-        />
-        <AuthCard title="Sign In">
+        <AuthHeroPanel title={t("auth.signIn.heroTitle")} description={t("auth.signIn.heroDescription")} t={t} />
+        <AuthCard title={t("auth.signIn.cardTitle")}>
           <SignInForm redirectTo={redirect} />
         </AuthCard>
       </AuthLayout>

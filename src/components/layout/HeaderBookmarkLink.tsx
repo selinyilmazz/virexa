@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 export function HeaderBookmarkLink() {
+  const t = useTranslations();
   const { user } = useAuth();
   const router = useRouter();
 
@@ -18,7 +20,7 @@ export function HeaderBookmarkLink() {
   return (
     <Link
       href="/bookmarks"
-      aria-label="Bookmarks"
+      aria-label={t("nav.bookmarks")}
       onClick={handleClick}
       className="hidden shrink-0 items-center justify-center text-slate-500 transition-colors hover:text-[#2f67e8] md:flex"
     >

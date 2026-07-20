@@ -1,9 +1,14 @@
+"use client";
+
+import { useTranslations } from "@/i18n/i18n-provider";
+
 type SocialLoginButtonsProps = {
   onGoogleClick: () => void;
   disabled?: boolean;
 };
 
 export function SocialLoginButtons({ onGoogleClick, disabled }: SocialLoginButtonsProps) {
+  const t = useTranslations();
   return (
     <div className="space-y-3">
       <button
@@ -18,7 +23,7 @@ export function SocialLoginButtons({ onGoogleClick, disabled }: SocialLoginButto
           <path fill="#FBBC05" d="M6 14.3c-.2-.7-.4-1.4-.4-2.3s.1-1.6.4-2.3V6.9H2.3C1.5 8.5 1 10.2 1 12s.5 3.5 1.3 5.1L6 14.3Z" />
           <path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.3 1.6l3.2-3.2C17.4 2 15 1 12 1 7.8 1 4.1 3.4 2.3 6.9L6 9.7c.9-2.5 3.2-4.3 6-4.3Z" />
         </svg>
-        Continue with Google
+        {t("auth.google")}
       </button>
     </div>
   );

@@ -1,0 +1,185 @@
+{
+  "nav": {
+    "logoAria": "Virexa ana sayfa",
+    "searchAria": "Haber, konu veya kaynak ara",
+    "searchPlaceholder": "Haber, konu veya kaynak ara...",
+    "searchButtonAria": "Ara",
+    "categories": {
+      "technology": "Teknoloji",
+      "business": "İş Dünyası",
+      "ai": "Yapay Zeka",
+      "games": "Oyunlar",
+      "world": "Dünya"
+    },
+    "more": "Daha Fazla",
+    "signIn": "Giriş Yap",
+    "signUp": "Kayıt Ol",
+    "profile": "Profil",
+    "bookmarks": "Kaydedilenler",
+    "settings": "Ayarlar",
+    "logout": "Çıkış Yap"
+  },
+  "footer": {
+    "tagline": "Teknoloji, iş dünyası, yapay zeka, oyunlar ve dünya haberlerini kapsayan modern bir yapay zeka haber toplama ve bülten platformu.",
+    "categoriesHeading": "Kategoriler",
+    "viewAll": "Tümünü Gör →",
+    "resourcesHeading": "Kaynaklar",
+    "latestNews": "Son Haberler",
+    "search": "Ara",
+    "allCategories": "Tüm Kategoriler",
+    "companyHeading": "Şirket",
+    "about": "Hakkımızda",
+    "privacyPolicy": "Gizlilik Politikası",
+    "termsOfService": "Kullanım Şartları",
+    "cookiePolicy": "Çerez Politikası",
+    "contactHeading": "İletişim",
+    "supportCenter": "Destek Merkezi",
+    "advertise": "Reklam Ver",
+    "copyright": "© {year} Virexa. Tüm hakları saklıdır."
+  },
+  "common": {
+    "home": "Anasayfa",
+    "save": "Kaydet",
+    "saving": "Kaydediliyor...",
+    "cancel": "Vazgeç",
+    "loading": "Yükleniyor...",
+    "retry": "Tekrar Dene",
+    "close": "Kapat",
+    "readMore": "Devamını Oku"
+  },
+  "auth": {
+    "signIn": {
+      "metaTitle": "Giriş Yap | Virexa",
+      "heroTitle": "Tekrar Hoş Geldin!",
+      "heroDescription": "Hesabına giriş yap ve yapay zeka destekli özetlerle en güncel teknoloji ve oyun haberlerini keşfetmeye devam et.",
+      "cardTitle": "Giriş Yap",
+      "rememberMe": "Beni hatırla",
+      "forgotPassword": "Şifremi Unuttum?",
+      "submit": "Giriş Yap",
+      "submitting": "Giriş yapılıyor...",
+      "footerText": "Hesabın yok mu?",
+      "footerLink": "Kayıt Ol",
+      "termsAction": "giriş yaparak",
+      "successToast": "Giriş başarılı! Yönlendiriliyorsunuz..."
+    },
+    "signUp": {
+      "metaTitle": "Kayıt Ol | Virexa",
+      "heroTitle": "Hesabını Oluştur!",
+      "heroDescription": "Virexa'ya katıl ve senin için özel olarak hazırlanmış akıllı özetlerle en güncel yapay zeka, teknoloji ve oyun haberlerine eriş.",
+      "cardTitle": "Kayıt Ol",
+      "fullNameLabel": "Ad Soyad",
+      "fullNamePlaceholder": "Ad soyadın",
+      "passwordHelper": "En az 8 karakter",
+      "confirmPasswordLabel": "Şifreyi Onayla",
+      "confirmPasswordPlaceholder": "Şifreni tekrar gir",
+      "agreeToTerms": "{terms} ve {privacy} kabul ediyorum",
+      "submit": "Hesap Oluştur",
+      "submitting": "Hesap oluşturuluyor...",
+      "footerText": "Zaten bir hesabın var mı?",
+      "footerLink": "Giriş Yap",
+      "termsAction": "kayıt olarak",
+      "successToast": "Hesap başarıyla oluşturuldu! Yönlendiriliyorsunuz...",
+      "confirmEmailToast": "Hesap oluşturuldu! Hesabını onaylamak için lütfen e-postanı kontrol et."
+    },
+    "forgotPassword": {
+      "metaTitle": "Şifremi Unuttum | Virexa",
+      "heroTitle": "Şifreni Sıfırla",
+      "heroDescription": "E-postanı gir, güvenli bir sıfırlama bağlantısıyla hesabına yeniden erişmene yardımcı olalım.",
+      "cardTitle": "Şifremi Unuttum?",
+      "submit": "Şifreyi Sıfırla",
+      "submitting": "Gönderiliyor...",
+      "footerText": "Şifreni hatırladın mı?",
+      "footerLink": "Girişe Dön",
+      "successToast": "Sıfırlama bağlantısı gönderildi! Yönlendiriliyorsunuz..."
+    },
+    "fields": {
+      "email": "E-posta",
+      "emailPlaceholder": "sen@ornek.com",
+      "password": "Şifre",
+      "passwordPlaceholder": "Şifreni gir",
+      "showPassword": "Şifreyi göster",
+      "hidePassword": "Şifreyi gizle"
+    },
+    "hero": {
+      "aiSummaryBadge": "Yapay Zeka Özeti",
+      "trustedSourcesBadge": "Güvenilir Kaynaklar",
+      "feature1Title": "Yapay Zeka Özetleri",
+      "feature1Description": "Uzun makalelerden saniyeler içinde önemli bilgileri edin.",
+      "feature2Title": "Kaydet ve Düzenle",
+      "feature2Description": "Favori makalelerini kaydet, daha sonra oku.",
+      "feature3Title": "Güvenilir Kaynaklar",
+      "feature3Description": "Güvenebileceğin, doğrulanmış kaynaklardan haberler."
+    },
+    "divider": "veya şununla devam et",
+    "google": "Google ile devam et",
+    "googleUnavailable": "Google ile giriş henüz kullanılamıyor. Lütfen e-posta ve şifre ile devam et.",
+    "termsNotice": "{action}, {terms} ve {privacy} kabul etmiş olursun",
+    "termsOfService": "Kullanım Şartları",
+    "privacyPolicy": "Gizlilik Politikası",
+    "errors": {
+      "emailRequired": "E-posta zorunludur.",
+      "emailInvalid": "Geçerli bir e-posta adresi gir.",
+      "passwordRequired": "Şifre zorunludur.",
+      "passwordTooShort": "Şifre en az 8 karakter olmalıdır.",
+      "nameRequired": "Ad Soyad zorunludur.",
+      "confirmPasswordRequired": "Lütfen şifreni onayla.",
+      "passwordsDoNotMatch": "Şifreler eşleşmiyor.",
+      "mustAgreeToTerms": "Kullanım Şartları ve Gizlilik Politikası'nı kabul etmelisin."
+    }
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "subtitle": "Virexa tercihlerini yönet.",
+    "loading": "Ayarların yükleniyor...",
+    "loadError": "Ayarların yüklenemedi.",
+    "language": {
+      "sectionTitle": "Dil",
+      "label": "Görüntüleme Dili",
+      "helper": "Değişiklikler tüm sitede anında etkili olur ve giriş yaptığınız her cihazda hatırlanır."
+    },
+    "browsing": {
+      "sectionTitle": "Gezinme",
+      "openLinksLabel": "Bağlantıları Yeni Sekmede Aç",
+      "openLinksDescription": "Haber ve kaynak bağlantıları yeni bir tarayıcı sekmesinde açılır."
+    },
+    "reading": {
+      "summaryLengthTitle": "AI Özet Uzunluğu",
+      "summaryShort": "Kısa",
+      "summaryShortDescription": "1-2 cümlelik öne çıkanlar",
+      "summaryMedium": "Orta",
+      "summaryMediumDescription": "Kısa bir paragraf",
+      "summaryLong": "Uzun",
+      "summaryLongDescription": "Ayrıntılı, çok paragraflı özet",
+      "categoriesTitle": "Tercih Edilen Kategoriler",
+      "categoriesDescription": "Daha fazla görmek istediğin konuları seç."
+    },
+    "notifications": {
+      "sectionTitle": "Bildirimler",
+      "emailLabel": "E-posta Bildirimleri",
+      "emailDescription": "Önemli güncellemeleri gelen kutunda al.",
+      "pushLabel": "Push Bildirimleri",
+      "pushDescription": "Son dakika haberleri için bildirim al.",
+      "weeklyDigestLabel": "Haftalık Özet",
+      "weeklyDigestDescription": "Öne çıkan haberlerin haftalık özeti."
+    },
+    "emailPreferences": {
+      "sectionTitle": "E-posta Tercihleri",
+      "productUpdatesLabel": "Ürün Güncellemeleri",
+      "productUpdatesDescription": "Yeni Virexa özellikleri hakkında haberler.",
+      "accountActivityLabel": "Hesap Etkinliği",
+      "accountActivityDescription": "Giriş ve güvenlikle ilgili uyarılar."
+    },
+    "saveButton": "Değişiklikleri Kaydet",
+    "savedToast": "Ayarlar kaydedildi.",
+    "saveErrorToast": "Ayarların kaydedilemedi. Lütfen tekrar dene."
+  },
+  "errors": {
+    "pageTitle": "Bir şeyler ters gitti",
+    "pageDescription": "Bu sayfa yüklenirken beklenmeyen bir hata oluştu. Tekrar deneyebilir veya anasayfaya dönebilirsin.",
+    "tryAgain": "Tekrar dene",
+    "backToHome": "Anasayfaya Dön",
+    "notFoundTitle": "Sayfa bulunamadı",
+    "notFoundDescription": "Aradığın sayfa mevcut değil ya da taşınmış olabilir.",
+    "notFoundBack": "Anasayfaya Dön"
+  }
+}

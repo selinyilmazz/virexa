@@ -14,6 +14,7 @@ import { AuthToast } from "@/components/auth/AuthToast";
 import { isRequired, isValidEmail } from "@/lib/validators";
 import { createClient } from "@/lib/supabase/client";
 import { getAuthErrorMessage } from "@/lib/supabase/errors";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 type FormErrors = {
   email?: string;
@@ -37,6 +38,7 @@ type SignInFormProps = {
 };
 
 export function SignInForm({ redirectTo }: SignInFormProps) {
+  const t = useTranslations();
   const router = useRouter();
   // Guards against open redirects: must be an internal path (starts with
   // "/") and NOT protocol-relative ("//evil.com" also starts with "/" but
@@ -58,12 +60,12 @@ export function SignInForm({ redirectTo }: SignInFormProps) {
   function validate(): boolean {
     const nextErrors: FormErrors = {};
     if (!isRequired(email)) {
-      nextErrors.email = "Email is required.";
+      nextErrors.email = t("auth.errors.emailRequired");
     } else if (!isValidEmail(email)) {
-      nextErrors.email = "Enter a valid email address.";
+      nextErrors.email = t("auth.errors.emailInvalid");
     }
     if (!isRequired(password)) {
-      nextErrors.password = "Password is required.";
+      nextErrors.password = t("auth.errors.passwordRequired");
     }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -83,13 +85,13 @@ export function SignInForm({ redirectTo }: SignInFormProps) {
       return;
     }
 
-    showToast("Signed in successfully! Redirecting...", "success");
+    showToast(t("auth.signIn.successToast"), "success");
     router.push(safeRedirectTo);
     router.refresh();
   }
 
   function handleGoogleClick() {
-    showToast("Google sign-in isn't available yet. Please use email and password.", "info", 3500);
+    showToast(t("auth.googleUnavailable"), "info", 3500);
   }
 
   return (
@@ -99,23 +101,23 @@ export function SignInForm({ redirectTo }: SignInFormProps) {
       <form onSubmit={(event) => void handleSubmit(event)} noValidate className="space-y-5">
         <AuthInput
           id="signin-email"
-          label="Email"
+          label={t("auth.fields.email")}
           type="email"
           value={email}
           onChange={setEmail}
           error={errors.email}
           autoComplete="email"
-          placeholder="you@example.com"
+          placeholder={t("auth.fields.emailPlaceholder")}
           icon={emailIcon}
         />
         <PasswordInput
           id="signin-password"
-          label="Password"
+          label={t("auth.fields.password")}
           value={password}
           onChange={setPassword}
           error={errors.password}
           autoComplete="current-password"
-          placeholder="Enter your password"
+          placeholder={t("auth.fields.passwordPlaceholder")}
         />
 
         <div className="flex items-center justify-between gap-4 text-sm">
@@ -126,10 +128,10 @@ export function SignInForm({ redirectTo }: SignInFormProps) {
               onChange={(event) => setRememberMe(event.target.checked)}
               className="size-4 rounded border-slate-300 text-[#2f67e8] focus:ring-[#2f67e8]"
             />
-            Remember me
+            {t("auth.signIn.rememberMe")}
           </label>
           <Link href="/forgot-password" className="font-medium text-[#2f67e8] transition-colors hover:text-[#2556c9]">
-            Forgot Password?
+            {t("auth.signIn.forgotPassword")}
           </Link>
         </div>
 
@@ -139,7 +141,7 @@ export function SignInForm({ redirectTo }: SignInFormProps) {
           className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2f67e8] text-base font-semibold text-white transition-colors hover:bg-[#2556c9] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isSubmitting && <Spinner className="size-5 text-white" />}
-          {isSubmitting ? "Signing in..." : "Sign In"}
+          {isSubmitting ? t("auth.signIn.submitting") : t("auth.signIn.submit")}
         </button>
 
         <AuthDivider />
@@ -147,9 +149,9 @@ export function SignInForm({ redirectTo }: SignInFormProps) {
         <SocialLoginButtons disabled={isSubmitting} onGoogleClick={handleGoogleClick} />
       </form>
 
-      <AuthFooter text="Don't have an account?" linkLabel="Sign Up" href="/signup" />
+      <AuthFooter text={t("auth.signIn.footerText")} linkLabel={t("auth.signIn.footerLink")} href="/signup" />
 
-      <AuthTermsNotice actionLabel="signing in" />
+      <AuthTermsNotice actionLabelKey="auth.signIn.termsAction" />
     </>
   );
 }

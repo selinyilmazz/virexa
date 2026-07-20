@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ConditionalFooter } from "@/components/layout/ConditionalFooter";
+import { Footer } from "@/components/layout/Footer";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
+import { I18nProvider } from "@/i18n/i18n-provider";
+import { resolveServerLocale } from "@/i18n/resolve-locale.server";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -71,16 +74,30 @@ export default async function RootLayout({
     console.error("[RootLayout] Failed to resolve auth session:", error);
   }
 
+  // Resolved once per request (React `cache()`-wrapped, see
+  // resolve-locale.server.ts) from the signed-in user's saved
+  // `user_settings.language` (falls back to the `virexa_locale` cookie,
+  // then "en") - this is what makes the language switch apply
+  // immediately across the whole app on every render, survive a page
+  // refresh, and auto-load on sign-in, all without a client-side flash
+  // of the wrong language: the very first server-rendered HTML is
+  // already in the right locale.
+  const locale = await resolveServerLocale();
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AuthProvider initialSession={session}>
-          {children}
-          <ConditionalFooter />
-        </AuthProvider>
+        <I18nProvider locale={locale}>
+          <AuthProvider initialSession={session}>
+            {children}
+            <ConditionalFooter>
+              <Footer />
+            </ConditionalFooter>
+          </AuthProvider>
+        </I18nProvider>
       </body>
     </html>
   );

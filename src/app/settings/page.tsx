@@ -2,12 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { SettingsForm } from "@/components/settings/SettingsForm";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 export const metadata: Metadata = {
   title: "Settings | Virexa",
 };
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const { t } = await getServerTranslations();
+
   return (
     <>
       <Header />
@@ -15,15 +18,15 @@ export default function SettingsPage() {
         <div className="mx-auto max-w-4xl">
           <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
             <Link href="/" className="transition-colors hover:text-[#2f67e8]">
-              Home
+              {t("common.home")}
             </Link>
             <span aria-hidden="true">›</span>
-            <span className="font-medium text-slate-950">Settings</span>
+            <span className="font-medium text-slate-950">{t("settings.title")}</span>
           </nav>
 
           <div className="mt-4">
-            <h1 className="text-4xl font-bold tracking-tight text-slate-950">Settings</h1>
-            <p className="mt-2 text-base text-slate-500">Manage your Virexa preferences.</p>
+            <h1 className="text-4xl font-bold tracking-tight text-slate-950">{t("settings.title")}</h1>
+            <p className="mt-2 text-base text-slate-500">{t("settings.subtitle")}</p>
           </div>
 
           <div className="mt-8">
