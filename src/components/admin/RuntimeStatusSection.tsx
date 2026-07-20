@@ -50,7 +50,11 @@ export async function RuntimeStatusSection({ compact = false }: RuntimeStatusSec
   return (
     <SectionCard
       title="Runtime Status"
-      description="Read-only snapshot of the background job engine."
+      description={
+        isRunning
+          ? "Read-only snapshot of the background job engine."
+          : "Read-only snapshot of the background job engine. This in-process scheduler is normally off on serverless hosting (e.g. Vercel) - check \"Last Run\"/\"Last Success\" below for whether the site is actually getting fresh content; the real production trigger is the external cron hitting /api/cron/news-fetch (see vercel.json)."
+      }
       action={<StatusBadge status={isRunning ? "healthy" : "unknown"} label={isRunning ? "Scheduler Running" : "Scheduler Stopped"} />}
     >
       <div className="grid gap-4 sm:grid-cols-3">

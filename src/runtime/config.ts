@@ -17,6 +17,8 @@ export type RuntimeConfig = {
   /** Master switch. Defaults to `false` - the runtime never auto-starts just because this module was imported (see `runtime/engine.ts`). */
   enabled: boolean;
   intervals: {
+    /** How often the full, database-persisting pipeline (`news-fetch`) runs when the in-process scheduler is used - the interval that actually matters for keeping the live site's real content fresh. See `scheduler/schedule-definitions.ts`'s doc comment for why this is separate from `rssMs` et al. below. */
+    newsFetchMs: number;
     rssMs: number;
     newsApiMs: number;
     gNewsMs: number;
@@ -28,6 +30,15 @@ export type RuntimeConfig = {
   jobTimeoutMs: number;
   maxRetry: number;
   concurrency: number;
+  /**
+   * Shared secret an external cron trigger must present (as
+   * `Authorization: Bearer <secret>`) to invoke `/api/cron/news-fetch`
+   * (see that route). `undefined` when unset - the route treats that as
+   * "not configured" and refuses every request (fails closed, never
+   * silently open), the same convention `SUPABASE_SERVICE_ROLE_KEY`'s
+   * absence already follows elsewhere in this file.
+   */
+  cronSecret: string | undefined;
 };
 
 const MINUTE_MS = 60_000;
@@ -60,6 +71,7 @@ export function resolveRuntimeConfig(): RuntimeConfig {
   return {
     enabled: resolveBoolean("RUNTIME_ENABLED", process.env.RUNTIME_ENABLED, false),
     intervals: {
+      newsFetchMs: resolveMinutesToMs("NEWSFETCH_INTERVAL", process.env.NEWSFETCH_INTERVAL, 30),
       rssMs: resolveMinutesToMs("RSS_INTERVAL", process.env.RSS_INTERVAL, 5),
       newsApiMs: resolveMinutesToMs("NEWSAPI_INTERVAL", process.env.NEWSAPI_INTERVAL, 10),
       gNewsMs: resolveMinutesToMs("GNEWS_INTERVAL", process.env.GNEWS_INTERVAL, 10),
@@ -72,6 +84,7 @@ export function resolveRuntimeConfig(): RuntimeConfig {
     jobTimeoutMs: resolvePositiveInt("JOB_TIMEOUT", process.env.JOB_TIMEOUT, 30_000),
     maxRetry: resolvePositiveInt("MAX_RETRY", process.env.MAX_RETRY, 3),
     concurrency: resolvePositiveInt("CONCURRENCY", process.env.CONCURRENCY, 2),
+    cronSecret: process.env.CRON_SECRET && process.env.CRON_SECRET.trim() !== "" ? process.env.CRON_SECRET : undefined,
   };
 }
 

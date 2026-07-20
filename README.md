@@ -120,8 +120,9 @@ Full reference with descriptions lives in `.env.example` - copy it to
 | `NEWS_API_KEY` / `GNEWS_API_KEY` / `THENEWS_API_KEY` | Extra news sources beyond RSS | Optional - RSS ingestion works without them. |
 | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `OPENROUTER_API_KEY` | AI enrichment (summaries, tags, sentiment, bias) | Set the key matching `AI_PROVIDER`; only one provider is active at a time. |
 | `AI_PROVIDER`, `AI_MODEL`, `AI_TIMEOUT`, `AI_MAX_TOKENS`, `AI_CACHE_TTL` | AI tuning | All have sensible defaults - see `src/lib/env.ts`. |
-| `RUNTIME_ENABLED` | Background job scheduler | Master switch; defaults to `false`. Something still has to call `runtimeEngine.start()`. |
-| `RSS_INTERVAL`, `NEWSAPI_INTERVAL`, `GNEWS_INTERVAL`, `AI_INTERVAL`, `CACHE_INTERVAL`, `HEALTH_INTERVAL`, `JOB_TIMEOUT`, `MAX_RETRY`, `CONCURRENCY` | Runtime tuning | All have sensible defaults - see `src/runtime/config.ts`. |
+| `CRON_SECRET` | **Production ingestion** - secures `/api/cron/news-fetch`, the real trigger on serverless hosting | Required for that route to accept any request. Random string, 16+ characters. Vercel sends it automatically as `Authorization: Bearer <value>` for Cron Jobs defined in `vercel.json`. |
+| `RUNTIME_ENABLED` | In-process background job scheduler (self-hosted only - see [Known Limitations](#known-limitations)) | Master switch; defaults to `false`. Something still has to call `runtimeEngine.start()`. Not the production path on Vercel - use `CRON_SECRET` above instead. |
+| `NEWSFETCH_INTERVAL`, `RSS_INTERVAL`, `NEWSAPI_INTERVAL`, `GNEWS_INTERVAL`, `HN_INTERVAL`, `AI_INTERVAL`, `CACHE_INTERVAL`, `HEALTH_INTERVAL`, `JOB_TIMEOUT`, `MAX_RETRY`, `CONCURRENCY` | In-process scheduler tuning | All have sensible defaults - see `src/runtime/config.ts`. |
 
 **Checking what's actually configured**: `/admin/settings` (once signed
 in as an admin) shows a live, read-only "Environment" category listing
@@ -212,13 +213,34 @@ types (`src/runtime/types.ts`): `news-fetch`, `rss-sync`,
 - `runtimeEngine` (`runtime/engine.ts`) is the singleton entry point:
   `enqueueJob()`, `runJob()`, `queue.list()`, `queue.getStats()`,
   `checkHealth()`.
-- The scheduler never starts implicitly - `RUNTIME_ENABLED=true` alone
-  does nothing; something must call `runtimeEngine.start()` (a cron
-  trigger, a platform-specific scheduled invocation, or an admin
-  action).
-- On serverless platforms (Vercel) an in-process, always-running
-  scheduler does not persist between invocations - see
-  [Known Limitations](#known-limitations).
+- The in-process scheduler (`RuntimeScheduler`, `setInterval`-based)
+  never starts implicitly - `RUNTIME_ENABLED=true` alone does nothing;
+  something must call `runtimeEngine.start()` on a long-lived process
+  (self-hosted/Docker). Nothing in this codebase calls it automatically
+  today (no `instrumentation.ts` hook) - this is a deliberate opt-in, not
+  a bug, since starting it unconditionally would surprise a bare `next
+  dev`/`next start`.
+- On serverless platforms (Vercel), that in-process scheduler does not
+  persist between invocations regardless of `RUNTIME_ENABLED` - see
+  [Known Limitations](#known-limitations). **The real production
+  trigger is `GET/POST /api/cron/news-fetch`** (`src/app/api/cron/news-fetch/route.ts`),
+  secured by `CRON_SECRET` (`Authorization: Bearer <secret>` - the exact
+  mechanism Vercel Cron Jobs use natively). `vercel.json` at the repo
+  root wires a Vercel Cron Job to that route (once daily by default -
+  see that file's comment for how to run it more often on a paid plan;
+  Vercel's Hobby tier rejects any cron expression that fires more than
+  once per day at deploy time). This one route call is sufficient on its
+  own: `news-fetch` runs the full pipeline (fetch, normalize, dedupe,
+  trust score, AI enrichment, trending, database persistence, cache
+  refresh) - it's the only job type that writes to Supabase at all (see
+  the next paragraph).
+- Of the 14 job types, only `news-fetch` persists to Supabase.
+  `rss-sync`/`newsapi-sync`/`gnews-sync`/`hn-sync`/`ai-summary`/`ai-tag`/
+  `sentiment`/`bias-analysis` each only touch a legacy in-memory
+  `live-articles` cache that no current, database-backed page reads from
+  - they're independently useful for isolating one provider/capability
+  while debugging, but do not by themselves keep the live site's content
+  fresh. `schedule-definitions.ts` documents this in full.
 
 ## AI Intelligence Layer
 
@@ -299,14 +321,21 @@ any Node.js host that supports the App Router.
    Supabase project, in order.
 3. Deploy. `npm run build` / `npm run start` are the standard Next.js
    production commands.
-4. If you need the Runtime layer's scheduled ingestion/AI jobs to run
-   in production, trigger them externally (see
-   [Known Limitations](#known-limitations) - the in-process scheduler
-   doesn't persist on serverless platforms) - e.g. a Vercel Cron Job
-   hitting a dedicated trigger, or an external scheduler calling the
-   admin Runtime actions.
+4. Set `CRON_SECRET` (a random string of 16+ characters) in the
+   platform's environment settings - this is what secures
+   `/api/cron/news-fetch` (see [Runtime / Automation Layer](#runtime--automation-layer)).
+   On Vercel, `vercel.json`'s `crons` entry picks this route up
+   automatically on deploy - no extra dashboard configuration needed
+   beyond setting the env var. On any other host, point your own
+   scheduler (cron, GitHub Actions, etc.) at
+   `POST /api/cron/news-fetch` with header
+   `Authorization: Bearer <CRON_SECRET>` on whatever cadence you want.
 5. After deploying, verify `/admin/settings` shows every expected
-   integration as "Configured".
+   integration as "Configured", then either wait for the first cron
+   invocation or call `/api/cron/news-fetch` once by hand to confirm
+   articles start appearing - `/admin/runtime`'s "Last Run"/"Last
+   Success" cards and the homepage's newest article date are the two
+   fastest ways to confirm it worked.
 
 ## Troubleshooting
 
@@ -319,6 +348,20 @@ any Node.js host that supports the App Router.
 - **Articles appear but are never AI-enriched**: no `AI_PROVIDER` key
   is set, or `AI_PROVIDER` points at a provider whose key is empty.
   This is a supported, non-error state - the site works without it.
+  Check `/admin/settings` or `/admin/health`'s "AI Provider" row.
+- **Runtime Status shows "Scheduler Stopped" / homepage shows stale
+  articles / "Added in Last 24h" is 0**: the in-process scheduler being
+  "Stopped" is expected on Vercel (see
+  [Runtime / Automation Layer](#runtime--automation-layer)) - it does
+  not mean ingestion is broken. Check instead: (1) is `CRON_SECRET` set
+  and does `vercel.json` have an active Cron Job pointed at
+  `/api/cron/news-fetch`; (2) does `/admin/runtime`'s "Last Success"
+  card show a recent `news-fetch` run; (3) call
+  `/api/cron/news-fetch` by hand with the right `Authorization: Bearer
+  <CRON_SECRET>` header and check the JSON response for per-step
+  errors. If none of that resolves it, use `/admin/runtime`'s "Run
+  Pipeline" button to trigger `news-fetch` manually and watch for
+  errors there instead.
 - **Sitemap/canonical URLs point at `localhost:3000` in production**:
   `NEXT_PUBLIC_SITE_URL` isn't set in that environment.
 - **`npm run build` fails with an SWC binary error**: this happens in
@@ -342,10 +385,24 @@ knowing:
 - **Rate limiting is per-process, in-memory.** On a multi-instance
   deployment it does not provide a hard global cap. A shared store
   (Redis/Upstash) would be needed for a strict guarantee.
-- **The Runtime scheduler is in-process.** It does not run
-  automatically on serverless platforms between invocations; production
-  ingestion/AI jobs need an external trigger (see
-  [Deployment](#deployment)).
+- **The in-process Runtime scheduler does not run automatically on
+  serverless platforms** between invocations - production ingestion/AI
+  now runs via the external `/api/cron/news-fetch` trigger + Vercel Cron
+  instead (see [Deployment](#deployment)); the in-process scheduler
+  remains available (and now includes `news-fetch` itself in its
+  schedule) for anyone self-hosting on a persistent Node process.
+- **Only `news-fetch` persists to Supabase.** The other, individually
+  scheduled jobs (`rss-sync`/`newsapi-sync`/`gnews-sync`/`hn-sync`/
+  `ai-summary`/`ai-tag`/`sentiment`/`bias-analysis`) still only touch a
+  legacy in-memory cache pre-dating the Supabase-backed Article Storage
+  layer - see `schedule-definitions.ts`'s doc comment. Consolidating or
+  removing these is a reasonable future cleanup, not done here to keep
+  this fix scoped to restoring ingestion.
+- **Vercel Hobby plan cron limits.** `vercel.json`'s default schedule
+  (`0 6 * * *`, once daily) is intentionally the most conservative
+  option that deploys successfully on every Vercel plan - Hobby rejects
+  any cron expression that would fire more than once per day. Increase
+  the frequency (e.g. `*/30 * * * *`) if the project is on Pro/Team.
 - **Analytics time-series data is best-effort** where the schema
   doesn't retain daily history - see
   `admin-analytics-service.ts`'s doc comments for the exact,

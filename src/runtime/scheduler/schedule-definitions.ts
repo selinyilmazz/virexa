@@ -22,15 +22,41 @@ export type ScheduleDefinition = {
  * min, AI every 15 min, Cleanup once a day, Health Check every 1 min).
  * `hn-sync` was added alongside the Hacker News integration, scheduled
  * every 5 min like `rss-sync` (both need no API key, unlike the
- * 10-minute NewsAPI/GNews). `news-fetch` (the full end-to-end
- * pipeline), `duplicate-detection`, and `trending` are intentionally
- * NOT auto-scheduled here - they're still fully independent jobs,
- * runnable any time via `runtimeEngine.runJob(...)` (manual trigger) or
- * a future addition to this list; auto-running them alongside the
- * already-scheduled rss-sync/newsapi-sync/gnews-sync/hn-sync/ai-* jobs
- * would just duplicate work.
+ * 10-minute NewsAPI/GNews).
+ *
+ * IMPORTANT, found during the "Scheduler Stopped / no new articles"
+ * production incident: `rss-sync`, `newsapi-sync`, `gnews-sync`,
+ * `hn-sync`, `ai-summary`, `ai-tag`, `sentiment`, and `bias-analysis`
+ * each only touch the legacy in-memory `live-articles` cache
+ * (`services/news/live-articles.ts`) - NONE of them write to Supabase.
+ * Only `news-fetch` runs the full pipeline INCLUDING the database step
+ * (`pipeline/steps/database-step.ts`), which is what every current,
+ * database-backed page (`article-read-service.ts`) actually reads from.
+ * A perfectly running scheduler with only the jobs below would still
+ * never have put a single new article on the live site - `news-fetch`
+ * itself was missing from this list entirely. It's now included, and is
+ * the one entry that matters for keeping the live site fresh.
+ *
+ * `news-fetch` is deliberately NOT a replacement for the granular
+ * per-provider jobs above - those still have standalone value for
+ * observability/debugging one provider in isolation - but this codebase
+ * has no instrumentation.ts wiring that ever calls `runtimeEngine.start()`
+ * for ANY of these, and on serverless hosting (Vercel) this whole
+ * `setInterval`-based scheduler doesn't persist between invocations
+ * regardless. The real production trigger is the external one at
+ * `/api/cron/news-fetch` (see that route + `vercel.json`) - this
+ * in-process schedule only actually runs anything for a deployment that
+ * both sets `RUNTIME_ENABLED=true` AND has something call
+ * `runtimeEngine.start()` on a long-lived, persistent Node process
+ * (e.g. self-hosted/Docker, not Vercel).
+ *
+ * `duplicate-detection` and `trending` are still intentionally NOT
+ * auto-scheduled - `news-fetch` already runs both internally on every
+ * pass, and `trending`'s own standalone job only recomputes scores for
+ * whatever's already in the (now largely redundant) live-articles cache.
  */
 export const SCHEDULE_DEFINITIONS: ScheduleDefinition[] = [
+  { jobType: "news-fetch", cron: "*/30 * * * *", intervalMs: runtimeConfig.intervals.newsFetchMs },
   { jobType: "rss-sync", cron: "*/5 * * * *", intervalMs: runtimeConfig.intervals.rssMs },
   { jobType: "newsapi-sync", cron: "*/10 * * * *", intervalMs: runtimeConfig.intervals.newsApiMs },
   { jobType: "gnews-sync", cron: "*/10 * * * *", intervalMs: runtimeConfig.intervals.gNewsMs },

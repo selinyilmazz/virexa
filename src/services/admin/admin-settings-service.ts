@@ -95,7 +95,17 @@ export function getSettingsCategories(): SettingsCategory[] {
       description: "Background job engine configuration.",
       items: [
         boolItem("Runtime Enabled", runtimeConfig.enabled, "Enabled", "Disabled"),
-        { label: "Scheduler", value: runtimeEngine.isRunning ? "Running" : "Stopped", status: runtimeEngine.isRunning ? "ok" : "warning" },
+        {
+          label: "In-Process Scheduler",
+          value: runtimeEngine.isRunning ? "Running" : "Stopped",
+          status: runtimeEngine.isRunning ? "ok" : "warning",
+        },
+        boolItem(
+          "Production Cron Trigger (CRON_SECRET)",
+          Boolean(runtimeConfig.cronSecret),
+          "Configured",
+          "Not Configured - /api/cron/news-fetch will reject every request"
+        ),
         { label: "Concurrency", value: String(runtimeConfig.concurrency) },
         { label: "Max Retry", value: String(runtimeConfig.maxRetry) },
         { label: "Job Timeout", value: formatMs(runtimeConfig.jobTimeoutMs) },
