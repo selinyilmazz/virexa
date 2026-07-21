@@ -1,6 +1,7 @@
 import { hashArticleContent } from "@/lib/ai/content-hash";
 import { createServiceClient } from "@/lib/supabase/service-client";
 import type { ArticleAIInput } from "@/lib/validation/article-storage-schema";
+import { logErrorFully } from "@/runtime/errors";
 import { mapWithConcurrency } from "@/runtime/pipeline/concurrency";
 import { createArticleAIRepository } from "@/repositories/article-ai-repository";
 import { createArticleRepository } from "@/repositories/article-repository";
@@ -306,7 +307,14 @@ export async function runAIEnrichmentCapability(
   for (const result of results) {
     if (result.status === "rejected") {
       failed += 1;
-      console.error(`[ai-enrichment:${capability}] article "${result.item.id}" failed:`, result.reason);
+      // Was `console.error(..., result.reason)` alone - no stack/cause/
+      // inspect breakdown. This is a likely real origin of the "[object
+      // Object]" bug: a Supabase repository call inside `descriptor.generate`
+      // (via `aiService.get*`) or a provider error can reject with a
+      // plain object, not an `Error` instance. `logErrorFully()` prints
+      // the raw value, its stack (if any), its `.cause` (if any), and a
+      // full `util.inspect` dump instead.
+      logErrorFully(`[ai-enrichment:${capability}] article "${result.item.id}" failed`, result.reason);
       continue;
     }
 
@@ -363,7 +371,7 @@ export async function runAllAIEnrichmentCapabilities(batchSize: number = AI_ENRI
   return settled.map((result, index) => {
     const capability = AI_CAPABILITY_KEYS[index];
     if (result.status === "fulfilled") return result.value;
-    console.error(`[ai-enrichment:${capability}] capability run failed:`, result.reason);
+    logErrorFully(`[ai-enrichment:${capability}] capability run failed`, result.reason);
     return { capability, checked: 0, updated: 0, failed: 0 };
   });
 }

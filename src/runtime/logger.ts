@@ -1,3 +1,4 @@
+import { describeError } from "@/runtime/errors";
 import type { JobType } from "@/runtime/types";
 
 export type RuntimeLogEvent = "start" | "success" | "failure" | "retry" | "cancelled";
@@ -88,7 +89,11 @@ export class RuntimeLogger {
       event: "retry",
       timestamp: new Date().toISOString(),
       retryCount,
-      message: error instanceof Error ? error.message : String(error),
+      // Bug fix: was `error instanceof Error ? error.message : String(error)` -
+      // `String()` on a non-Error value (e.g. a Supabase error object)
+      // always produces "[object Object]". See `describeError()`'s doc
+      // comment in `runtime/errors.ts`.
+      message: describeError(error),
     });
   }
 
@@ -99,7 +104,7 @@ export class RuntimeLogger {
       timestamp: new Date().toISOString(),
       durationMs,
       attempt,
-      message: error instanceof Error ? error.message : String(error),
+      message: describeError(error),
     });
   }
 

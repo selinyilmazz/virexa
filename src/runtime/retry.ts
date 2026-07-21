@@ -1,4 +1,4 @@
-import { RuntimeCancelledError, RuntimeTimeoutError } from "@/runtime/errors";
+import { RuntimeCancelledError, RuntimeTimeoutError, describeError } from "@/runtime/errors";
 import type { CancelToken } from "@/runtime/types";
 
 function sleep(ms: number): Promise<void> {
@@ -66,5 +66,18 @@ export async function withRetry<T>(label: string, fn: () => Promise<T>, options:
     }
   }
 
-  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+  // Bug fix ("Error: [object Object]" in Vercel logs): this used to be
+  // `throw lastError instanceof Error ? lastError : new Error(String(lastError))` -
+  // `String()` on a non-Error `lastError` (a Supabase/PostgREST error
+  // object is the common real-world case - `{ message, code, details,
+  // hint }`, not `instanceof Error`) always collapses to the literal
+  // string "[object Object]", regardless of what the object actually
+  // contains. `describeError()` extracts the real message (or a full
+  // `util.inspect` dump as a last resort) instead - see its doc comment
+  // in `runtime/errors.ts`. The original `lastError` is preserved as the
+  // new Error's `.cause` (standard `Error` `cause` option, ES2022) so
+  // nothing is lost even when it has to be wrapped - a caller that wants
+  // the raw original value can still get it via `error.cause`.
+  if (lastError instanceof Error) throw lastError;
+  throw new Error(describeError(lastError), { cause: lastError });
 }

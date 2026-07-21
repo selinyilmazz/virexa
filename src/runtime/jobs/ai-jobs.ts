@@ -1,3 +1,4 @@
+import { logErrorFully } from "@/runtime/errors";
 import { runAIEnrichmentCapability } from "@/services/ai/ai-enrichment-runner";
 import type { AICapabilityKey } from "@/services/ai/ai-enrichment-runner";
 import type { JobDefinition } from "@/runtime/types";
@@ -51,8 +52,24 @@ function createAICapabilityJob(capability: AICapabilityKey, jobType: JobDefiniti
     timeoutMs: 90_000,
     maxAttempts: 1,
     run: async () => {
-      const result = await runAIEnrichmentCapability(capability);
-      return result;
+      // Bug fix ("Error: [object Object]" in Vercel logs for every AI
+      // job): this job used to have no try/catch of its own at all -
+      // whatever `runAIEnrichmentCapability()` (or something it calls,
+      // e.g. a Supabase repository's `if (error) throw error;`) threw
+      // propagated up through `withRetry()`/`RuntimeQueue` with no
+      // exhaustive logging at its actual origin. `logErrorFully()` (see
+      // `runtime/errors.ts`) logs the raw error, its stack, its `.cause`,
+      // and a full `util.inspect` dump right here - the closest point to
+      // where the real exception (e.g. a Supabase error object, which is
+      // a plain object, not `instanceof Error`) is thrown - then
+      // rethrows unchanged so `RuntimeQueue`/`RuntimeJobError`'s own
+      // retry-exhaustion handling is completely unaffected.
+      try {
+        return await runAIEnrichmentCapability(capability);
+      } catch (error) {
+        logErrorFully(`[ai-jobs:${jobType}] runAIEnrichmentCapability("${capability}") failed`, error);
+        throw error;
+      }
     },
   };
 }

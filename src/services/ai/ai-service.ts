@@ -1,5 +1,6 @@
 import { AICache, buildCacheKey, hashArticleContent } from "@/lib/ai";
 import { findSimilarArticlesHeuristic } from "@/lib/ai/similar-articles";
+import { logErrorFully } from "@/runtime/errors";
 import {
   ARTICLE_REWRITE_PROMPT_VERSION,
   BIAS_PROMPT_VERSION,
@@ -100,18 +101,17 @@ export class AIService {
       this.cache.set(cacheKey, result);
       return result;
     } catch (error) {
-      // TEMPORARY DEBUG LOGGING - production hang investigation. This is
-      // the actual source of the repeating "provider timeout" log lines:
-      // every AI capability call for every article in the batch (up to
-      // 60 articles x 4 broad-tier capabilities, or 20 x 5 narrow-tier)
-      // routes through this catch. Deliberately NOT converted to a
-      // rethrow - one article's provider call timing out must not abort
-      // the whole batch for the other 59 articles (same per-item
-      // isolation contract as `runPipelineStep`). Now logs the raw error
-      // and full stack, not just `.message`, so the real exception is
-      // visible in Vercel logs instead of just "provider timeout".
-      console.error(`[AIService] "${task}" (article ${articleId}) failed:`, error);
-      console.error(`[AIService] "${task}" stack:`, error instanceof Error ? error.stack : "(no stack - not an Error instance)");
+      // Deliberately NOT converted to a rethrow - one article's provider
+      // call failing/timing out must not abort the whole batch for every
+      // other article (same per-item isolation contract as
+      // `runPipelineStep`/`mapWithConcurrency`). `logErrorFully()` (see
+      // `runtime/errors.ts`) prints the raw error, its stack, its
+      // `.cause`, and a full `util.inspect` dump - this is the actual
+      // provider call boundary, so a real `OpenAIError`/`OpenRouterError`/
+      // "Provider not configured" exception (or a non-Error rejection)
+      // surfaces here in full instead of collapsing to "[object Object]"
+      // once it's wrapped further up the call chain.
+      logErrorFully(`[AIService] "${task}" (article ${articleId}) failed`, error);
       return null;
     }
   }

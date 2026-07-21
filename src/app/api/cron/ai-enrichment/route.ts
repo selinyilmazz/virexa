@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { AI_ENRICHMENT_JOB_TYPES } from "@/runtime/jobs";
 import { runtimeConfig } from "@/runtime/config";
+import { describeError, logErrorFully } from "@/runtime/errors";
 import { runtimeEngine } from "@/runtime/engine";
 import type { JobRunSummary } from "@/runtime/types";
 
@@ -91,7 +92,12 @@ async function triggerAIEnrichment(request: NextRequest): Promise<NextResponse> 
     "[ai-cron-debug] All jobs settled:",
     settled.map((result, index) => ({
       jobType: AI_ENRICHMENT_JOB_TYPES[index],
-      outcome: result.status === "fulfilled" ? result.value.status : `rejected: ${String(result.reason)}`,
+      // Was `${String(result.reason)}` - collapses a non-Error rejection
+      // (e.g. a Supabase error object) to the literal "[object Object]".
+      // `describeError()` (see `runtime/errors.ts`) extracts the real
+      // message/code/details/hint or falls back to a full `util.inspect`
+      // dump instead.
+      outcome: result.status === "fulfilled" ? result.value.status : `rejected: ${describeError(result.reason)}`,
     }))
   );
 
@@ -105,9 +111,13 @@ async function triggerAIEnrichment(request: NextRequest): Promise<NextResponse> 
       if (result.value.status === "failed") anyFailed = true;
     } else {
       anyFailed = true;
-      const error = result.reason instanceof Error ? result.reason.message : String(result.reason);
-      console.error(`[api/cron/ai-enrichment] "${jobType}" failed:`, result.reason);
-      results[jobType] = { status: "failed", error };
+      // Was `result.reason instanceof Error ? result.reason.message : String(result.reason)` -
+      // `describeError()` avoids the same "[object Object]" collapse for
+      // a non-Error rejection when building the HTTP response body, and
+      // `logErrorFully()` replaces the old single-line `console.error`
+      // so the full raw error/stack/cause/inspect lands in Vercel logs.
+      logErrorFully(`[api/cron/ai-enrichment] "${jobType}" failed`, result.reason);
+      results[jobType] = { status: "failed", error: describeError(result.reason) };
     }
   });
 

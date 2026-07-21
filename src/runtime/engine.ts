@@ -1,4 +1,5 @@
 import { runtimeConfig } from "@/runtime/config";
+import { logErrorFully } from "@/runtime/errors";
 import { checkSystemHealth } from "@/runtime/health/health-monitor";
 import type { HealthReport } from "@/runtime/health/health-monitor";
 import { createJobRegistry } from "@/runtime/jobs";
@@ -56,7 +57,12 @@ function persistRuntimeJobRun(entry: RuntimeQueueEntry): void {
       error: entry.lastError ?? null,
     })
     .catch((error) => {
-      console.error(`[RuntimeEngine] failed to persist job run for "${entry.jobType}":`, error);
+      // Was `console.error(..., error)` with no stack/cause/inspect
+      // breakdown - `logErrorFully()` prints all four (raw error, stack,
+      // cause, full `util.inspect`) so a non-Error rejection (e.g. a
+      // Supabase write failure, which is a plain object) never collapses
+      // to "[object Object]" here either.
+      logErrorFully(`[RuntimeEngine] failed to persist job run for "${entry.jobType}"`, error);
     });
 }
 
