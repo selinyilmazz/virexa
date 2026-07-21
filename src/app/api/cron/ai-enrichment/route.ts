@@ -28,13 +28,21 @@ import type { JobRunSummary } from "@/runtime/types";
  * `runAIEnrichmentCapability()` itself isolates one article's failure
  * from the rest of its own batch.
  *
- * Same `CRON_SECRET` auth mechanism as `/api/cron/news-fetch` - see that
- * route's doc comment for why (Vercel Cron's native
- * `Authorization: Bearer <secret>` header, fails closed if unconfigured).
- * Scheduled independently in `vercel.json` so AI enrichment keeps
- * clearing its backlog on its own cadence regardless of how often
- * `news-fetch` itself runs ("AI işlemlerinin arka planda kademeli olarak
- * bitmesi").
+ * Same `CRON_SECRET` auth mechanism as `/api/cron/news-fetch` (fails
+ * closed if unconfigured) - but triggered by GitHub Actions
+ * (`.github/workflows/ai-enrichment.yml`), NOT Vercel Cron. It used to be
+ * a `vercel.json` cron entry firing every 15 minutes, but Vercel's Hobby
+ * plan rejects any cron expression that fires more than once a day and
+ * fails the ENTIRE deployment at build time when it sees one - not just
+ * that one route, every route, including the already-working `news-fetch`
+ * (production incident: this exact entry broke deployments outright).
+ * `news-fetch` stays on Vercel Cron (`vercel.json`, once daily - Hobby-
+ * compatible); this route's frequent schedule lives in GitHub Actions
+ * instead, calling this same route over plain HTTP with the same
+ * `CRON_SECRET` header Vercel Cron would have sent - the route itself
+ * has no idea which scheduler called it. AI enrichment keeps clearing
+ * its backlog on its own cadence regardless of how often `news-fetch`
+ * itself runs ("AI işlemlerinin arka planda kademeli olarak bitmesi").
  */
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;

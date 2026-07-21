@@ -1,0 +1,70 @@
+name: AI Enrichment Cron
+
+# Production trigger for /api/cron/ai-enrichment, running every 15
+# minutes - the frequent cadence that made vercel.json fail to deploy on
+# Vercel's Hobby plan (Hobby only allows cron expressions that fire at
+# most once per day; anything more frequent fails the whole deployment
+# at build time, not just that one cron entry - see vercel.json's
+# comment and README.md's "Vercel Hobby plan cron limits" note).
+#
+# This workflow calls the exact same route Vercel Cron would have
+# called, with the exact same auth (CRON_SECRET as a Bearer token) - the
+# route itself (src/app/api/cron/ai-enrichment/route.ts) doesn't know or
+# care which scheduler invoked it. news-fetch stays on Vercel Cron
+# (vercel.json) since its once-daily schedule is already Hobby-compatible
+# and needs no extra moving parts; only the frequent AI enrichment
+# trigger moves here.
+#
+# Required GitHub repo secrets (Settings > Secrets and variables >
+# Actions):
+#   - PRODUCTION_URL: the deployed site's base URL, no trailing slash
+#                      (e.g. https://virexa.vercel.app)
+#   - CRON_SECRET:     the SAME value as the CRON_SECRET environment
+#                       variable set in Vercel's project settings - this
+#                       route rejects any request whose Authorization
+#                       header doesn't match it exactly.
+#
+# GitHub Actions' `schedule` trigger is best-effort, not exact - GitHub
+# explicitly reserves the right to delay or occasionally skip scheduled
+# runs during high load, more so on free/public-repo minutes. This is
+# fine for AI enrichment (each run just picks up whatever's still
+# missing a field - a late or skipped run has no lasting effect, the
+# backlog just clears one tick slower), unlike news-fetch where
+# reliability matters more.
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  # Manual trigger from the Actions tab - same "manual retry" convenience
+  # the Admin Dashboard's own action buttons already provide for
+  # in-app-triggered jobs.
+  workflow_dispatch: {}
+
+jobs:
+  trigger-ai-enrichment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/cron/ai-enrichment
+        run: |
+          set -u
+          if [ -z "${PRODUCTION_URL:-}" ] || [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::PRODUCTION_URL and/or CRON_SECRET repo secrets are not set. See this workflow's header comment."
+            exit 1
+          fi
+
+          http_status=$(curl -sS -o /tmp/ai-enrichment-response.json -w "%{http_code}" \
+            -X POST "${PRODUCTION_URL}/api/cron/ai-enrichment" \
+            -H "Authorization: Bearer ${CRON_SECRET}")
+
+          echo "HTTP status: ${http_status}"
+          echo "Response body:"
+          cat /tmp/ai-enrichment-response.json
+          echo ""
+
+          if [ "${http_status}" -lt 200 ] || [ "${http_status}" -ge 300 ]; then
+            echo "::error::AI enrichment trigger failed with HTTP ${http_status}."
+            exit 1
+          fi
+        env:
+          PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}

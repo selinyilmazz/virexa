@@ -323,17 +323,35 @@ any Node.js host that supports the App Router.
    production commands.
 4. Set `CRON_SECRET` (a random string of 16+ characters) in the
    platform's environment settings - this is what secures
-   `/api/cron/news-fetch` (see [Runtime / Automation Layer](#runtime--automation-layer)).
-   On Vercel, `vercel.json`'s `crons` entry picks this route up
-   automatically on deploy - no extra dashboard configuration needed
-   beyond setting the env var. On any other host, point your own
-   scheduler (cron, GitHub Actions, etc.) at
+   `/api/cron/news-fetch` AND `/api/cron/ai-enrichment` (see
+   [Runtime / Automation Layer](#runtime--automation-layer)). On Vercel,
+   `vercel.json`'s `crons` entry picks `news-fetch` up automatically on
+   deploy (once daily - Hobby-compatible) - no extra dashboard
+   configuration needed beyond setting the env var. On any other host,
+   point your own scheduler (cron, GitHub Actions, etc.) at
    `POST /api/cron/news-fetch` with header
    `Authorization: Bearer <CRON_SECRET>` on whatever cadence you want.
-5. After deploying, verify `/admin/settings` shows every expected
+5. **AI enrichment (`/api/cron/ai-enrichment`) is triggered by GitHub
+   Actions, not `vercel.json`** - `.github/workflows/ai-enrichment.yml`
+   calls it every 15 minutes. This is deliberate, not incidental:
+   Vercel's Hobby plan rejects any `vercel.json` cron expression that
+   fires more than once a day and fails the WHOLE deployment (every
+   route, not just the offending cron entry) when it sees one - AI
+   enrichment needs a much tighter cadence than news-fetch's once-daily
+   schedule to clear its backlog at a reasonable pace, so it lives
+   outside `vercel.json` entirely. To enable it, add two repo secrets
+   under GitHub Settings > Secrets and variables > Actions:
+   `PRODUCTION_URL` (the deployed site's base URL, no trailing slash)
+   and `CRON_SECRET` (the exact same value set in step 4). On a Vercel
+   Pro/Team plan you could instead add an `/api/cron/ai-enrichment` entry
+   back into `vercel.json` at whatever frequency you want and drop the
+   GitHub Actions workflow - the route itself doesn't care which
+   scheduler calls it.
+6. After deploying, verify `/admin/settings` shows every expected
    integration as "Configured", then either wait for the first cron
-   invocation or call `/api/cron/news-fetch` once by hand to confirm
-   articles start appearing - `/admin/runtime`'s "Last Run"/"Last
+   invocation (or manually run the "AI Enrichment Cron" workflow from
+   GitHub's Actions tab) or call `/api/cron/news-fetch` once by hand to
+   confirm articles start appearing - `/admin/runtime`'s "Last Run"/"Last
    Success" cards and the homepage's newest article date are the two
    fastest ways to confirm it worked.
 
@@ -349,19 +367,21 @@ any Node.js host that supports the App Router.
   is set, or `AI_PROVIDER` points at a provider whose key is empty.
   This is a supported, non-error state - the site works without it.
   Check `/admin/settings` or `/admin/health`'s "AI Provider" row.
-- **Runtime Status shows "Scheduler Stopped" / homepage shows stale
-  articles / "Added in Last 24h" is 0**: the in-process scheduler being
-  "Stopped" is expected on Vercel (see
-  [Runtime / Automation Layer](#runtime--automation-layer)) - it does
-  not mean ingestion is broken. Check instead: (1) is `CRON_SECRET` set
-  and does `vercel.json` have an active Cron Job pointed at
-  `/api/cron/news-fetch`; (2) does `/admin/runtime`'s "Last Success"
-  card show a recent `news-fetch` run; (3) call
-  `/api/cron/news-fetch` by hand with the right `Authorization: Bearer
-  <CRON_SECRET>` header and check the JSON response for per-step
-  errors. If none of that resolves it, use `/admin/runtime`'s "Run
-  Pipeline" button to trigger `news-fetch` manually and watch for
-  errors there instead.
+- **Runtime Status shows "No Recent Runs" / homepage shows stale
+  articles / "Added in Last 24h" is 0**: `/admin/runtime`'s status badge
+  is based entirely on `runtime_job_runs` (durable, DB-backed - see
+  `admin-runtime-history-service.ts`), not any in-process scheduler
+  state, so this means no job of any kind has actually completed in the
+  last 26 hours - a real signal, not a false alarm. Check: (1) is
+  `CRON_SECRET` set and does `vercel.json` have an active Cron Job
+  pointed at `/api/cron/news-fetch`; (2) is the
+  `.github/workflows/ai-enrichment.yml` workflow enabled with its
+  `PRODUCTION_URL`/`CRON_SECRET` repo secrets set (check the Actions tab
+  for failed runs); (3) call `/api/cron/news-fetch` by hand with the
+  right `Authorization: Bearer <CRON_SECRET>` header and check the JSON
+  response for per-step errors. If none of that resolves it, use
+  `/admin/runtime`'s "Run Pipeline" button to trigger `news-fetch`
+  manually and watch for errors there instead.
 - **Sitemap/canonical URLs point at `localhost:3000` in production**:
   `NEXT_PUBLIC_SITE_URL` isn't set in that environment.
 - **`npm run build` fails with an SWC binary error**: this happens in
@@ -391,18 +411,28 @@ knowing:
   instead (see [Deployment](#deployment)); the in-process scheduler
   remains available (and now includes `news-fetch` itself in its
   schedule) for anyone self-hosting on a persistent Node process.
-- **Only `news-fetch` persists to Supabase.** The other, individually
-  scheduled jobs (`rss-sync`/`newsapi-sync`/`gnews-sync`/`hn-sync`/
-  `ai-summary`/`ai-tag`/`sentiment`/`bias-analysis`) still only touch a
-  legacy in-memory cache pre-dating the Supabase-backed Article Storage
-  layer - see `schedule-definitions.ts`'s doc comment. Consolidating or
-  removing these is a reasonable future cleanup, not done here to keep
-  this fix scoped to restoring ingestion.
-- **Vercel Hobby plan cron limits.** `vercel.json`'s default schedule
-  (`0 6 * * *`, once daily) is intentionally the most conservative
-  option that deploys successfully on every Vercel plan - Hobby rejects
-  any cron expression that would fire more than once per day. Increase
-  the frequency (e.g. `*/30 * * * *`) if the project is on Pro/Team.
+- **`news-fetch` and all 9 AI enrichment jobs persist to Supabase.**
+  `news-fetch` handles fetch/normalize/persist only; AI enrichment
+  (Summary, TL;DR, Key Takeaways, Long Summary, Rewrite, Entities, Tags,
+  Sentiment, Bias) is fully decoupled into 9 independent jobs
+  (`runtime/jobs/ai-jobs.ts`), each writing real `article_ai` rows via
+  `services/ai/ai-enrichment-runner.ts` - see
+  [Runtime / Automation Layer](#runtime--automation-layer). The
+  remaining individually-scheduled jobs (`rss-sync`/`newsapi-sync`/
+  `gnews-sync`/`hn-sync`) still only touch a legacy in-memory cache
+  pre-dating the Supabase-backed Article Storage layer - see
+  `schedule-definitions.ts`'s doc comment. Consolidating or removing
+  those is a reasonable future cleanup.
+- **Vercel Hobby plan cron limits.** `vercel.json` only contains
+  `news-fetch`'s once-daily schedule - Hobby rejects any cron expression
+  that fires more than once a day and fails the ENTIRE deployment (every
+  route) when it sees one, which is exactly what happened when AI
+  enrichment's `*/15 * * * *` schedule was briefly added directly to
+  `vercel.json`. AI enrichment's frequent trigger lives in GitHub Actions
+  instead (`.github/workflows/ai-enrichment.yml`) for that reason - see
+  [Deployment](#deployment) step 5. On Pro/Team, you can add
+  `/api/cron/ai-enrichment` back into `vercel.json` at any frequency and
+  drop the GitHub Actions workflow.
 - **Analytics time-series data is best-effort** where the schema
   doesn't retain daily history - see
   `admin-analytics-service.ts`'s doc comments for the exact,
