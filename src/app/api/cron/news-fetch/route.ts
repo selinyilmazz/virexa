@@ -49,9 +49,22 @@ export const maxDuration = 300;
 
 function isAuthorized(request: NextRequest): boolean {
   const configuredSecret = runtimeConfig.cronSecret;
-  if (!configuredSecret) return false;
-
   const authHeader = request.headers.get("authorization");
+
+  // TEMPORARY DEBUG LOGGING - production 401 investigation (all cron
+  // requests rejected despite CRON_SECRET reportedly being read
+  // correctly). Remove once the mismatch is found - this prints the
+  // real secret value to Vercel's function logs, which must not stay
+  // in place after debugging.
+  console.log("[cron-debug] Configured CRON_SECRET:", configuredSecret);
+  console.log("[cron-debug] Configured CRON_SECRET length:", configuredSecret?.length ?? 0);
+  console.log("[cron-debug] Authorization header:", authHeader);
+  console.log("[cron-debug] Authorization header length:", authHeader?.length ?? 0);
+  console.log("[cron-debug] x-vercel-cron:", request.headers.get("x-vercel-cron"));
+  console.log("[cron-debug] Expected header:", configuredSecret ? `Bearer ${configuredSecret}` : "(no secret configured - configuredSecret is falsy)");
+  console.log("[cron-debug] Exact match:", authHeader === `Bearer ${configuredSecret}`);
+
+  if (!configuredSecret) return false;
   return authHeader === `Bearer ${configuredSecret}`;
 }
 
