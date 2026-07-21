@@ -33,11 +33,15 @@ import { recordAuditEvent } from "@/services/admin/admin-audit-service";
  *                              `backfillArticleContent` - same shape,
  *                              for thin/missing article body text
  * - backfill-ai-enrichment -> `admin-runtime-ops-service.ts`'s
- *                              `backfillArticleAIEnrichment` - same
- *                              shape, retroactively generates Summary +
- *                              Key Takeaways for old articles that never
- *                              got either (product polishing phase, 5th
- *                              pass)
+ *                              `backfillArticleAIEnrichment`, which now
+ *                              just calls the shared
+ *                              `runAllAIEnrichmentCapabilities()`
+ *                              (`services/ai/ai-enrichment-runner.ts`) -
+ *                              retroactively generates all 9 AI
+ *                              capabilities for old articles still
+ *                              missing any of them, the same underlying
+ *                              logic the 9 independent AI jobs/cron route
+ *                              use
  *
  * Every action `runtimeEngine.enqueueJob()` reaches the existing job
  * registry unmodified (`runtime/jobs/*`) - this route adds no new job
@@ -132,10 +136,26 @@ export async function POST(request: Request) {
       }
       case "backfill-ai-enrichment": {
         const result = await backfillArticleAIEnrichment();
+        // Bug fix: this used to branch on `result.updated === 0`, which
+        // conflates two very different states - "no articles are missing
+        // AI enrichment" (checked === 0) vs. "articles ARE missing it,
+        // but nothing could actually be generated for them" (checked > 0,
+        // updated === 0 - e.g. no AI provider configured, so every
+        // aiService.getX() call short-circuits to null before ever
+        // reaching a provider). Confirmed via SQL: `article_ai` had 0
+        // rows while `articles` had many, yet this said "No articles
+        // needed an AI enrichment backfill" - the detection
+        // (`runAIEnrichmentCapability`'s `isMissing` check in
+        // `ai-enrichment-runner.ts`) was finding every article as a
+        // candidate correctly; this message was just reporting the wrong
+        // thing when generation produced zero updates for a nonzero
+        // candidate pool.
         message =
           result.checked === 0
             ? "No articles needed an AI enrichment backfill."
-            : `Checked ${result.checked} article(s), generated Summary/Key Takeaways for ${result.updated}.`;
+            : result.updated === 0
+              ? `Found ${result.checked} article(s) missing AI enrichment, but none could be generated. Check that an AI provider is configured (OPENAI_API_KEY / ANTHROPIC_API_KEY / OPENROUTER_API_KEY).`
+              : `Checked ${result.checked} article(s), generated ${result.updated} AI field(s) across all 9 capabilities (Summary, TL;DR, Key Takeaways, Long Summary, Rewrite, Entities, Tags, Sentiment, Bias).`;
         metadata = result;
         break;
       }

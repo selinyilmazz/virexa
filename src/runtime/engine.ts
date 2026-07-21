@@ -15,6 +15,8 @@ export type EnqueueJobOptions = {
   delayMs?: number;
   /** One-off override, takes priority over the job's own `JobDefinition.timeoutMs` and the global default - see `enqueueJob`'s doc comment for the full resolution order. */
   timeoutMs?: number;
+  /** One-off override, takes priority over the job's own `JobDefinition.maxAttempts` and the global `runtimeConfig.maxRetry` default - same resolution order as `timeoutMs` above. */
+  maxAttempts?: number;
 };
 
 /**
@@ -131,13 +133,21 @@ export class RuntimeEngine {
    * the global default for every job type with no way to give a
    * genuinely heavier job (`news-fetch`) more time without raising the
    * timeout for every lightweight job too.
+   *
+   * `maxAttempts` resolves the same way (production architecture fix -
+   * see `JobDefinition.maxAttempts`'s doc comment in `runtime/types.ts`
+   * for why some jobs need this pinned to `1`): explicit
+   * `options.maxAttempts` first, then the job type's own
+   * `JobDefinition.maxAttempts`, then the global `runtimeConfig.maxRetry`.
+   * Previously this ignored any override entirely and always used the
+   * global default.
    */
   enqueueJob(jobType: JobType, options: EnqueueJobOptions = {}): string {
     const definition = this.registry[jobType];
     return this.queue.enqueue(jobType, definition.run, {
       priority: options.priority,
       delayMs: options.delayMs,
-      maxAttempts: runtimeConfig.maxRetry,
+      maxAttempts: options.maxAttempts ?? definition.maxAttempts ?? runtimeConfig.maxRetry,
       timeoutMs: options.timeoutMs ?? definition.timeoutMs ?? runtimeConfig.jobTimeoutMs,
     });
   }

@@ -83,7 +83,17 @@ export function resolveRuntimeConfig(): RuntimeConfig {
     },
     jobTimeoutMs: resolvePositiveInt("JOB_TIMEOUT", process.env.JOB_TIMEOUT, 30_000),
     maxRetry: resolvePositiveInt("MAX_RETRY", process.env.MAX_RETRY, 3),
-    concurrency: resolvePositiveInt("CONCURRENCY", process.env.CONCURRENCY, 2),
+    // Production architecture fix (decoupled AI enrichment): the new
+    // `/api/cron/ai-enrichment` route triggers all 9 independent AI
+    // capability jobs (`runtime/jobs/ai-jobs.ts`) in the same request via
+    // `Promise.all` of `runtimeEngine.runJob(...)` calls, specifically so
+    // they run CONCURRENTLY through the queue rather than one at a time -
+    // that only actually happens if `RuntimeQueue`'s own concurrency
+    // ceiling is at least 9. Raised from 2 to 10 accordingly (each of
+    // those 9 jobs is itself small/bounded - see `ai-enrichment-runner.ts` -
+    // so running them all at once is exactly the intended shape, not a
+    // thundering-herd risk). Still overridable via `CONCURRENCY`.
+    concurrency: resolvePositiveInt("CONCURRENCY", process.env.CONCURRENCY, 10),
     cronSecret: process.env.CRON_SECRET && process.env.CRON_SECRET.trim() !== "" ? process.env.CRON_SECRET : undefined,
   };
 }

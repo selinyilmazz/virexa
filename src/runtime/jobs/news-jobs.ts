@@ -52,7 +52,7 @@ import { getLiveArticlesSync } from "@/services/news";
  */
 export const newsFetchJob: JobDefinition = {
   type: "news-fetch",
-  description: "Runs the full news pipeline: fetch, normalize, dedupe, trust score, AI enrichment, trending, database, cache refresh.",
+  description: "Runs the news ingestion pipeline: fetch, normalize, dedupe, trust score, trending, database, cache refresh. AI enrichment runs separately - see runtime/jobs/ai-jobs.ts.",
   // Production root-cause fix: this job used to inherit the global
   // 30s default (`runtimeConfig.jobTimeoutMs`) like every other job
   // type, and was timing out and being retried 3x in production
@@ -65,30 +65,57 @@ export const newsFetchJob: JobDefinition = {
   // `maxDuration` (300s) for the one caller that actually matters in
   // production, with real margin for degraded network conditions.
   timeoutMs: 180_000,
+  // Production architecture fix ("Hiçbir job Vercel'in 300 saniye
+  // sınırını aşmasın"): the global default (`runtimeConfig.maxRetry`,
+  // 3) combined with this job's own 180s `timeoutMs` has a worst case of
+  // 180s x 3 = 540s+ if every attempt times out - well past this route's
+  // `maxDuration` (300s), meaning Vercel could kill the function
+  // mid-retry with none of the queue's own failure logging ever getting
+  // to run (the exact "provider timeout, then nothing" symptom this was
+  // debugged from). Pinned to a single attempt - the next scheduled cron
+  // tick, or the Admin Dashboard's "Retry Failed Jobs" button, is the
+  // retry mechanism now, not an in-process backoff loop that can itself
+  // blow the time budget it's supposed to respect.
+  maxAttempts: 1,
   run: async () => {
-    const result = await runNewsPipeline();
+    // TEMPORARY DEBUG LOGGING - production hang investigation ("only
+    // provider timeout logs appear, then nothing - no completed/failed,
+    // no stack trace"). This job has no pre-existing failure-isolation
+    // contract (unlike `runPipelineStep`/`RuntimeQueue.runEntry`, which
+    // deliberately swallow so one job/step can't take down others) - so
+    // it's safe here to log the raw error and stack and rethrow exactly
+    // as requested, with no behavior change (it already threw on every
+    // failure path below; this just makes the failure visible before it
+    // does).
+    try {
+      const result = await runNewsPipeline();
 
-    if (result.steps.length > 0 && result.steps.every((step) => !step.success)) {
-      throw new Error("Every pipeline step failed - see individual step errors in the result.");
+      if (result.steps.length > 0 && result.steps.every((step) => !step.success)) {
+        throw new Error("Every pipeline step failed - see individual step errors in the result.");
+      }
+
+      const databaseStep = result.steps.find((step) => step.step === "database");
+      if (databaseStep && !databaseStep.success) {
+        throw new Error(
+          `Database persistence step failed: ${databaseStep.error ?? "unknown error"}. Fetched articles were NOT saved to the database this run.`
+        );
+      }
+
+      const articlesFetched = result.articles.length;
+      const articlesSaved = (databaseStep?.data as DatabaseStepData | undefined)?.articlesSaved ?? 0;
+      if (articlesFetched > 0 && articlesSaved === 0) {
+        throw new Error(
+          `Pipeline fetched ${articlesFetched} article(s) but saved 0 to the database this run. ` +
+            `Check that SUPABASE_SERVICE_ROLE_KEY is configured in this environment (Admin > Settings > Environment) and that RLS policies allow the service role to write.`
+        );
+      }
+
+      return result;
+    } catch (error) {
+      console.error("[news-fetch]", error);
+      console.error("[news-fetch] stack:", error instanceof Error ? error.stack : "(no stack - not an Error instance)");
+      throw error;
     }
-
-    const databaseStep = result.steps.find((step) => step.step === "database");
-    if (databaseStep && !databaseStep.success) {
-      throw new Error(
-        `Database persistence step failed: ${databaseStep.error ?? "unknown error"}. Fetched articles were NOT saved to the database this run.`
-      );
-    }
-
-    const articlesFetched = result.articles.length;
-    const articlesSaved = (databaseStep?.data as DatabaseStepData | undefined)?.articlesSaved ?? 0;
-    if (articlesFetched > 0 && articlesSaved === 0) {
-      throw new Error(
-        `Pipeline fetched ${articlesFetched} article(s) but saved 0 to the database this run. ` +
-          `Check that SUPABASE_SERVICE_ROLE_KEY is configured in this environment (Admin > Settings > Environment) and that RLS policies allow the service role to write.`
-      );
-    }
-
-    return result;
   },
 };
 

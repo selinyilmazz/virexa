@@ -8,6 +8,16 @@ export const metadata: Metadata = {
 };
 
 /**
+ * Forces this page to always render fresh, per-request - defensive fix
+ * alongside `RuntimeStatusSection`'s data-source fix (see that
+ * component's doc comment): without this, Next.js/Vercel could still
+ * statically cache the page at build time even though the underlying
+ * data (`runtime_job_runs`) is fully dynamic and changes every time cron
+ * runs a job.
+ */
+export const dynamic = "force-dynamic";
+
+/**
  * `RuntimeStatusSection` (built in an earlier phase) is untouched - this
  * page adds one new section below it, "Operations" (requirement 2), so
  * `/admin/runtime` "artık sadece bilgi göstermesin" without changing

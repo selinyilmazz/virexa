@@ -84,8 +84,8 @@ export function RuntimeActionsPanel() {
         label="Backfill AI Enrichment"
         endpoint="/api/admin/runtime/actions"
         buildBody={() => ({ action: "backfill-ai-enrichment" })}
-        confirmTitle="Backfill AI Summary + Key Takeaways for older articles?"
-        confirmDescription="Generates AI Summary and Key Takeaways for up to 60 already-stored articles that are still missing one or both - the same broad-tier AI capabilities a live pipeline run generates for new articles. Runs immediately; click again to work through more of the table."
+        confirmTitle="Backfill all 9 AI capabilities for older articles?"
+        confirmDescription="Generates Summary, TL;DR, Key Takeaways, Long Summary, Rewrite, Entities, Tags, Sentiment, and Bias for already-stored articles still missing each one (up to ~20 articles per capability, run independently and concurrently). Runs immediately; click again to work through more of the backlog."
         confirmLabel="Backfill AI Enrichment"
         successMessage={(json) =>
           typeof json.message === "string" ? json.message : "AI enrichment backfill complete."

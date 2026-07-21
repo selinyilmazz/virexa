@@ -263,6 +263,21 @@ export class RuntimeQueue {
       // `runtime/errors.ts`'s doc comment for that class.
       const jobError = new RuntimeJobError(entry.jobType, entry.attempts, error);
       entry.lastError = jobError.message;
+
+      // TEMPORARY DEBUG LOGGING - production hang investigation. This
+      // block is intentionally NOT converted to a rethrow: `runEntry()`
+      // is invoked as `void this.runEntry(next).finally(...)` in `pump()`
+      // (never awaited), specifically so one job's exhausted retries can
+      // never crash the queue's run loop or block any other job -
+      // rethrowing here would only produce an unhandled promise
+      // rejection, not a visible stack trace, and would violate that
+      // documented isolation guarantee. Instead this logs everything
+      // `RuntimeLogger.logFailure()` currently omits: the raw underlying
+      // error (`jobError.cause`, not just its flattened `.message`) and
+      // its real stack trace.
+      console.error(`[RuntimeQueue] "${entry.jobType}" failed after ${entry.attempts} attempt(s):`, error);
+      console.error(`[RuntimeQueue] "${entry.jobType}" stack:`, error instanceof Error ? error.stack : "(no stack - not an Error instance)");
+
       this.logger.logFailure(entry.jobType, Date.now() - startedAt, entry.attempts, jobError);
     } finally {
       this.handlers.delete(entry.id);

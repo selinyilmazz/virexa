@@ -100,7 +100,18 @@ export class AIService {
       this.cache.set(cacheKey, result);
       return result;
     } catch (error) {
-      console.error(`[AIService] "${task}" failed:`, error instanceof Error ? error.message : String(error));
+      // TEMPORARY DEBUG LOGGING - production hang investigation. This is
+      // the actual source of the repeating "provider timeout" log lines:
+      // every AI capability call for every article in the batch (up to
+      // 60 articles x 4 broad-tier capabilities, or 20 x 5 narrow-tier)
+      // routes through this catch. Deliberately NOT converted to a
+      // rethrow - one article's provider call timing out must not abort
+      // the whole batch for the other 59 articles (same per-item
+      // isolation contract as `runPipelineStep`). Now logs the raw error
+      // and full stack, not just `.message`, so the real exception is
+      // visible in Vercel logs instead of just "provider timeout".
+      console.error(`[AIService] "${task}" (article ${articleId}) failed:`, error);
+      console.error(`[AIService] "${task}" stack:`, error instanceof Error ? error.stack : "(no stack - not an Error instance)");
       return null;
     }
   }

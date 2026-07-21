@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   title: "Dashboard | Virexa Admin",
 };
 
+/** Forces this page to always render fresh, per-request - see `RuntimeStatusSection`'s doc comment (`components/admin/RuntimeStatusSection.tsx`) for why this matters alongside that component's data-source fix. */
+export const dynamic = "force-dynamic";
+
 const ICON_PROPS = {
   viewBox: "0 0 24 24",
   className: "size-5",

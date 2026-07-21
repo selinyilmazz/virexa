@@ -43,6 +43,35 @@ export function createRuntimeJobRunRepository(supabase: SupabaseClient<Database>
 
       return data ?? [];
     },
+
+    /**
+     * Counts of finished runs by status since `sinceIso`, across every job
+     * type - the DB-backed replacement for `RuntimeStatusSection`'s old
+     * "Queue" card, which used to read `runtimeEngine.queue.getStats()`
+     * (an in-memory `Map`, meaningless on serverless - see that
+     * component's doc comment for the full explanation). Only
+     * `completed`/`failed`/`cancelled` are countable this way (this table
+     * is only ever written once a job SETTLES - see `record()`'s doc
+     * comment - so "queued"/"running" have no durable representation at
+     * all, unlike the in-memory queue's transient state).
+     *
+     * No server-side `GROUP BY` through the shimmed query builder, same
+     * tradeoff as `article-ai-repository.ts`'s `listAllLatestPerArticle` -
+     * fetches just the `status` column for the window and reduces in
+     * application code. Bounded by `sinceIso`, not a `limit`, so this
+     * stays cheap regardless of table size as long as the window is
+     * reasonable (the Dashboard uses 24h).
+     */
+    async countRecentByStatus(sinceIso: string): Promise<Record<string, number>> {
+      const { data, error } = await supabase.from("runtime_job_runs").select("status").gte("finished_at", sinceIso);
+      if (error) throw error;
+
+      const counts: Record<string, number> = { completed: 0, failed: 0, cancelled: 0 };
+      for (const row of data ?? []) {
+        counts[row.status] = (counts[row.status] ?? 0) + 1;
+      }
+      return counts;
+    },
   };
 }
 
