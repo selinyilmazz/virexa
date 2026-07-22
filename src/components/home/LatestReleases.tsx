@@ -11,13 +11,17 @@ const STATUS_BADGE_CLASSES: Record<ReleaseStatus, string> = {
 
 /**
  * "Developer Releases" homepage widget (renamed from "Latest Releases" in
- * Phase F) - framework/tool version rows, each linking to the real
- * article that reported it (see `getLatestReleases()`'s doc comment:
- * every row is a real, currently-stored article's headline, never a
- * fabricated version number). Renders nothing when the database
- * currently has no matching release articles for any watched tool,
- * consistent with every other homepage section's "no fake placeholder
- * content" convention.
+ * Phase F). Each row's version/status/date is still derived from a real,
+ * currently-stored article (see `getLatestReleases()`'s doc comment -
+ * never a fabricated version number), but clicking a row now opens the
+ * dedicated Developer Release Detail page (`/developer-hub/releases/
+ * [techSlug]`) instead of that backing article - a release/version
+ * overview is documentation, not a news story, so it gets its own
+ * template (`src/data/releases.ts` + `ReleaseDetailView`) rather than
+ * reusing the article page. Renders nothing when the database currently
+ * has no matching release articles for any watched tool, consistent with
+ * every other homepage section's "no fake placeholder content"
+ * convention.
  *
  * Phase F additions: a colored Stable/Beta/RC/LTS status badge and a
  * relative publish date ("Yesterday" etc.), both derived from the same
@@ -41,7 +45,7 @@ export async function LatestReleases() {
         {releases.map((release) => (
           <li key={release.name}>
             <Link
-              href={`/article/${release.slug}`}
+              href={`/developer-hub/releases/${release.techSlug}`}
               className="flex min-w-0 items-center gap-3 rounded-xl p-2 transition-colors hover:bg-slate-50"
             >
               <span

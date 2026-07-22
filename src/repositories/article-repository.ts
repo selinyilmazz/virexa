@@ -159,12 +159,26 @@ export function createArticleRepository(supabase: SupabaseClient<Database>) {
       return data;
     },
 
-    /** Bulk lookup by id - one round trip regardless of how many ids are requested. Used to cross-reference a candidate pool (e.g. `listTopByTrending`) against another source of ids (e.g. metrics). */
+    /**
+     * Bulk lookup by id, split into `LOOKUP_CHUNK_SIZE`-sized `.in()`
+     * calls run in parallel and merged - same request-URL-too-long fix as
+     * `lookupExistingByColumn` (see `LOOKUP_CHUNK_SIZE`'s doc comment).
+     * Used to cross-reference a candidate pool (e.g. `listTopByTrending`,
+     * or the Most Read pooled path's `article_metrics`-driven id list in
+     * `article-read-service.ts`, which can realistically hand this up to
+     * ~1000 ids) against another source of ids.
+     */
     async getByIds(ids: string[]): Promise<ArticleRow[]> {
       if (ids.length === 0) return [];
-      const { data, error } = await supabase.from("articles").select("*").in("id", ids);
-      if (error) throw error;
-      return data ?? [];
+      const results = await Promise.all(
+        chunkArray(ids, LOOKUP_CHUNK_SIZE).map((idsChunk) => supabase.from("articles").select("*").in("id", idsChunk))
+      );
+      const rows: ArticleRow[] = [];
+      for (const result of results) {
+        if (result.error) throw result.error;
+        rows.push(...(result.data ?? []));
+      }
+      return rows;
     },
 
     /** Top articles by `trending_score`, most-trending first - the candidate pool the read-side UI service (`services/articles/article-read-service.ts`) builds Home's Featured/Most-Read/Trending-Topics widgets from. */
@@ -213,8 +227,12 @@ export function createArticleRepository(supabase: SupabaseClient<Database>) {
      * filtrelerini desteklesin"). One query, one round trip;
      * `count: "exact"` returns the total match count for pagination.
      * `sortBy` defaults to newest-first by publish date; pass
-     * `"trending_score"` for a real, exact, paginated trending/most-read
-     * listing (see the `/most-read` page).
+     * `"trending_score"` for the `/news` Explorer's real "Trending" sort.
+     * NOT used for `/most-read` - that ranks by real
+     * `article_metrics.view_count` instead (a separate table this method
+     * doesn't touch), via `listTopByViewCount` - see
+     * `getNewsExplorerArticles`'s `most-read` branch and
+     * `getMostRead`'s doc comment (Most Read ordering audit).
      *
      * Admin Articles Management additions (all additive, optional,
      * backward-compatible with every existing caller): `url` (partial

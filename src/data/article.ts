@@ -2,11 +2,25 @@ import { latestNewsItems } from "@/data/latestNews";
 import { categories } from "@/data/categories";
 import { mostReadItems } from "@/data/most-read";
 
+/**
+ * Article Detail redesign: added `image`, `table`, and `code` variants
+ * (purely additive - every existing `heading`/`paragraph`/`quote`/`list`
+ * block and every existing caller of `buildContentBlocks` is unchanged)
+ * so the rendering layer (`ArticleContent.tsx`) can support the full
+ * required content surface. No current ingestion/AI-rewrite path emits
+ * `image`/`table`/`code` blocks yet - real extracted article text is
+ * plain prose - so these render only if/when a future content source
+ * actually produces one; this is a rendering CAPABILITY, never
+ * fabricated content for an article that doesn't have it.
+ */
 export type ArticleContentBlock =
   | { type: "heading"; text: string }
   | { type: "paragraph"; text: string }
   | { type: "quote"; text: string; attribution?: string }
-  | { type: "list"; items: string[] };
+  | { type: "list"; items: string[]; ordered?: boolean }
+  | { type: "image"; src: string; alt: string; caption?: string }
+  | { type: "table"; headers: string[]; rows: string[][] }
+  | { type: "code"; code: string; language?: string };
 
 export type BreadcrumbItem = {
   label: string;

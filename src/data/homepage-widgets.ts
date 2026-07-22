@@ -26,6 +26,8 @@ export type WatchedRelease = {
   tileColor: string;
   /** Additional title substrings to try if `name` itself finds nothing (e.g. a common short form). */
   aliases?: string[];
+  /** Slug into `src/data/releases.ts`'s `TECHNOLOGY_RELEASES` - drives the widget's link target, `/developer-hub/releases/[techSlug]` (the dedicated Technology Detail page), instead of the widget's old behavior of linking to whichever real news article happened to back that row. */
+  techSlug: string;
 };
 
 /**
@@ -34,16 +36,16 @@ export type WatchedRelease = {
  * exists for each - see the widget's own doc comment).
  */
 export const WATCHED_RELEASES: WatchedRelease[] = [
-  { name: "Next.js", subtitle: "The React Framework", glyph: "N", tileBg: "#000000", tileColor: "#ffffff", aliases: ["Next 15", "Next 16"] },
-  { name: "React", subtitle: "The library for web and native", glyph: "⚛", tileBg: "#e6f4fe", tileColor: "#087ea4" },
-  { name: "Node.js", subtitle: "JavaScript runtime", glyph: "⬡", tileBg: "#e7f6e9", tileColor: "#3c873a" },
-  { name: "TypeScript", subtitle: "Typed JavaScript", glyph: "TS", tileBg: "#dbeafe", tileColor: "#3178c6" },
-  { name: "Docker", subtitle: "Container platform", glyph: "🐳", tileBg: "#e6f4fd", tileColor: "#1d63ed" },
-  { name: "Rust", subtitle: "Systems programming language", glyph: "R", tileBg: "#fdf0e3", tileColor: "#a35127" },
-  { name: "Python", subtitle: "General-purpose language", glyph: "Py", tileBg: "#fef7e0", tileColor: "#2b6a99" },
-  { name: "Kubernetes", subtitle: "Container orchestration", glyph: "K", tileBg: "#e6ecfc", tileColor: "#326ce5" },
-  { name: "VS Code", subtitle: "Code editor", glyph: "VS", tileBg: "#e6f1fd", tileColor: "#007acc", aliases: ["Visual Studio Code"] },
-  { name: "Flutter", subtitle: "UI toolkit for all platforms", glyph: "F", tileBg: "#e6f5fd", tileColor: "#0468d7" },
+  { name: "Next.js", subtitle: "The React Framework", glyph: "N", tileBg: "#000000", tileColor: "#ffffff", aliases: ["Next 15", "Next 16"], techSlug: "nextjs" },
+  { name: "React", subtitle: "The library for web and native", glyph: "⚛", tileBg: "#e6f4fe", tileColor: "#087ea4", techSlug: "react" },
+  { name: "Node.js", subtitle: "JavaScript runtime", glyph: "⬡", tileBg: "#e7f6e9", tileColor: "#3c873a", techSlug: "nodejs" },
+  { name: "TypeScript", subtitle: "Typed JavaScript", glyph: "TS", tileBg: "#dbeafe", tileColor: "#3178c6", techSlug: "typescript" },
+  { name: "Docker", subtitle: "Container platform", glyph: "🐳", tileBg: "#e6f4fd", tileColor: "#1d63ed", techSlug: "docker" },
+  { name: "Rust", subtitle: "Systems programming language", glyph: "R", tileBg: "#fdf0e3", tileColor: "#a35127", techSlug: "rust" },
+  { name: "Python", subtitle: "General-purpose language", glyph: "Py", tileBg: "#fef7e0", tileColor: "#2b6a99", techSlug: "python" },
+  { name: "Kubernetes", subtitle: "Container orchestration", glyph: "K", tileBg: "#e6ecfc", tileColor: "#326ce5", techSlug: "kubernetes" },
+  { name: "VS Code", subtitle: "Code editor", glyph: "VS", tileBg: "#e6f1fd", tileColor: "#007acc", aliases: ["Visual Studio Code"], techSlug: "vscode" },
+  { name: "Flutter", subtitle: "UI toolkit for all platforms", glyph: "F", tileBg: "#e6f5fd", tileColor: "#0468d7", techSlug: "flutter" },
 ];
 
 /**

@@ -261,6 +261,16 @@ export type LatestReleaseItem = {
   status: ReleaseStatus;
   /** Human-relative form of the chosen article's real `published_at` (e.g. "Yesterday", "3 days ago") - see `formatRelativeDate`. */
   relativeDate: string;
+  /**
+   * Copied straight from the matching `WatchedRelease.techSlug` (Developer
+   * Release Detail redesign) - lets the homepage widget link to
+   * `/developer-hub/releases/[techSlug]` (a dedicated documentation/
+   * overview page for the technology) instead of the widget's previous
+   * behavior of linking to whichever real news article happened to back
+   * this row, which was a category mismatch (a release row isn't the
+   * same thing as the article that mentioned it).
+   */
+  techSlug: string;
 };
 
 /** Tries to pull a real version-like token out of a title/description pair - `null` when neither has one. */
@@ -354,6 +364,7 @@ export async function getLatestReleases(limit = 6): Promise<LatestReleaseItem[]>
             slug: versionedFromTitle.slug,
             status: classifyReleaseStatus(versionedFromTitle.title, versionedFromTitle.description),
             relativeDate: formatRelativeDate(versionedFromTitle.published_at),
+            techSlug: tool.techSlug,
           } satisfies LatestReleaseItem;
         }
 
@@ -383,6 +394,7 @@ export async function getLatestReleases(limit = 6): Promise<LatestReleaseItem[]>
           slug: chosen.slug,
           status: classifyReleaseStatus(chosen.title, chosen.description),
           relativeDate: formatRelativeDate(chosen.published_at),
+          techSlug: tool.techSlug,
         } satisfies LatestReleaseItem;
       })
     );
@@ -390,6 +402,47 @@ export async function getLatestReleases(limit = 6): Promise<LatestReleaseItem[]>
     return perTool.filter((item): item is LatestReleaseItem => item !== null).slice(0, limit);
   } catch (error) {
     console.error("[article-read-service] getLatestReleases failed:", error);
+    return [];
+  }
+}
+
+/**
+ * Real, DB-backed "Related News" for the Developer Release Detail page's
+ * right sidebar (`src/data/releases.ts`'s `relatedNewsSearchTerms`) - the
+ * same "search curated terms, dedupe by article id, newest first" shape
+ * `getResourcesNews` already uses, but backed by `fullTextSearch` (title/
+ * description/content/tags/AI summary) rather than the plainer
+ * `search({ searchText })`, since most real coverage of a technology
+ * doesn't put its name in the headline alone (same reasoning documented
+ * on `getLatestReleases`'s fallback path). Returns real articles only -
+ * an empty array, never a fabricated placeholder, when nothing currently
+ * in the database mentions the technology.
+ */
+export async function getRelatedNewsForTechnology(searchTerms: string[], limit = 4): Promise<CategoryNewsItem[]> {
+  try {
+    if (searchTerms.length === 0) return [];
+    const { articles } = await getRepositories();
+
+    const perTerm = await Promise.all(
+      searchTerms.map((term) =>
+        articles.fullTextSearch({ query: term, sortBy: "newest", page: 1, pageSize: limit + 2 }).catch(() => null)
+      )
+    );
+
+    const byId = new Map<string, ArticleRow>();
+    for (const result of perTerm) {
+      if (!result) continue;
+      for (const row of result.items) {
+        if (!byId.has(row.id)) byId.set(row.id, row);
+      }
+    }
+
+    return Array.from(byId.values())
+      .sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
+      .slice(0, limit)
+      .map(toCategoryNewsItem);
+  } catch (error) {
+    console.error("[article-read-service] getRelatedNewsForTechnology failed:", error);
     return [];
   }
 }
@@ -477,58 +530,59 @@ export async function getResourcesNews(limit = 5): Promise<ResourceNewsItem[]> {
   }
 }
 
-/**
- * Exact, paginated "most read" listing for the dedicated `/most-read`
- * page - sorted by `trending_score` via `ArticleRepository.search()`'s
- * `sortBy` option, using the same `count: "exact"` pagination as every
- * other real listing (category, search).
- */
-export async function getMostReadPage(page: number, pageSize: number): Promise<ArticlesPage> {
-  try {
-    const { articles } = await getRepositories();
-    const result = await articles.search({ sortBy: "trending_score", page, pageSize });
-    return {
-      items: result.items.map(toCategoryNewsItem),
-      total: result.total,
-      totalPages: Math.max(1, Math.ceil(result.total / pageSize)),
-      page: result.page,
-      pageSize: result.pageSize,
-    };
-  } catch (error) {
-    console.error("[article-read-service] getMostReadPage failed:", error);
-    return emptyPage(page, pageSize);
-  }
-}
-
 /** `CategoryNewsItem` plus a real `article_metrics.view_count` (see `getMostRead`'s doc comment) - `null` only if the metrics row itself is somehow missing (shouldn't happen post-`ensureExists`, defensive). */
 export type MostReadItem = CategoryNewsItem & { viewCount: number | null };
 
 /**
- * Top-N "most read" items for the homepage's Most Read sidebar widget
- * (product polishing phase, 3rd pass, layout correction #3 - restores a
- * homepage Most Read widget, paired with Breaking News in the page's
- * second section). A lightweight, non-paginated counterpart to
- * `getMostReadPage` - same `trending_score` sort, just the first page
- * only and no total-count query, since the widget only ever shows a
- * fixed handful of items and links out to the full `/most-read` page
- * for anyone who wants more.
+ * Top-N "most read" items for the homepage's Most Read widget.
  *
- * Widget expansion (Phase F - "current sidebar feels too empty"): now
- * also cross-references each returned article's real `article_metrics`
- * row (`metrics.getManyByArticleIds`, one extra round trip, same
- * "candidate pool + bulk lookup" pattern `getTopSourcesForCategory`/
- * `getBreakingNews` already use) so the widget can show a genuine
- * "N views" figure - never a fabricated one. `viewCount` is `null` when
- * no metrics row exists yet for that article; the UI simply omits the
- * views figure in that case rather than showing "0 views".
+ * BUG FIX (Most Read ordering audit): this used to rank by
+ * `trending_score` (`articles.search({ sortBy: "trending_score" })`),
+ * fetching real `view_count` only for display. `trending_score` is NOT a
+ * popularity metric - see `lib/news/trending-score.ts`: it's ~70%
+ * recency-decay + 30% source trust, with real view/bookmark counts
+ * explicitly documented there as "still unused by any current caller".
+ * It's also only recomputed while an article stays in a live provider
+ * poll, then frozen forever - so ranking by it looked recency-biased/
+ * effectively random relative to actual reader popularity, which is
+ * exactly the reported bug ("ordering appears random or based on
+ * publication date").
+ *
+ * Fixed to rank strictly by the real `article_metrics.view_count` column
+ * - the same number already shown in the widget ("N views") - via
+ * `ArticleMetricsRepository.listTopByViewCount()`'s real, exact
+ * `ORDER BY view_count DESC LIMIT` SQL query, never falling back to
+ * `published_at`. `view_count` lives on a separate table from `articles`
+ * (see `article_metrics`'s schema), so this is a real two-step join done
+ * in application code (one `ORDER BY` query for the ranking, one bulk
+ * `getByIds` for the matching article rows), not a client-side re-sort
+ * of an already-different-ordered page - the result order is set once,
+ * by `listTopByViewCount`, and preserved end to end: `getByIds` doesn't
+ * guarantee it returns rows in the same order as the input id list (a
+ * plain SQL `.in()` doesn't promise that), so this maps back over
+ * `topMetrics` (already in the correct, real order) rather than over
+ * whatever order `getByIds` happens to return.
+ *
+ * This is also the exact same metric/direction (`view_count DESC`) the
+ * dedicated `/most-read` page's pooled "most-read" sort now ranks by
+ * (see `getNewsExplorerArticles`'s `most-read` branch) - the homepage
+ * widget and "View all" page are both real, exact, view-count-ranked,
+ * never recency-ranked.
  */
 export async function getMostRead(limit = 5): Promise<MostReadItem[]> {
   try {
     const { articles, metrics } = await getRepositories();
-    const result = await articles.search({ sortBy: "trending_score", page: 1, pageSize: limit });
-    const metricsRows = await metrics.getManyByArticleIds(result.items.map((row) => row.id));
-    const viewCountById = new Map(metricsRows.map((row) => [row.article_id, row.view_count]));
-    return result.items.map((row) => ({ ...toCategoryNewsItem(row), viewCount: viewCountById.get(row.id) ?? null }));
+    const topMetrics = await metrics.listTopByViewCount(limit);
+    const articleRows = await articles.getByIds(topMetrics.map((row) => row.article_id));
+    const articleById = new Map(articleRows.map((row) => [row.id, row]));
+
+    const items: MostReadItem[] = [];
+    for (const metricRow of topMetrics) {
+      const articleRow = articleById.get(metricRow.article_id);
+      if (!articleRow) continue; // Metrics row for a since-deleted/unknown article - skip rather than render a broken card.
+      items.push({ ...toCategoryNewsItem(articleRow), viewCount: metricRow.view_count });
+    }
+    return items;
   } catch (error) {
     console.error("[article-read-service] getMostRead failed:", error);
     return [];
@@ -983,7 +1037,20 @@ function buildContentBlocks(
 /** Flattens `ArticleContentBlock[]` back to plain text - used only to feed `estimateReadingTime` on whatever content actually ends up on the page (see `getArticleDetail` below), so "Reading Time" reflects the real, final rendered length rather than a value computed once at ingestion time and never revisited. */
 function blocksToPlainText(blocks: ArticleContentBlock[]): string {
   return blocks
-    .map((block) => (block.type === "list" ? block.items.join(" ") : block.text))
+    .map((block) => {
+      switch (block.type) {
+        case "list":
+          return block.items.join(" ");
+        case "image":
+          return block.caption ?? "";
+        case "table":
+          return [block.headers.join(" "), ...block.rows.map((row) => row.join(" "))].join(" ");
+        case "code":
+          return ""; // Code doesn't count toward a prose reading-time estimate.
+        default:
+          return block.text;
+      }
+    })
     .join(" ")
     .trim();
 }
@@ -1021,10 +1088,18 @@ export type ArticleDetail = {
   image: string;
   category: string;
   source: string;
+  /** Raw `source_id` (e.g. `"reuters"`) - for the Article Detail redesign's breadcrumb (links to `/news?sources=<id>`) and Original Source card, which need the id itself, not just the display name. */
+  sourceId: string;
+  /** Real source logo path (or the shared default badge) - see `resolveSourceLogo` - for the redesigned page's single metadata row and Original Source card. */
+  sourceLogo: string;
+  /** The source's real homepage, from the source registry (`lib/news/sources.ts`) - `undefined` for a source with no registered website. Powers the Original Source card's domain line and CTA fallback. */
+  sourceWebsite: string | undefined;
   sourceUrl: string;
   publishedDate: string;
   publishedAtIso: string;
   readingTime: string;
+  /** Real `article_metrics.view_count` for this article - `null` only if no metrics row exists yet (shouldn't happen post-`ensureExists`, defensive). Never fabricated - the redesigned metadata row simply omits the view count when this is `null`. */
+  viewCount: number | null;
   content: ArticleContentBlock[];
   /** Set whenever an AI long summary is available for this article, regardless of whether raw `content` is thin - see `StructuredSummary`'s doc comment for the full priority ordering. */
   structuredSummary: StructuredSummary | null;
@@ -1100,11 +1175,12 @@ function structuredSummaryToPlainText(summary: StructuredSummary): string {
  */
 export async function getArticleDetail(slug: string): Promise<ArticleDetail | null> {
   try {
-    const { articles, ai } = await getRepositories();
+    const { articles, ai, metrics } = await getRepositories();
     const row = await articles.getBySlug(slug);
     if (!row) return null;
 
     const aiRow = await ai.getLatest(row.id);
+    const metricsRow = await metrics.getByArticleId(row.id);
     const content = buildContentBlocks(row.content, row.description, aiRow?.summary ?? null, aiRow?.tldr ?? null);
 
     const structuredSummary = aiRow?.long_summary ?? null;
@@ -1130,6 +1206,9 @@ export async function getArticleDetail(slug: string): Promise<ArticleDetail | nu
       image: resolveDisplayImage(row),
       category: row.category,
       source: resolveSourceName(row.source_id),
+      sourceId: row.source_id,
+      sourceLogo: resolveSourceLogo(row.source_id),
+      sourceWebsite: getSourceById(row.source_id)?.website,
       // Prefer the article's own discussion page (currently only ever
       // set for Hacker News - see `types/database.ts`'s `discussion_url`
       // doc comment) over its plain `url`, so a link labeled with the
@@ -1142,6 +1221,7 @@ export async function getArticleDetail(slug: string): Promise<ArticleDetail | nu
       publishedDate: formatPublishedDate(row.published_at),
       publishedAtIso: row.published_at,
       readingTime: `${estimateReadingTime(resolvedContentText, row.description)} min read`,
+      viewCount: metricsRow?.view_count ?? null,
       content,
       structuredSummary,
       rewrittenArticle,
@@ -1251,6 +1331,19 @@ const NEWS_EXPLORER_POOL_PAGE_SIZE_SEARCH = 100;
 const NEWS_EXPLORER_POOL_PAGE_SIZE_FTS = 50;
 /** How many raw pages the pooled path fetches (in parallel) to build its candidate pool - 1000 rows for a plain browse, 500 for a text query. A hard, honest cap: see the pooled-path doc comment below for what happens beyond it. */
 const NEWS_EXPLORER_POOL_PAGE_COUNT = 10;
+
+/**
+ * Most Read pool size (Most Read ordering audit) - the number of
+ * highest-`view_count` `article_metrics` rows fetched to build the
+ * "most-read" sort's candidate pool. Deliberately matches the general
+ * pool budget above (`NEWS_EXPLORER_POOL_PAGE_COUNT *
+ * NEWS_EXPLORER_POOL_PAGE_SIZE_SEARCH` = 1000) rather than introducing a
+ * separate budget - same honest "bounded pool, real undercounting if a
+ * filter combination has more matches than the pool holds" tradeoff
+ * already documented on the function itself, just sourced from real
+ * popularity instead of recency.
+ */
+const MOST_READ_POOL_SIZE = NEWS_EXPLORER_POOL_PAGE_COUNT * NEWS_EXPLORER_POOL_PAGE_SIZE_SEARCH;
 
 /**
  * Real, filtered/sorted/paginated (true page numbers, not "Load More")
@@ -1438,6 +1531,44 @@ export async function getNewsExplorerArticles(params: NewsExplorerParams = {}): 
           (row) => row.title.toLowerCase().includes(needle) || row.description.toLowerCase().includes(needle)
         );
       }
+    } else if (params.sort === "most-read" && !hasQuery) {
+      // BUG FIX (Most Read ordering audit): this branch used to reuse
+      // the generic recency/trending pool below (`sortBy: "published_at"`
+      // whenever `params.sort` wasn't `"trending"` - which "most-read"
+      // isn't), fetch view counts for that recency-biased pool, and only
+      // THEN sort by view count. That silently capped "most read" to
+      // "most viewed among the ~1000 most-recently-published articles" -
+      // a genuinely popular older article outside that recent window
+      // could never appear on `/most-read` at all, which is exactly the
+      // reported "ordering looks... publish-date-based" symptom.
+      //
+      // Fixed to build the candidate pool from real popularity FIRST:
+      // the top `MOST_READ_POOL_SIZE` `article_metrics` rows by
+      // `view_count` (a real, exact `ORDER BY view_count DESC LIMIT`
+      // query - see `listTopByViewCount`), then fetch the matching
+      // `articles` rows and apply every filter this page supports
+      // in-memory (category/single-source/date can't be pushed into that
+      // metrics query since `article_metrics` has none of those columns
+      // - `sourceIdSet`/`contentType` are filtered the same way just
+      // below regardless of which branch built the pool). No text query
+      // support here (an exact metrics-driven pool and a full-text
+      // ranked pool don't compose) - a query typed while sorted by "most
+      // read" falls through to the generic pooled branch instead, same
+      // as before.
+      const { metrics } = await getRepositories();
+      const topByViews = await metrics.listTopByViewCount(MOST_READ_POOL_SIZE);
+      const topArticles = await articles.getByIds(topByViews.map((row) => row.article_id));
+      const articleById = new Map(topArticles.map((row) => [row.id, row]));
+
+      pool = topByViews
+        .map((row) => articleById.get(row.article_id))
+        .filter((row): row is ArticleRow => Boolean(row))
+        .filter((row) => {
+          if (categories && !categories.includes(row.category)) return false;
+          if (singleSourceId && row.source_id !== singleSourceId) return false;
+          if (params.dateFrom && row.published_at < params.dateFrom) return false;
+          return true;
+        });
     } else {
       const rawPageSize = hasQuery ? NEWS_EXPLORER_POOL_PAGE_SIZE_FTS : NEWS_EXPLORER_POOL_PAGE_SIZE_SEARCH;
       const rawPageNumbers = Array.from({ length: NEWS_EXPLORER_POOL_PAGE_COUNT }, (_, index) => index + 1);

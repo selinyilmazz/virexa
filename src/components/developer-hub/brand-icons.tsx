@@ -107,7 +107,8 @@ export function NodeIcon({ className = "size-6" }: IconProps) {
   );
 }
 
-function PythonIcon({ className = "size-6" }: IconProps) {
+/** Exported for reuse by the Developer Release Detail page (`src/data/releases.ts`). */
+export function PythonIcon({ className = "size-6" }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
       <path
@@ -130,7 +131,8 @@ function VercelIcon({ className = "size-6" }: IconProps) {
   );
 }
 
-function NextjsIcon({ className = "size-6" }: IconProps) {
+/** Exported for reuse by the Developer Release Detail page (`src/data/releases.ts`). */
+export function NextjsIcon({ className = "size-6" }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
       <circle cx="12" cy="12" r="10" fill="#000000" />
@@ -156,7 +158,8 @@ function SvelteIcon({ className = "size-6" }: IconProps) {
   );
 }
 
-function TailwindIcon({ className = "size-6" }: IconProps) {
+/** Exported for reuse by the Developer Release Detail page (`src/data/releases.ts`). */
+export function TailwindIcon({ className = "size-6" }: IconProps) {
   return (
     <svg viewBox="0 0 24 20" className={className} aria-hidden="true" fill="#38BDF8">
       <path d="M6 9c1-4 3-5 6-5s5 1 6 5c-1-1.5-2.5-2-4-1.5-1 .3-1.7 1.2-2.5 2.1C10.5 10.9 9 12 6 9Z" />
@@ -240,6 +243,59 @@ export function VSCodeIcon({ className = "size-6" }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
       <path d="M17 2.5 8.3 10 4 6.7 1.8 8l4.8 4-4.8 4L4 17.3 8.3 14 17 21.5l4.2-2V4.5Zm0 5.4v8.2L11.6 12Z" fill="#007ACC" />
+    </svg>
+  );
+}
+
+/** TypeScript's real "TS" mark on its real brand blue square - exported for reuse by the Developer Release Detail page (`src/data/releases.ts`). */
+export function TypeScriptIcon({ className = "size-6" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <rect x="1" y="1" width="22" height="22" rx="3" fill="#3178C6" />
+      <text x="12" y="16.5" textAnchor="middle" fontSize="11" fontWeight="700" fill="#ffffff">
+        TS
+      </text>
+    </svg>
+  );
+}
+
+/** Simplified gear mark in Rust's real brand orange/black - exported for reuse by the Developer Release Detail page (`src/data/releases.ts`). */
+export function RustIcon({ className = "size-6" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="currentColor">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <rect key={i} x="11" y="1.2" width="2" height="4.6" rx="1" transform={`rotate(${(360 / 8) * i} 12 12)`} />
+      ))}
+      <circle cx="12" cy="12" r="6.2" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="12" cy="12" r="2.6" />
+    </svg>
+  );
+}
+
+/** Bun's real "bun/burger" wordmark tile in its real brand tan/cream - exported for reuse by the Developer Release Detail page (`src/data/releases.ts`). */
+export function BunIcon({ className = "size-6" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="10" fill="#FBF0DF" />
+      <path
+        d="M6 12.5c0-3.6 2.7-6.5 6-6.5s6 2.9 6 6.5-2.7 5.5-6 5.5-6-1.9-6-5.5Z"
+        fill="none"
+        stroke="#7A3B12"
+        strokeWidth="1.4"
+      />
+      <circle cx="9.3" cy="11.2" r="0.9" fill="#7A3B12" />
+      <circle cx="14.7" cy="11.2" r="0.9" fill="#7A3B12" />
+    </svg>
+  );
+}
+
+/** Simplified Flutter "twin dart" mark in its real brand blues - exported for reuse by the Developer Release Detail page (`src/data/releases.ts`). */
+export function FlutterIcon({ className = "size-6" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path d="M14 2 4 12l4 4 14-14Z" fill="#42A5F5" />
+      <path d="M14 22 8 16l4-4 8 8Z" fill="#0D47A1" />
+      <path d="M12 16 8 12l-4 4 4 4Z" fill="#42A5F5" opacity="0.7" />
     </svg>
   );
 }
