@@ -1,98 +1,125 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { CategoryNav } from "@/components/layout/CategoryNav";
 import { HeaderAuthArea } from "@/components/layout/HeaderAuthArea";
 import { HeaderBookmarkLink } from "@/components/layout/HeaderBookmarkLink";
 import { HeaderSearchInput } from "@/components/layout/HeaderSearchInput";
+import { HeaderThemeToggle } from "@/components/layout/HeaderThemeToggle";
 import { getServerTranslations } from "@/i18n/get-server-translations";
 
-// Slugs are the stable, non-localized identifiers used in URLs
-// (`/category/technology`) and as `nav.categories.*` translation keys -
-// only the on-screen label is localized, the route never changes with
-// locale.
-const navigationSlugs = ["technology", "business", "ai", "games", "world"] as const;
+/**
+ * Header alignment redesign: a true 3-zone grid (`grid-cols-[1fr_auto_1fr]`)
+ * instead of a `flex` row, specifically so the search bar is mathematically
+ * centered in the FULL row width - not just centered in whatever space is
+ * left over after the logo and the actions cluster (which used to pull
+ * everything visually toward the left, since the actions cluster is
+ * wider than the logo). Both edge tracks are equal `1fr` columns, so the
+ * middle `auto` column (the search form) always sits dead-center
+ * regardless of how wide the logo or the actions cluster happen to be -
+ * `justify-self-start`/`justify-self-end` then pin the logo/actions to
+ * their own track's edge even if that track ends up wider than its
+ * content (same trick Linear/Vercel/Stripe headers use). The 3-column
+ * grid switches on at `md:` (768px) specifically because that's the
+ * exact breakpoint where the right-side actions (`HeaderBookmarkLink`/
+ * `HeaderThemeToggle`/`HeaderAuthArea`, each `hidden md:flex`) start
+ * rendering anything at all - below that, true 1fr/1fr centering would
+ * needlessly reserve space in an empty right column instead of letting
+ * the search bar use it.
+ *
+ * `max-w-[1820px]` matches `page.tsx`'s own content container exactly
+ * (was `1920px` - its own, different, un-matched value) - this row and
+ * `CategoryNav` underneath now share the EXACT same content edge as the
+ * rest of the page, not just each other.
+ */
+type HeaderProps = {
+  /**
+   * The unified Explorer's EFFECTIVE search query (real `q` param, or a
+   * page's own locked default when none is set - e.g. `/cloud` always
+   * has an effective query of "cloud") - lets this single header search
+   * box visually reflect a page-level default query even before the
+   * visitor has typed anything, exactly like it already reflects a real
+   * `?q=` param on `/search`/`/news`. `undefined` everywhere else
+   * (unrelated pages never pass this).
+   */
+  initialSearchQuery?: string;
+};
 
-export async function Header() {
+export async function Header({ initialSearchQuery }: HeaderProps = {}) {
   const { t } = await getServerTranslations();
 
   return (
-    <header className="border-b border-slate-200 bg-white shadow-sm">
-      <div className="mx-auto flex min-h-24 max-w-[1920px] items-center gap-5 px-5 py-3 sm:px-8 xl:gap-10">
-        <Link
-          href="/"
-          className="flex shrink-0 items-center gap-2 text-[#2f67e8]"
-          aria-label={t("nav.logoAria")}
-        >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 64 56"
-            className="h-10 w-12 sm:h-11 sm:w-13"
-            fill="none"
-          >
-            <path d="M3 4h16l14 26L47 4h14L38 52H24L3 4Z" fill="currentColor" />
-            <path d="m35 18 7-13h13l-8 13H35Z" fill="currentColor" />
-            <path d="M48 17h10v10H48zM55 3h7v7h-7z" fill="currentColor" />
-          </svg>
-          <span className="font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
-            Virexa
-          </span>
-        </Link>
-
-        <form role="search" action="/search" method="GET" className="min-w-0 flex-1 xl:max-w-[550px]">
-          <label htmlFor="site-search" className="sr-only">
-            {t("nav.searchAria")}
-          </label>
-          <div className="flex h-14 items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-5 shadow-md">
-            <Suspense
-              fallback={
-                <input
-                  id="site-search"
-                  name="q"
-                  type="search"
-                  placeholder={t("nav.searchPlaceholder")}
-                  className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-900 outline-none placeholder:text-slate-500"
-                />
-              }
-            >
-              <HeaderSearchInput />
-            </Suspense>
-            <button type="submit" aria-label={t("nav.searchButtonAria")} className="flex shrink-0 items-center justify-center">
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                className="h-7 w-7 shrink-0 text-slate-500"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <circle cx="11" cy="11" r="6.5" />
-                <path d="m16 16 4.5 4.5" />
-              </svg>
-            </button>
-          </div>
-        </form>
-
-        <nav aria-label="Primary navigation" className="hidden items-center gap-7 xl:flex">
-          {navigationSlugs.map((slug) => (
-            <Link
-              key={slug}
-              href={`/category/${slug}`}
-              className="text-xl font-semibold text-black transition-colors hover:text-[#2f67e8]"
-            >
-              {t(`nav.categories.${slug}`)}
-            </Link>
-          ))}
+    <div className="sticky top-0 z-30">
+      <header className="border-b border-slate-200 bg-white shadow-sm">
+        <div className="mx-auto grid max-w-[1820px] grid-cols-[auto_1fr_auto] items-center gap-4 px-5 py-4 sm:px-8 sm:gap-6 md:grid-cols-[1fr_auto_1fr] md:gap-8">
           <Link
-            href="/categories"
-            className="text-xl font-semibold text-black transition-colors hover:text-[#2f67e8]"
+            href="/"
+            className="flex shrink-0 items-center gap-2 justify-self-start text-[#2f67e8]"
+            aria-label={t("nav.logoAria")}
           >
-            {t("nav.more")}
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 64 56"
+              className="h-10 w-12 sm:h-11 sm:w-13"
+              fill="none"
+            >
+              <path d="M3 4h16l14 26L47 4h14L38 52H24L3 4Z" fill="currentColor" />
+              <path d="m35 18 7-13h13l-8 13H35Z" fill="currentColor" />
+              <path d="M48 17h10v10H48zM55 3h7v7h-7z" fill="currentColor" />
+            </svg>
+            <span className="font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
+              Virexa
+            </span>
           </Link>
-        </nav>
 
-        <HeaderBookmarkLink />
+          <form
+            role="search"
+            action="/search"
+            method="GET"
+            className="min-w-0 w-full max-w-[420px] justify-self-stretch sm:max-w-[500px] md:w-[650px] md:max-w-none md:justify-self-center lg:w-[700px]"
+          >
+            <label htmlFor="site-search" className="sr-only">
+              {t("nav.searchAria")}
+            </label>
+            <div className="flex h-14 items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-5 shadow-md">
+              <Suspense
+                fallback={
+                  <input
+                    id="site-search"
+                    name="q"
+                    type="search"
+                    defaultValue={initialSearchQuery}
+                    placeholder={t("nav.searchPlaceholder")}
+                    className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-900 outline-none placeholder:text-slate-500"
+                  />
+                }
+              >
+                <HeaderSearchInput initialQuery={initialSearchQuery} />
+              </Suspense>
+              <button type="submit" aria-label={t("nav.searchButtonAria")} className="flex shrink-0 items-center justify-center">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  className="h-7 w-7 shrink-0 text-slate-500"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <circle cx="11" cy="11" r="6.5" />
+                  <path d="m16 16 4.5 4.5" />
+                </svg>
+              </button>
+            </div>
+          </form>
 
-        <HeaderAuthArea />
-      </div>
-    </header>
+          <div className="flex shrink-0 items-center justify-self-end gap-4 sm:gap-5">
+            <HeaderBookmarkLink />
+            <HeaderThemeToggle />
+            <HeaderAuthArea />
+          </div>
+        </div>
+      </header>
+
+      <CategoryNav />
+    </div>
   );
 }

@@ -2,7 +2,7 @@
   "nav": {
     "logoAria": "Virexa home",
     "searchAria": "Search news, topics or sources",
-    "searchPlaceholder": "Search news, topics or sources...",
+    "searchPlaceholder": "Search news, technologies, companies, repositories...",
     "searchButtonAria": "Search",
     "categories": {
       "technology": "Technology",

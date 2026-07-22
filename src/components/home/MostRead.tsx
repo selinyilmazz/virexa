@@ -3,34 +3,44 @@ import { NewsImage } from "@/components/news/NewsImage";
 import { resolveFallbackImageForCategory } from "@/lib/news";
 import { getMostRead } from "@/services/articles/article-read-service";
 
+/** Compact "12.4K"-style form of a real `view_count` - presentation-only, kept local to this widget rather than a shared formatter since nothing else on the site currently shows a raw view count. */
+function formatViewCount(count: number): string {
+  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`;
+  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}K`;
+  return String(count);
+}
+
 /**
  * Homepage "Most Read" widget - paired with Breaking News in the page's
  * second section (product polishing phase, 3rd pass, layout correction
  * #3). A numbered, thumbnail list in the same bordered-card language as
- * every other sidebar widget (`rounded-3xl border ... shadow-sm`), sized
+ * every other sidebar widget (`rounded-2xl border ... shadow-sm`), sized
  * for a sidebar column rather than the full content width. Links out to
  * the full, paginated `/most-read` page for anyone who wants more than
  * this handful of items. Renders nothing when there's no data yet,
  * consistent with every other section on this page.
+ *
+ * Phase F ("current sidebar feels too empty"): expanded from 5 to 7
+ * items, category restored to the meta row (dropped in an earlier pass),
+ * and a real view count added when the article's `article_metrics` row
+ * has one - never a fabricated number, and simply omitted (not shown as
+ * "0 views") when there isn't one yet.
  */
 export async function MostRead() {
-  const items = await getMostRead(5);
+  const items = await getMostRead(7);
   if (items.length === 0) return null;
 
   return (
     <section
       aria-labelledby="most-read-title"
-      className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+      className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
     >
       <div className="flex items-center justify-between gap-2 px-1">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2f67e8]">Popular</p>
-          <h2 id="most-read-title" className="mt-1 text-xl font-bold tracking-tight text-slate-950">
-            Most Read
-          </h2>
-        </div>
+        <h2 id="most-read-title" className="text-lg font-bold tracking-tight text-slate-950">
+          Most Read Today
+        </h2>
         <Link href="/most-read" className="shrink-0 text-sm font-medium text-[#2f67e8] transition-colors hover:text-[#2556c9]">
-          View All
+          View all
         </Link>
       </div>
 
@@ -58,7 +68,21 @@ export async function MostRead() {
                 <span className="line-clamp-2 block text-sm font-semibold leading-snug text-slate-950 group-hover:text-[#2f67e8]">
                   {item.title}
                 </span>
-                <span className="mt-0.5 block truncate text-xs text-slate-500">{item.category}</span>
+                <span className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-slate-500">
+                  <span className="font-semibold text-[#2f67e8]">{item.category}</span>
+                  {item.readingTime && (
+                    <>
+                      <span aria-hidden="true">·</span>
+                      <span>{item.readingTime}</span>
+                    </>
+                  )}
+                  {item.viewCount !== null && item.viewCount > 0 && (
+                    <>
+                      <span aria-hidden="true">·</span>
+                      <span>{formatViewCount(item.viewCount)} views</span>
+                    </>
+                  )}
+                </span>
               </span>
             </Link>
           </li>

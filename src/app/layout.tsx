@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Inter } from "next/font/google";
 import { ConditionalFooter } from "@/components/layout/ConditionalFooter";
 import { Footer } from "@/components/layout/Footer";
 import { AuthProvider } from "@/components/providers/AuthProvider";
@@ -9,13 +9,19 @@ import { I18nProvider } from "@/i18n/i18n-provider";
 import { resolveServerLocale } from "@/i18n/resolve-locale.server";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Homepage refinement pass: switched from Geist to Inter (explicit
+// typography requirement - "Use Inter", strong hierarchy/readability for
+// a dense editorial layout). Renamed the exposed CSS variables to
+// `--font-sans`/`--font-mono` (from `--font-geist-sans`/`--font-geist-mono`)
+// to match what they now actually contain - see `globals.css`'s `@theme`
+// block and its body `font-family` fix for the other half of this change.
+const inter = Inter({
+  variable: "--font-sans",
   subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+  variable: "--font-mono",
   subsets: ["latin"],
 });
 
@@ -87,7 +93,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <I18nProvider locale={locale}>

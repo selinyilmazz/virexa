@@ -4,7 +4,10 @@ import { CategoryHeader } from "@/components/category/CategoryHeader";
 import { CategoryNewsGrid } from "@/components/category/CategoryNewsGrid";
 import { CategorySidebar } from "@/components/category/CategorySidebar";
 import { Pagination } from "@/components/category/Pagination";
+import { ExplorerView } from "@/components/explorer/ExplorerView";
 import { categories, getCategoryBySlug } from "@/data/categories";
+import type { PulseTopicKey } from "@/lib/explorer/developer-pulse-data";
+import type { ExplorerSearchParams } from "@/lib/news-explorer/shared";
 import {
   getRecentArticlesForCategory,
   getTopSourcesForCategory,
@@ -14,17 +17,66 @@ import {
 
 const PAGE_SIZE = 8;
 
+/**
+ * Real categories moved onto the unified Explorer template (per the
+ * unified-Explorer design - "Do NOT create different layouts for...
+ * categories... reuse the exact same News Explorer template"). Every
+ * OTHER real category (Technology, Business, Games, World, Robotics,
+ * Mobile, Startup, Space, Science) was NOT named in that request and
+ * keeps this route's original `CategoryHeader`/`CategoryNewsGrid`/
+ * `CategorySidebar` layout entirely unchanged below.
+ */
+const EXPLORER_CATEGORIES: Record<string, { title: string; subtitle: string; pulseTopic: PulseTopicKey }> = {
+  ai: { title: "Artificial Intelligence", subtitle: "Latest AI news, model releases, research and developer updates.", pulseTopic: "ai" },
+  programming: {
+    title: "Programming",
+    subtitle: "Latest programming news, frameworks, languages and developer tools.",
+    pulseTopic: "programming",
+  },
+  security: {
+    title: "Security",
+    subtitle: "Security news, CVEs, vulnerabilities and industry advisories.",
+    pulseTopic: "security",
+  },
+};
+
 type CategoryPageProps = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<ExplorerSearchParams>;
 };
 
 export function generateStaticParams() {
   return categories.map((category) => ({ slug: category.slug }));
 }
 
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const explorerConfig = EXPLORER_CATEGORIES[slug];
+  if (explorerConfig) {
+    return { title: `${explorerConfig.title} | VIREXA`, description: explorerConfig.subtitle };
+  }
+  const category = getCategoryBySlug(slug);
+  return category ? { title: `${category.name} | VIREXA`, description: category.description } : {};
+}
+
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
   const { slug } = await params;
+
+  const explorerConfig = EXPLORER_CATEGORIES[slug];
+  if (explorerConfig) {
+    const resolvedSearchParams = await searchParams;
+    return (
+      <ExplorerView
+        title={explorerConfig.title}
+        subtitle={explorerConfig.subtitle}
+        basePath={`/category/${slug}`}
+        searchParams={resolvedSearchParams}
+        defaultCategorySlug={slug}
+        pulseTopic={explorerConfig.pulseTopic}
+      />
+    );
+  }
+
   const { page } = await searchParams;
   const category = getCategoryBySlug(slug);
 

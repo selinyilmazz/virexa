@@ -8,8 +8,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,5 +22,87 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Bug fix (homepage refinement pass): this used to hardcode
+     `Arial, Helvetica, sans-serif` here, which - since this `body`
+     selector is declared AFTER Tailwind's own Preflight reset - silently
+     overrode the app's actual configured font (Geist, now Inter,
+     exposed as `--font-sans` above) on every single page. The app never
+     visually rendered in its intended font at all until this fix;
+     `var(--font-sans)` (falling back to the same Arial/Helvetica/
+     sans-serif stack if the variable is ever unset) is what makes Inter
+     actually apply. */
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Hero redesign: cinematic full-bleed background-image treatment
+   (Apple News / Bloomberg / Netflix / Stripe references - see
+   `FeaturedStoryCarousel.tsx`). `hero-bg-fade` cross-fades the whole
+   background+overlay in when the featured slide changes (300-500ms per
+   spec); `hero-bg-zoom` is the "barely noticeable" slow 100%->105% zoom
+   on the background image. Both are restarted on every slide change
+   because their parent element is remounted via `key={slide.slug}`.
+   Respect `prefers-reduced-motion` since neither animation is essential
+   to reading the Hero. */
+@keyframes hero-bg-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hero-bg-zoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.05);
+  }
+}
+
+.hero-bg-fade {
+  animation: hero-bg-fade 450ms ease-out;
+}
+
+.hero-bg-zoom {
+  animation: hero-bg-zoom 20s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-bg-fade,
+  .hero-bg-zoom {
+    animation: none;
+  }
+}
+
+/* Developer Hub card-quality pass: hides the horizontal scrollbar on the
+   "Featured Resources" Netflix-style carousel (`FeaturedResourcesCarousel`)
+   - the row is still fully scrollable (drag/swipe/arrow buttons), this
+   just removes the native scrollbar chrome for a cleaner look, matching
+   the reference products (Netflix/Apple TV/Linear) this section is
+   modeled on. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Developer Hub premium pass: native smooth scrolling for the landing
+   page's Quick Access bar (in-page anchor jumps to "Trending GitHub
+   Repositories" / "Editor's Picks") and any other `href="#id"` link
+   site-wide - a plain browser feature, no JS scroll library needed.
+   Respects `prefers-reduced-motion`, same principle as the Hero's own
+   animations above. */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }

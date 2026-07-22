@@ -2,10 +2,13 @@ import { cache } from "react";
 import { categories as categoryTaxonomy } from "@/data/categories";
 import type { CategoryNewsItem } from "@/data/categories";
 import type { ArticleContentBlock } from "@/data/article";
+import { RESOURCE_SEARCH_TERMS, WATCHED_RELEASES } from "@/data/homepage-widgets";
+import type { WatchedRelease } from "@/data/homepage-widgets";
 import {
   estimateReadingTime,
   formatPublishedDate,
   getSourceById,
+  getSourceLogo,
   MIN_ACCEPTABLE_CONTENT_LENGTH,
   resolveArticleImage,
   searchStockImage,
@@ -90,6 +93,11 @@ function resolveSourceName(sourceId: string): string {
   return getSourceById(sourceId)?.name ?? sourceId;
 }
 
+/** Real source logo (or the shared default badge) for a stored article's `source_id` - used by the "Resources & Career Hub" widget, whose rows are real DB articles rather than a curated logo set (see `getResourcesNews()`). */
+function resolveSourceLogo(sourceId: string): string {
+  return getSourceLogo({ logo: getSourceById(sourceId)?.logo });
+}
+
 /** Adapts an `ArticleRow` into the `CategoryNewsItem` shape every existing card component (`NewsCard`, category grids, search results) already renders - the DB-backed counterpart to `lib/news/ui-adapter.ts`'s `toCategoryNewsItem` (which adapts the in-memory `NewsArticle` shape instead). */
 function toCategoryNewsItem(row: ArticleRow): CategoryNewsItem {
   return {
@@ -101,6 +109,13 @@ function toCategoryNewsItem(row: ArticleRow): CategoryNewsItem {
     source: resolveSourceName(row.source_id),
     publishedDate: formatPublishedDate(row.published_at),
     isBookmarked: false,
+    // `row.reading_time` is stamped once at ingestion (minutes) - fine
+    // for a list/card preview's "N min read" badge. The article detail
+    // page recomputes this from the final resolved content instead (see
+    // `getArticleDetail`) since that value needs to stay accurate for a
+    // single article read end-to-end; a list card doesn't need that
+    // precision, just a fast, honest ballpark.
+    readingTime: `${row.reading_time} min read`,
   };
 }
 
@@ -206,6 +221,263 @@ export const getFeaturedArticle = cache(async (): Promise<FeaturedArticle | null
 });
 
 /**
+ * Top-N trending articles for the homepage's "Featured Story" carousel
+ * (homepage redesign - the reference layout's dot-navigated hero, one
+ * real story per dot instead of a single static Hero). Same
+ * `hasAIInsights` flag as `getFeaturedArticle` (that function's single-
+ * article shape is unchanged and still used wherever only one featured
+ * article is needed - `LatestNews`/`MostRead` excluding it from their
+ * own lists). Deliberately its own query rather than "call
+ * `getFeaturedArticle` N times" - one `listTopByTrending(limit)` round
+ * trip covers every slide.
+ */
+export const getFeaturedArticles = cache(async (limit = 4): Promise<FeaturedArticle[]> => {
+  try {
+    const { articles, ai } = await getRepositories();
+    const top = await articles.listTopByTrending(limit);
+    if (top.length === 0) return [];
+
+    const insights = await Promise.all(top.map((row) => ai.getLatest(row.id)));
+    return top.map((row, index) => ({ ...toCategoryNewsItem(row), hasAIInsights: insights[index] !== null }));
+  } catch (error) {
+    console.error("[article-read-service] getFeaturedArticles failed:", error);
+    return [];
+  }
+});
+
+const RELEASE_VERSION_PATTERN = /\bv?(\d+(?:\.\d+){1,3}(?:-[a-z0-9.]+)?)\b/i;
+
+export type ReleaseStatus = "Stable" | "Beta" | "RC" | "LTS";
+
+export type LatestReleaseItem = {
+  name: string;
+  subtitle: string;
+  glyph: string;
+  tileBg: string;
+  tileColor: string;
+  version: string;
+  slug: string;
+  /** Real-article-derived release channel (see `classifyReleaseStatus`) - defaults to "Stable" only when neither the title nor description mentions a pre-release/LTS keyword, never a guess pulled from anywhere else. */
+  status: ReleaseStatus;
+  /** Human-relative form of the chosen article's real `published_at` (e.g. "Yesterday", "3 days ago") - see `formatRelativeDate`. */
+  relativeDate: string;
+};
+
+/** Tries to pull a real version-like token out of a title/description pair - `null` when neither has one. */
+function extractVersion(title: string, description: string): string | null {
+  const match = RELEASE_VERSION_PATTERN.exec(title) ?? RELEASE_VERSION_PATTERN.exec(description);
+  if (!match) return null;
+  return match[0].toLowerCase().startsWith("v") ? match[0] : `v${match[1]}`;
+}
+
+/**
+ * Real-article-derived release channel for the "Developer Releases"
+ * widget's colored status badge (Phase F). Keyword-matched against the
+ * SAME title/description pair `extractVersion` already reads for that
+ * row - never an invented classification. LTS/RC/Beta/Alpha keywords
+ * are checked in that priority order (an "LTS" release is never also
+ * flagged Beta even if "beta" appears elsewhere in a longer description);
+ * anything that matches none of them is the honest default, "Stable".
+ */
+function classifyReleaseStatus(title: string, description: string): ReleaseStatus {
+  const text = `${title} ${description}`.toLowerCase();
+  if (/\blts\b|long[- ]term support/.test(text)) return "LTS";
+  if (/\brc\d*\b|release candidate/.test(text)) return "RC";
+  if (/\bbeta\b|\balpha\b|\bpreview\b|\bcanary\b/.test(text)) return "Beta";
+  return "Stable";
+}
+
+const RELATIVE_DATE_DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Human-relative form of an ISO timestamp ("Today"/"Yesterday"/"N days ago"/"N weeks ago"/"N months ago") - the "Yesterday"-style date Phase F's Developer Releases/Resources widgets want, distinct from `formatPublishedDate`'s absolute "May 21, 2026" form used elsewhere. */
+function formatRelativeDate(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const days = Math.floor(diffMs / RELATIVE_DATE_DAY_MS);
+  if (days <= 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 7) return `${days} days ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return `${weeks} week${weeks === 1 ? "" : "s"} ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} month${months === 1 ? "" : "s"} ago`;
+  const years = Math.floor(days / 365);
+  return `${years} year${years === 1 ? "" : "s"} ago`;
+}
+
+/**
+ * Real, DB-derived rows for the homepage's "Latest Releases" widget
+ * (homepage redesign). For each tool in `WATCHED_RELEASES`
+ * (`data/homepage-widgets.ts` - search input + generic display labels
+ * only, see that file's doc comment):
+ *
+ *  1. Exact-title search (`ArticleRepository.search({ title })`) for the
+ *     tool's name/aliases, newest first - the fast, most literal path.
+ *  2. If nothing there has an extractable version token
+ *     (`RELEASE_VERSION_PATTERN` - e.g. "TypeScript 5.9 Beta Released
+ *     with New Decorator Support" -> "v5.9"), falls back to real
+ *     full-text search (`fullTextSearch` - title/description/content/
+ *     tags/AI summary, not just the title) for the same terms, since most
+ *     real-world coverage of a release doesn't put the version number in
+ *     the headline itself.
+ *  3. If a version token is found anywhere in that wider pool (title OR
+ *     description), it's used. If real articles about the tool exist but
+ *     genuinely none of them state a version number, the row still
+ *     renders - linked to the most recent real match - with an honest
+ *     "Latest" badge instead of a fabricated version number.
+ *
+ * A tool is only ever omitted entirely when NO real article mentions it
+ * at all right now - this widget never invents a release, a version
+ * number, or a headline that isn't backed by an actual stored article.
+ */
+export async function getLatestReleases(limit = 6): Promise<LatestReleaseItem[]> {
+  try {
+    const { articles } = await getRepositories();
+
+    const perTool = await Promise.all(
+      WATCHED_RELEASES.map(async (tool: WatchedRelease) => {
+        const terms = [tool.name, ...(tool.aliases ?? [])];
+
+        const titleResults = await Promise.all(
+          terms.map((term) => articles.search({ title: term, sortBy: "published_at", sortAscending: false, page: 1, pageSize: 5 }))
+        );
+        const titlePool = titleResults.flatMap((result) => result.items);
+
+        const versionedFromTitle = titlePool.find((row) => extractVersion(row.title, row.description) !== null);
+        if (versionedFromTitle) {
+          return {
+            name: tool.name,
+            subtitle: tool.subtitle,
+            glyph: tool.glyph,
+            tileBg: tool.tileBg,
+            tileColor: tool.tileColor,
+            version: extractVersion(versionedFromTitle.title, versionedFromTitle.description) as string,
+            slug: versionedFromTitle.slug,
+            status: classifyReleaseStatus(versionedFromTitle.title, versionedFromTitle.description),
+            relativeDate: formatRelativeDate(versionedFromTitle.published_at),
+          } satisfies LatestReleaseItem;
+        }
+
+        // Nothing in the exact-title pool had a version - widen to real
+        // full-text search (title/description/content/tags/AI summary)
+        // before giving up on a version number entirely.
+        const ftsResults = await Promise.all(
+          terms.map((term) =>
+            articles.fullTextSearch({ query: term, sortBy: "newest", page: 1, pageSize: 5 }).catch(() => null)
+          )
+        );
+        const ftsPool = ftsResults.filter((result) => result !== null).flatMap((result) => result.items);
+        const combinedPool = [...titlePool, ...ftsPool];
+        if (combinedPool.length === 0) return null;
+
+        const versionedFromFts = ftsPool.find((row) => extractVersion(row.title, row.description) !== null);
+        const chosen = versionedFromFts ?? combinedPool[0];
+        const version = versionedFromFts ? extractVersion(chosen.title, chosen.description) : null;
+
+        return {
+          name: tool.name,
+          subtitle: tool.subtitle,
+          glyph: tool.glyph,
+          tileBg: tool.tileBg,
+          tileColor: tool.tileColor,
+          version: version ?? "Latest",
+          slug: chosen.slug,
+          status: classifyReleaseStatus(chosen.title, chosen.description),
+          relativeDate: formatRelativeDate(chosen.published_at),
+        } satisfies LatestReleaseItem;
+      })
+    );
+
+    return perTool.filter((item): item is LatestReleaseItem => item !== null).slice(0, limit);
+  } catch (error) {
+    console.error("[article-read-service] getLatestReleases failed:", error);
+    return [];
+  }
+}
+
+export type ResourceBadge = "FREE" | "UPDATED" | "NEW";
+
+export type ResourceNewsItem = {
+  slug: string;
+  title: string;
+  source: string;
+  sourceLogo: string;
+  publishedDate: string;
+  /** Real-article-derived badge (see `classifyResourceBadge`) - `null` when the title has no free/update keyword AND the article isn't recent enough to honestly call "new". */
+  badge: ResourceBadge | null;
+};
+
+/**
+ * Real-article-derived badge for the "Developer Resources" widget
+ * (Phase F) - checked in this priority order against the article's own
+ * title, then (only if neither keyword matched) its real publish
+ * recency, so a genuinely free/updated resource is never demoted to a
+ * generic "NEW" just because it's also recent:
+ *
+ *  1. "FREE" - title mentions "free" or "scholarship" (both watched
+ *     terms already imply no-cost access - see `RESOURCE_SEARCH_TERMS`).
+ *  2. "UPDATED" - title explicitly says "updated"/"new version"/
+ *     "refreshed".
+ *  3. "NEW" - neither keyword matched, but the article published within
+ *     the last 7 days (a real, `published_at`-derived cutoff).
+ *  4. `null` - none of the above; the row still renders, just with no
+ *     badge, rather than forcing an inaccurate one.
+ */
+function classifyResourceBadge(title: string, publishedAt: string): ResourceBadge | null {
+  const text = title.toLowerCase();
+  if (/\bfree\b|\bscholarship\b/.test(text)) return "FREE";
+  if (/\bupdated?\b|new version|\brefresh(ed)?\b/.test(text)) return "UPDATED";
+  const ageMs = Date.now() - new Date(publishedAt).getTime();
+  if (ageMs <= 7 * RELATIVE_DATE_DAY_MS) return "NEW";
+  return null;
+}
+
+/**
+ * Real, DB-derived rows for the homepage's "Resources & Career Hub"
+ * widget (homepage redesign) - developer career news (free
+ * certifications, learning paths, licenses) rather than a courses
+ * catalog. Searches recent articles for each term in
+ * `RESOURCE_SEARCH_TERMS` (`data/homepage-widgets.ts`) via
+ * `ArticleRepository.search()`'s plain `searchText` match (title/url/tags
+ * - same ILIKE match the admin Articles list already uses), merges and
+ * de-duplicates the results by article id, and returns the most recent
+ * ones. Every row is a real, currently-stored article's own title/date/
+ * source - nothing here is a curated headline.
+ */
+export async function getResourcesNews(limit = 5): Promise<ResourceNewsItem[]> {
+  try {
+    const { articles } = await getRepositories();
+
+    const perTerm = await Promise.all(
+      RESOURCE_SEARCH_TERMS.map((term) =>
+        articles.search({ searchText: term, sortBy: "published_at", sortAscending: false, page: 1, pageSize: 3 })
+      )
+    );
+
+    const byId = new Map<string, ArticleRow>();
+    for (const result of perTerm) {
+      for (const row of result.items) {
+        if (!byId.has(row.id)) byId.set(row.id, row);
+      }
+    }
+
+    return Array.from(byId.values())
+      .sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
+      .slice(0, limit)
+      .map((row) => ({
+        slug: row.slug,
+        title: row.title,
+        source: resolveSourceName(row.source_id),
+        sourceLogo: resolveSourceLogo(row.source_id),
+        publishedDate: formatPublishedDate(row.published_at),
+        badge: classifyResourceBadge(row.title, row.published_at),
+      }));
+  } catch (error) {
+    console.error("[article-read-service] getResourcesNews failed:", error);
+    return [];
+  }
+}
+
+/**
  * Exact, paginated "most read" listing for the dedicated `/most-read`
  * page - sorted by `trending_score` via `ArticleRepository.search()`'s
  * `sortBy` option, using the same `count: "exact"` pagination as every
@@ -228,6 +500,9 @@ export async function getMostReadPage(page: number, pageSize: number): Promise<A
   }
 }
 
+/** `CategoryNewsItem` plus a real `article_metrics.view_count` (see `getMostRead`'s doc comment) - `null` only if the metrics row itself is somehow missing (shouldn't happen post-`ensureExists`, defensive). */
+export type MostReadItem = CategoryNewsItem & { viewCount: number | null };
+
 /**
  * Top-N "most read" items for the homepage's Most Read sidebar widget
  * (product polishing phase, 3rd pass, layout correction #3 - restores a
@@ -237,12 +512,23 @@ export async function getMostReadPage(page: number, pageSize: number): Promise<A
  * only and no total-count query, since the widget only ever shows a
  * fixed handful of items and links out to the full `/most-read` page
  * for anyone who wants more.
+ *
+ * Widget expansion (Phase F - "current sidebar feels too empty"): now
+ * also cross-references each returned article's real `article_metrics`
+ * row (`metrics.getManyByArticleIds`, one extra round trip, same
+ * "candidate pool + bulk lookup" pattern `getTopSourcesForCategory`/
+ * `getBreakingNews` already use) so the widget can show a genuine
+ * "N views" figure - never a fabricated one. `viewCount` is `null` when
+ * no metrics row exists yet for that article; the UI simply omits the
+ * views figure in that case rather than showing "0 views".
  */
-export async function getMostRead(limit = 5): Promise<CategoryNewsItem[]> {
+export async function getMostRead(limit = 5): Promise<MostReadItem[]> {
   try {
-    const { articles } = await getRepositories();
+    const { articles, metrics } = await getRepositories();
     const result = await articles.search({ sortBy: "trending_score", page: 1, pageSize: limit });
-    return result.items.map(toCategoryNewsItem);
+    const metricsRows = await metrics.getManyByArticleIds(result.items.map((row) => row.id));
+    const viewCountById = new Map(metricsRows.map((row) => [row.article_id, row.view_count]));
+    return result.items.map((row) => ({ ...toCategoryNewsItem(row), viewCount: viewCountById.get(row.id) ?? null }));
   } catch (error) {
     console.error("[article-read-service] getMostRead failed:", error);
     return [];
@@ -896,6 +1182,424 @@ export type SitemapArticleEntry = {
   slug: string;
   updatedAt: string;
 };
+
+export type ContentTypeFilter =
+  | "news"
+  | "release"
+  | "tutorial"
+  | "research"
+  | "security-advisory"
+  | "certification"
+  | "open-source";
+
+export type NewsExplorerSort = "newest" | "oldest" | "trending" | "most-read";
+
+/**
+ * Heuristic content-type classification for the News Explorer's Content
+ * Type filter (Phase F) - `articles` has no such column, so this is
+ * derived purely from the article's own real title/description/category/
+ * tags, checked in this priority order (most specific first, so e.g. a
+ * security-advisory-shaped title never gets miscategorized as a generic
+ * "release" just because it also mentions a CVE-adjacent version
+ * number). Every article gets exactly one value; "news" is the honest
+ * default when nothing more specific matched - never an invented one.
+ */
+function classifyContentType(row: Pick<ArticleRow, "title" | "description" | "category" | "tags">): ContentTypeFilter {
+  const text = `${row.title} ${row.description}`.toLowerCase();
+  if (row.category === "Security" || /\bcve-\d|vulnerabilit(y|ies)|security advisory|\bexploit\b/.test(text)) {
+    return "security-advisory";
+  }
+  if (/\bcertificat|\bcertified\b|\bcertification\b|\bexam\b/.test(text)) return "certification";
+  if (row.tags.some((tag) => tag.toLowerCase().includes("open source")) || /\bopen[- ]source\b/.test(text)) {
+    return "open-source";
+  }
+  if (/\btutorial\b|\bhow to\b|\bwalkthrough\b|\bstep[- ]by[- ]step\b|\bguide\b/.test(text)) return "tutorial";
+  if (/\bresearch\b|\bpaper\b|\bstudy\b|\barxiv\b/.test(text)) return "research";
+  if (RELEASE_VERSION_PATTERN.test(row.title) || /\brelease(d)?\b|\bversion\b|\bchangelog\b/.test(text)) return "release";
+  return "news";
+}
+
+export type NewsExplorerItem = SearchResultItem & {
+  contentType: ContentTypeFilter;
+  /** Real `article_metrics.view_count` - `null` when no metrics row exists yet (see `MostReadItem.viewCount`). */
+  viewCount: number | null;
+};
+
+export type NewsExplorerParams = {
+  query?: string;
+  categories?: string[];
+  sourceIds?: string[];
+  dateFrom?: string;
+  contentType?: ContentTypeFilter;
+  sort?: NewsExplorerSort;
+  /** Restricts the candidate pool to real articles matching `RESOURCE_SEARCH_TERMS` (the same watch-list the homepage's "Developer Resources" widget is built from) - backs the unified `/resources` Explorer page. See `getNewsExplorerArticles`'s doc comment for how this pool is built. */
+  resourcesOnly?: boolean;
+  /** 1-based page number - real server-side pagination, not "Load More" (see `getNewsExplorerArticles`'s doc comment). Defaults to 1. */
+  page?: number;
+  pageSize?: number;
+};
+
+export type NewsExplorerArticlesPage = {
+  items: NewsExplorerItem[];
+  total: number;
+  page: number;
+  totalPages: number;
+};
+
+/** Direct-mode raw page size passed straight through to the repository - `search()` caps at 100, `fullTextSearch()` at 50, so the pooled path below uses two different constants for the two query paths. */
+const NEWS_EXPLORER_POOL_PAGE_SIZE_SEARCH = 100;
+const NEWS_EXPLORER_POOL_PAGE_SIZE_FTS = 50;
+/** How many raw pages the pooled path fetches (in parallel) to build its candidate pool - 1000 rows for a plain browse, 500 for a text query. A hard, honest cap: see the pooled-path doc comment below for what happens beyond it. */
+const NEWS_EXPLORER_POOL_PAGE_COUNT = 10;
+
+/**
+ * Real, filtered/sorted/paginated (true page numbers, not "Load More")
+ * article listing for the `/news` "News Explorer" page. Two situations
+ * can't be satisfied by a single, direct, exact database page fetch:
+ *
+ *  1. Content Type and multi-Source selection have no equivalent native
+ *     database filter (`articles` has no content-type column, and
+ *     `search()`/`fullTextSearch()` only accept ONE `sourceId`, not a
+ *     set) - see `classifyContentType`'s doc comment.
+ *  2. "Most Read" has no native `sortBy` option - `view_count` lives on
+ *     a separate `article_metrics` row (same constraint documented on
+ *     `getMostRead`), so ranking by it means joining metrics in first.
+ *  3. `resourcesOnly` (the unified `/resources` page) has no single
+ *     native filter either - it's real articles matching ANY of
+ *     `RESOURCE_SEARCH_TERMS`, which requires one `searchText` query per
+ *     term merged together (the exact same pattern `getResourcesNews`
+ *     already uses for the homepage widget), not a single-column filter.
+ *
+ * For every OTHER combination (the common case: Time/Categories/a
+ * single Source/Query, sorted by Newest/Oldest/Trending), this fetches
+ * the requested page directly from the database in one round trip, with
+ * an exact `total`/`totalPages` from the repository's own real count -
+ * true random-access pagination, jump to page 1 or page 128 equally
+ * cheaply.
+ *
+ * When Content Type, more-than-one Source, or "Most Read" IS active,
+ * there's no way to jump straight to an arbitrary page without knowing
+ * which rows match first, so this pulls a bounded, real candidate pool
+ * (`NEWS_EXPLORER_POOL_PAGE_COUNT` raw pages, fetched in parallel - the
+ * same "bounded pool, filtered/sorted in app code" convention
+ * `getTopSourcesForCategory`/`getBreakingNews`/`getTrendingCategories`
+ * already use elsewhere in this file), applies the filter/sort in
+ * memory, and paginates that in-memory list directly. `total` in this
+ * path is real but capped at pool size - if a filter combination
+ * genuinely has more matches than the pool holds, this honestly
+ * undercounts rather than fabricating a bigger number; a documented,
+ * narrow-case tradeoff rather than a full schema migration for one page.
+ */
+export async function getNewsExplorerArticles(params: NewsExplorerParams = {}): Promise<NewsExplorerArticlesPage> {
+  const pageSize = params.pageSize ?? 12;
+  const requestedPage = Math.max(1, Math.floor(params.page ?? 1));
+  const hasQuery = Boolean(params.query && params.query.trim().length > 0);
+  const categories = params.categories && params.categories.length > 0 ? params.categories : undefined;
+  const singleSourceId = params.sourceIds && params.sourceIds.length === 1 ? params.sourceIds[0] : undefined;
+  const sourceIdSet = params.sourceIds && params.sourceIds.length > 1 ? new Set(params.sourceIds) : null;
+  const needsPooledApproach =
+    Boolean(params.contentType) || sourceIdSet !== null || params.sort === "most-read" || Boolean(params.resourcesOnly);
+
+  // Debugging aid (per the "Most Read shows 0 results" investigation) -
+  // logs the fully-resolved query this call is about to run BEFORE
+  // anything can throw, so a silent failure further down (caught by the
+  // try/catch below) still leaves a trail of what was actually
+  // requested. Cheap enough to leave in permanently - one line per
+  // Explorer page load, not per-row.
+  console.log("[article-read-service] getNewsExplorerArticles: resolved query", {
+    query: params.query ?? null,
+    categories: categories ?? null,
+    sourceIds: params.sourceIds ?? null,
+    contentType: params.contentType ?? null,
+    resourcesOnly: Boolean(params.resourcesOnly),
+    sort: params.sort ?? "newest",
+    dateFrom: params.dateFrom ?? null,
+    page: requestedPage,
+    pageSize,
+    pooled: needsPooledApproach,
+  });
+
+  async function attachViewCounts(rows: ArticleRow[]): Promise<Map<string, number | null>> {
+    const { metrics } = await getRepositories();
+    const metricsRows = await metrics.getManyByArticleIds(rows.map((row) => row.id));
+    return new Map(metricsRows.map((row) => [row.article_id, row.view_count]));
+  }
+
+  try {
+    const { articles } = await getRepositories();
+
+    if (!needsPooledApproach) {
+      // Split (rather than a ternary sharing one `result`) so
+      // `matched_in` (only present on `FullTextSearchRow`, the real
+      // `search_articles_fts()` result - see `SearchResultItem`'s doc
+      // comment) stays type-safe to read - it powers the Search Results
+      // page's "Matched in X" badge (`ExplorerView`'s `explainMatches`).
+      if (hasQuery) {
+        const result = await articles.fullTextSearch({
+          query: params.query as string,
+          categories,
+          sourceId: singleSourceId,
+          dateFrom: params.dateFrom,
+          sortBy: params.sort === "oldest" ? "oldest" : "newest",
+          page: requestedPage,
+          pageSize,
+        });
+
+        const viewCountById = await attachViewCounts(result.items);
+        const items: NewsExplorerItem[] = result.items.map((row) => ({
+          ...toCategoryNewsItem(row),
+          contentType: classifyContentType(row),
+          viewCount: viewCountById.get(row.id) ?? null,
+          matchedIn: row.matched_in,
+        }));
+
+        console.log("[article-read-service] getNewsExplorerArticles: direct fullTextSearch result", {
+          returnedCount: items.length,
+          total: result.total,
+          page: result.page,
+        });
+
+        return {
+          items,
+          total: result.total,
+          page: result.page,
+          totalPages: Math.max(1, Math.ceil(result.total / pageSize)),
+        };
+      }
+
+      const result = await articles.search({
+        categories,
+        sourceId: singleSourceId,
+        dateFrom: params.dateFrom,
+        sortBy: params.sort === "trending" ? "trending_score" : "published_at",
+        sortAscending: params.sort === "oldest",
+        page: requestedPage,
+        pageSize,
+      });
+
+      const viewCountById = await attachViewCounts(result.items);
+      const items: NewsExplorerItem[] = result.items.map((row) => ({
+        ...toCategoryNewsItem(row),
+        contentType: classifyContentType(row),
+        viewCount: viewCountById.get(row.id) ?? null,
+      }));
+
+      console.log("[article-read-service] getNewsExplorerArticles: direct search result", {
+        returnedCount: items.length,
+        total: result.total,
+        page: result.page,
+      });
+
+      return {
+        items,
+        total: result.total,
+        page: result.page,
+        totalPages: Math.max(1, Math.ceil(result.total / pageSize)),
+      };
+    }
+
+    // Pooled path - Content Type / multi-Source / Most-Read / resourcesOnly (see doc comment above).
+    let pool: ArticleRow[];
+
+    if (params.resourcesOnly) {
+      // Real articles matching ANY watched resource term - one bounded
+      // `searchText` query per term (same merge-by-id pattern
+      // `getResourcesNews` uses), each already ANDed with categories/
+      // source/date. A free-text `query` on top of that (someone typing
+      // into the header search while already on `/resources`) is
+      // honored as a plain in-memory substring check on top of this
+      // pool, rather than a second full-text query - this pool is
+      // already real/bounded, not a place to add a second network round
+      // trip per term.
+      const perTerm = await Promise.all(
+        RESOURCE_SEARCH_TERMS.map((term) =>
+          articles.search({
+            searchText: term,
+            categories,
+            sourceId: singleSourceId,
+            dateFrom: params.dateFrom,
+            sortBy: params.sort === "trending" ? "trending_score" : "published_at",
+            sortAscending: params.sort === "oldest",
+            page: 1,
+            pageSize: 150,
+          })
+        )
+      );
+      const byId = new Map<string, ArticleRow>();
+      for (const result of perTerm) {
+        for (const row of result.items) {
+          if (!byId.has(row.id)) byId.set(row.id, row);
+        }
+      }
+      pool = Array.from(byId.values());
+      if (hasQuery) {
+        const needle = (params.query as string).toLowerCase();
+        pool = pool.filter(
+          (row) => row.title.toLowerCase().includes(needle) || row.description.toLowerCase().includes(needle)
+        );
+      }
+    } else {
+      const rawPageSize = hasQuery ? NEWS_EXPLORER_POOL_PAGE_SIZE_FTS : NEWS_EXPLORER_POOL_PAGE_SIZE_SEARCH;
+      const rawPageNumbers = Array.from({ length: NEWS_EXPLORER_POOL_PAGE_COUNT }, (_, index) => index + 1);
+
+      const batches = await Promise.all(
+        rawPageNumbers.map((rawPage) =>
+          hasQuery
+            ? articles
+                .fullTextSearch({
+                  query: params.query as string,
+                  categories,
+                  sourceId: singleSourceId,
+                  dateFrom: params.dateFrom,
+                  sortBy: params.sort === "oldest" ? "oldest" : "newest",
+                  page: rawPage,
+                  pageSize: rawPageSize,
+                })
+                .then((result) => result.items as ArticleRow[])
+            : articles
+                .search({
+                  categories,
+                  sourceId: singleSourceId,
+                  dateFrom: params.dateFrom,
+                  sortBy: params.sort === "trending" ? "trending_score" : "published_at",
+                  sortAscending: params.sort === "oldest",
+                  page: rawPage,
+                  pageSize: rawPageSize,
+                })
+                .then((result) => result.items)
+        )
+      );
+      pool = batches.flat();
+    }
+
+    const filtered = pool.filter((row) => {
+      if (sourceIdSet && !sourceIdSet.has(row.source_id)) return false;
+      if (params.contentType && classifyContentType(row) !== params.contentType) return false;
+      return true;
+    });
+
+    const viewCountById = await attachViewCounts(filtered);
+    let ranked = filtered.map((row) => ({ row, viewCount: viewCountById.get(row.id) ?? null }));
+
+    if (params.sort === "most-read") {
+      ranked = [...ranked].sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0));
+    }
+
+    const total = ranked.length;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const clampedPage = Math.min(requestedPage, totalPages);
+    const start = (clampedPage - 1) * pageSize;
+
+    const items: NewsExplorerItem[] = ranked.slice(start, start + pageSize).map(({ row, viewCount }) => ({
+      ...toCategoryNewsItem(row),
+      contentType: classifyContentType(row),
+      viewCount,
+    }));
+
+    console.log("[article-read-service] getNewsExplorerArticles: pooled result", {
+      poolSize: pool.length,
+      filteredSize: filtered.length,
+      returnedCount: items.length,
+      total,
+      page: clampedPage,
+    });
+
+    return { items, total, page: clampedPage, totalPages };
+  } catch (error) {
+    console.error("[article-read-service] getNewsExplorerArticles failed:", error);
+    return { items: [], total: 0, page: 1, totalPages: 1 };
+  }
+}
+
+export type NewsExplorerStats = {
+  articlesCount: number;
+  releasesCount: number;
+  resourcesCount: number;
+  sourcesCount: number;
+  lastUpdatedRelative: string;
+};
+
+/**
+ * Real counts for the News Explorer's top-of-page stats strip (Phase F,
+ * Turkish follow-up suggestion - "bu küçük detay sayfaya canlılık
+ * katar"). Every number is a genuine query result, never a placeholder:
+ *
+ *  - `articlesCount` - `ArticleRepository.count()`, the exact same total
+ *    the Admin Dashboard's "Total Articles" card already shows.
+ *  - `releasesCount` / `resourcesCount` - summed real per-term match
+ *    totals (one bounded `pageSize: 1` count-only query per term, all in
+ *    parallel) over the SAME watched-tool/search-term lists the
+ *    "Developer Releases"/"Developer Resources" widgets are themselves
+ *    built from (`WATCHED_RELEASES`/`RESOURCE_SEARCH_TERMS`) - a real,
+ *    if watch-list-scoped rather than site-wide, count; may double-count
+ *    an article matching more than one term, a documented minor
+ *    imprecision, never a fabricated figure.
+ *  - `sourcesCount` - `SourceRepository.countActive()`.
+ *  - `lastUpdatedRelative` - the most recently-inserted article's real
+ *    `created_at`, formatted via `formatRelativeDate`.
+ */
+export async function getNewsExplorerStats(): Promise<NewsExplorerStats> {
+  try {
+    const { articles, sources } = await getRepositories();
+
+    const [articlesCount, sourcesCount, releaseTotals, resourceTotals, latest] = await Promise.all([
+      articles.count(),
+      sources.countActive(),
+      Promise.all(WATCHED_RELEASES.map((tool) => articles.search({ title: tool.name, page: 1, pageSize: 1 }).then((r) => r.total))),
+      Promise.all(RESOURCE_SEARCH_TERMS.map((term) => articles.search({ searchText: term, page: 1, pageSize: 1 }).then((r) => r.total))),
+      articles.search({ sortBy: "created_at", sortAscending: false, page: 1, pageSize: 1 }),
+    ]);
+
+    const latestRow = latest.items[0];
+    return {
+      articlesCount,
+      releasesCount: releaseTotals.reduce((sum, value) => sum + value, 0),
+      resourcesCount: resourceTotals.reduce((sum, value) => sum + value, 0),
+      sourcesCount,
+      lastUpdatedRelative: latestRow ? formatRelativeDate(latestRow.created_at) : "just now",
+    };
+  } catch (error) {
+    console.error("[article-read-service] getNewsExplorerStats failed:", error);
+    return { articlesCount: 0, releasesCount: 0, resourcesCount: 0, sourcesCount: 0, lastUpdatedRelative: "just now" };
+  }
+}
+
+export type TopSourceOption = {
+  id: string;
+  name: string;
+  count: number;
+};
+
+/**
+ * The site's most-active real sources, most-covered first - backs the
+ * News Explorer sidebar's Sources filter with actually-represented
+ * sources instead of a hardcoded list. Tallies `source_id` across one
+ * bounded, most-recent 300-row pool (3 pages of the schema's 100-row
+ * cap, fetched in parallel) in application code - same "one shared pool,
+ * bucketed in app code" convention `getTrendingCategories` already uses.
+ */
+export async function getTopSources(limit = 12): Promise<TopSourceOption[]> {
+  try {
+    const { articles } = await getRepositories();
+    const pages = await Promise.all(
+      [1, 2, 3].map((page) => articles.search({ sortBy: "published_at", page, pageSize: 100 }))
+    );
+    const pool = pages.flatMap((result) => result.items);
+
+    const counts = new Map<string, number>();
+    for (const row of pool) {
+      counts.set(row.source_id, (counts.get(row.source_id) ?? 0) + 1);
+    }
+
+    return Array.from(counts.entries())
+      .map(([id, count]) => ({ id, name: resolveSourceName(id), count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit);
+  } catch (error) {
+    console.error("[article-read-service] getTopSources failed:", error);
+    return [];
+  }
+}
 
 /** Cap on how many article URLs `sitemap.ts` lists - a bounded, most-recent slice rather than the full table, matching the same "bounded candidate pool" convention `getAllArticlesForExport` (admin-article-service.ts) already uses for CSV export. Large sitemaps beyond this size should move to a sitemap index, which isn't needed at current article volumes. */
 const SITEMAP_MAX_ARTICLES = 1000;

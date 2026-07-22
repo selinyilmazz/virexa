@@ -32,7 +32,7 @@ export function NewsCard({
   publishedDate,
 }: NewsCardProps) {
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
+    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
       <div className="relative aspect-video w-full shrink-0 overflow-hidden">
         <NewsImage
           src={image}

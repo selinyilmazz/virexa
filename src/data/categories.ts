@@ -10,6 +10,8 @@ export type CategoryNewsItem = {
   source: string;
   publishedDate: string;
   isBookmarked: boolean;
+  /** "N min read", derived from the stored article's `reading_time` column (DB-backed listings only - see `article-read-service.ts`'s `toCategoryNewsItem`). `undefined` for the mock/in-memory adapter (`lib/news/ui-adapter.ts`), which has no equivalent column - callers that need this (Hero/Latest News/Most Read) always go through the DB-backed path. */
+  readingTime?: string;
 };
 
 export type CategoryTag = {

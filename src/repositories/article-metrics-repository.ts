@@ -4,6 +4,35 @@ import type { ArticleMetricsRow, ArticleMetricsUpdate, Database } from "@/types/
 type CounterColumn = "view_count" | "bookmark_count" | "share_count" | "click_count";
 
 /**
+ * Max article ids per `.in()` call in `getManyByArticleIds` - mirrors
+ * `article-repository.ts`'s `LOOKUP_CHUNK_SIZE` fix for the exact same
+ * class of bug ("request-URL-too-long", observed in production there as
+ * `UND_ERR_HEADERS_OVERFLOW` on a ~250-item batch - see that file's doc
+ * comment for the full incident). `getManyByArticleIds` had the same
+ * unbounded `.in("article_id", articleIds)` call, and is the one place
+ * in the app that can realistically be handed a FOUR-figure id list: the
+ * unified Explorer's "most-read" sort (`getNewsExplorerArticles`'s pooled
+ * path) builds a candidate pool of up to 1,000 articles when no other
+ * filter narrows it (exactly what `/most-read` does on a fresh page load
+ * with no filters selected), then looked up view counts for that entire
+ * pool in one request - ~1,000 UUIDs (~37k characters) is well past the
+ * ~250-URL batch that already failed, so this was silently throwing on
+ * every unfiltered `/most-read` load, caught by
+ * `getNewsExplorerArticles`'s outer try/catch, and surfacing as "0
+ * results" with no visible error. 100 keeps every chunk far under the
+ * ~16KB limit regardless of id shape.
+ */
+const METRICS_LOOKUP_CHUNK_SIZE = 100;
+
+function chunkArray<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+}
+
+/**
  * Data access for the `article_metrics` table - one row per article,
  * created (zeroed) once via `ensureExists` and incremented elsewhere.
  * The ingestion pipeline only ever calls `ensureExists`; it never
@@ -69,12 +98,30 @@ export function createArticleMetricsRepository(supabase: SupabaseClient<Database
   return {
     getByArticleId,
 
-    /** Bulk lookup by article id - one round trip, used to rank a candidate pool of articles by `view_count` (see `services/articles/article-read-service.ts`'s Most Read widget) without querying per-article. */
+    /**
+     * Bulk lookup by article id, used to rank a candidate pool of
+     * articles by `view_count` (see `services/articles/article-read-
+     * service.ts`'s Most Read sort) without querying per-article. Split
+     * into `METRICS_LOOKUP_CHUNK_SIZE`-sized `.in()` calls run in
+     * parallel and merged rather than one unbounded call - see
+     * `METRICS_LOOKUP_CHUNK_SIZE`'s doc comment for the production
+     * failure this fixes. Produces the exact same combined row set a
+     * single unbounded `.in()` call would have; callers see no
+     * difference besides no longer silently failing on large pools.
+     */
     async getManyByArticleIds(articleIds: string[]): Promise<ArticleMetricsRow[]> {
       if (articleIds.length === 0) return [];
-      const { data, error } = await supabase.from("article_metrics").select("*").in("article_id", articleIds);
-      if (error) throw error;
-      return data ?? [];
+      const results = await Promise.all(
+        chunkArray(articleIds, METRICS_LOOKUP_CHUNK_SIZE).map((idsChunk) =>
+          supabase.from("article_metrics").select("*").in("article_id", idsChunk)
+        )
+      );
+      const rows: ArticleMetricsRow[] = [];
+      for (const result of results) {
+        if (result.error) throw result.error;
+        rows.push(...(result.data ?? []));
+      }
+      return rows;
     },
 
     /**
