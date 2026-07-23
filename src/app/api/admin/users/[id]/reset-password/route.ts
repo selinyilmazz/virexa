@@ -34,7 +34,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     }
     const targetEmail = existingResponse.user.email;
 
-    const { data: resetLink, error: resetError } =
+    const { error: resetError } =
     await supabase.auth.admin.generateLink({
       type: "recovery",
       email: targetEmail,
