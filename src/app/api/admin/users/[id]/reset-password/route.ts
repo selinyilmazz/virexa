@@ -34,22 +34,10 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     }
     const targetEmail = existingResponse.user.email;
 
-    const { error: resetError } =
-    await supabase.auth.admin.generateLink({
-      type: "recovery",
-      email: targetEmail,
-      options: {
-        redirectTo: `${env.site.url}/auth/callback?next=/update-password`,
-      },
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(targetEmail, {
+      redirectTo: `${env.site.url}/auth/callback?next=/update-password`,
     });
-  
-  if (resetError) {
-    throw resetError;
-  }
-  
-  // Eğer SMTP açıksa Supabase e-postayı gönderir.
-  // SMTP yoksa resetLink.properties.action_link ile
-  // linki admin panelinde gösterebilir veya loglayabilirsin.
+    if (resetError) throw resetError;
 
     await recordAuditEvent({
       actor: { id: admin.id, email: admin.email },
