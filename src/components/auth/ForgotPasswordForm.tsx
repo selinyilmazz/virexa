@@ -7,6 +7,9 @@ import { AuthFooter } from "@/components/auth/AuthFooter";
 import { Spinner } from "@/components/auth/Spinner";
 import { AuthToast } from "@/components/auth/AuthToast";
 import { isRequired, isValidEmail } from "@/lib/validators";
+import { createClient } from "@/lib/supabase/client";
+import { getAuthErrorMessage } from "@/lib/supabase/errors";
+import { env } from "@/lib/env";
 import { useTranslations } from "@/i18n/i18n-provider";
 
 type FormErrors = {
@@ -48,11 +51,26 @@ export function ForgotPasswordForm() {
     if (isSubmitting || !validate()) return;
 
     setIsSubmitting(true);
-    await wait(1000);
+    const supabase = createClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${env.site.url}/auth/callback?next=/update-password`,
+    });
     setIsSubmitting(false);
+
+    // Supabase's `resetPasswordForEmail` succeeds even for an email that
+    // isn't registered (deliberate - avoids leaking which accounts exist,
+    // same reasoning documented in `getAuthErrorMessage`), so the success
+    // message here is shown regardless. A real error (rate limit, network,
+    // misconfigured project) still surfaces honestly instead of always
+    // claiming success.
+    if (error) {
+      setErrors({ email: getAuthErrorMessage(error) });
+      return;
+    }
+
     setToastMessage(t("auth.forgotPassword.successToast"));
-    await wait(600);
-    router.push("/");
+    await wait(1200);
+    router.push("/signin");
   }
 
   return (

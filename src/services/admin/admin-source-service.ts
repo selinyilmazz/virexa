@@ -2,6 +2,7 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { createArticleRepository } from "@/repositories/article-repository";
 import { createSourceRepository } from "@/repositories/source-repository";
+import { paginateArray, type PagedArrayResult } from "@/lib/admin/paginate-array";
 import type { ArticleSourceRow } from "@/types/database";
 
 /**
@@ -44,5 +45,26 @@ export async function getAdminSourcesList(): Promise<AdminSourceListItem[]> {
   } catch (error) {
     console.error("[admin-source-service] getAdminSourcesList failed:", error);
     return [];
+  }
+}
+
+/** Search + paginated sources list for `/admin/sources` (requirement 10: unified pagination). Small, bounded table (~15-20 rows) - fetches everything once (with article counts attached), then filters/paginates in application code, same convention as `admin-release-service.ts`'s `getAdminReleasesPage`. */
+export async function getAdminSourcesPage(search: string | undefined, page: number, pageSize: number): Promise<PagedArrayResult<AdminSourceListItem>> {
+  const all = await getAdminSourcesList();
+  const needle = search?.trim().toLowerCase();
+  const filtered = needle
+    ? all.filter((source) => `${source.name} ${source.domain} ${source.country ?? ""}`.toLowerCase().includes(needle))
+    : all;
+  return paginateArray(filtered, page, pageSize);
+}
+
+/** Single source lookup for the `AdminSourceEditDrawer` (`?edit=<id>`). `article_sources` has no `visible`-style RLS filter, so the request-scoped client sees every row - no service-role client needed for this read. */
+export async function getAdminSourceById(id: string): Promise<ArticleSourceRow | null> {
+  try {
+    const { sources } = await getRepositories();
+    return await sources.getById(id);
+  } catch (error) {
+    console.error("[admin-source-service] getAdminSourceById failed:", error);
+    return null;
   }
 }

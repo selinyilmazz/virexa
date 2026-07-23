@@ -260,6 +260,139 @@ export const FEED_SOURCES: FeedSourceConfig[] = [
     enabled: false,
     disabledReason: "Candidate third Games source - Future plc's exact feed path for this title could not be confirmed without outbound network access. Verify manually, then flip enabled to true (and register a dedicated 'pc-gamer' source id instead of reusing 'ign').",
   },
+
+  // ==========================================================================
+  // Mobile Games ecosystem expansion: "Mobile Games" was redefined to cover
+  // the mobile game DEVELOPMENT ecosystem (engines, LiveOps, monetization,
+  // ASO, UA, analytics, studios, major publishers - see category-mapper.ts),
+  // not just consumer mobile-gaming news. IGN/Polygon above are general
+  // console/PC outlets and essentially never use this category's dev/
+  // industry-jargon aliases in a headline, which is why Mobile Games had
+  // zero articles even after a full backfill (confirmed via code + feed
+  // audit, not guessed).
+  //
+  // Every URL below was LIVE-VERIFIED (fetched and inspected for a real
+  // RSS/Atom content-type and actual, current entries) before being set to
+  // `enabled: true` - this is not a guess-and-hope list. Two of the three
+  // originally-proposed sources needed a swap after verification:
+  //   - PocketGamer.biz: no working public RSS endpoint found after
+  //     trying /rss, /rss/, /feed, /feed/, /rss.xml, /feed.xml, /news/rss,
+  //     /news/index.rss - the site (confirmed live and on-topic via its
+  //     homepage) simply doesn't expose one anymore. Not replaced with a
+  //     separate row since `deconstructor-of-fun` and `touch-arcade` below
+  //     already cover this exact "mobile games industry" niche live.
+  //   - Deconstructor of Fun's URL was corrected from a guessed
+  //     `/blog-feed.xml` to the real Squarespace feed path, confirmed
+  //     returning `application/rss+xml` with live entries.
+  // ==========================================================================
+  {
+    id: "deconstructor-of-fun",
+    label: "Deconstructor of Fun",
+    url: "https://www.deconstructoroffun.com/blog?format=rss",
+    sourceId: "deconstructor-of-fun",
+    category: "Mobile Games",
+    enabled: true,
+  },
+  {
+    id: "touch-arcade",
+    label: "TouchArcade",
+    url: "https://toucharcade.com/feed/",
+    sourceId: "touch-arcade",
+    category: "Mobile Games",
+    enabled: true,
+  },
+
+  // --- Technical/developer resources ("teknik kaynaklardan da beslensin" -
+  // should also draw from technical sources, not just news): engines,
+  // platform docs blogs and official dev-relations channels, not
+  // journalism. All six confirmed live before enabling; two requested
+  // sources (Unity Blog, GDC) had no working public feed and were
+  // substituted per the same "replace rather than leave disabled" rule
+  // applied to PocketGamer.biz above - see each entry's comment.
+  {
+    id: "unity-discussions",
+    label: "Unity Discussions (Forum)",
+    // Substitute for "Unity Blog": blog.unity.com now redirects to
+    // unity.com/blog, a JS-rendered page with no discoverable RSS link
+    // (confirmed by fetching it directly - no <link rel="alternate"> feed
+    // reference, and /rss and /feed both 404). Unity's own community
+    // forum (Discourse-based) exposes a real, live `/latest.rss` instead -
+    // still genuinely Unity-run, just forum discussion rather than
+    // official blog posts.
+    url: "https://discussions.unity.com/latest.rss",
+    sourceId: "unity-discussions",
+    category: "Mobile Games",
+    enabled: true,
+  },
+  {
+    id: "unreal-engine-news",
+    label: "Unreal Engine News & Blog",
+    url: "https://www.unrealengine.com/rss",
+    sourceId: "unreal-engine",
+    category: "Mobile Games",
+    enabled: true,
+  },
+  {
+    id: "android-developers-blog",
+    label: "Android Developers Blog",
+    url: "https://android-developers.googleblog.com/atom.xml",
+    sourceId: "android-developers",
+    category: "Mobile Games",
+    enabled: true,
+  },
+  {
+    id: "google-play-developers",
+    label: "Google Play (Android Developers Blog)",
+    // Google doesn't run a separate "Google Play Developers" blog - Play
+    // Store/Play Console posts are a labeled subset of the same Android
+    // Developers Blog above. This is that label's own Blogger feed
+    // (confirmed live, real Atom content), which also covers what the
+    // request called "Play Console" - same publisher, same underlying
+    // blog, no separate feed exists for that either.
+    url: "https://android-developers.googleblog.com/feeds/posts/default/-/Google%20Play",
+    sourceId: "android-developers",
+    category: "Mobile Games",
+    enabled: true,
+  },
+  {
+    id: "firebase-blog",
+    label: "Firebase Blog",
+    // Covers Firebase overall (not gaming-exclusive) - Firebase has no
+    // separate "Firebase Gaming"-only feed, but Firebase's game-relevant
+    // announcements (Firebase for Games, Play Games Services, Crashlytics
+    // for game clients, etc.) are published here.
+    url: "https://firebase.blog/rss.xml",
+    sourceId: "firebase",
+    category: "Mobile Games",
+    enabled: true,
+  },
+  {
+    id: "apple-developer-news",
+    label: "Apple Developer News",
+    // Same caveat as Firebase above - general Apple Developer News, not a
+    // gaming-only channel (Apple doesn't run one), but covers App
+    // Store/GameKit/gaming-relevant platform announcements when they
+    // happen.
+    url: "https://developer.apple.com/news/rss/news.rss",
+    sourceId: "apple-developer",
+    category: "Mobile Games",
+    enabled: true,
+  },
+  {
+    id: "game-developer-gamasutra",
+    label: "Game Developer (Gamasutra)",
+    // Also serves as the practical substitute for "GDC": gdconf.com's own
+    // News & Insights page is a JS-rendered SPA with no discoverable feed
+    // (confirmed by fetching it directly - /feed and /news/rss both
+    // empty). Game Developer is the games industry's main trade
+    // publication and extensively covers GDC talks, award winners and
+    // State of the Industry reports, so it's the closer real substitute
+    // rather than forcing in an unverified GDC URL.
+    url: "https://www.gamedeveloper.com/rss.xml",
+    sourceId: "game-developer",
+    category: "Mobile Games",
+    enabled: true,
+  },
   {
     id: "krebs-on-security",
     label: "Krebs on Security",

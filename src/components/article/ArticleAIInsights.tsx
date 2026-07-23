@@ -104,7 +104,7 @@ export function ArticleAIInsights({ ai, rewrittenArticle, trustScore, trendingSc
           <ul className="mt-2 space-y-1.5">
             {ai.tldr.bullets.map((bullet) => (
               <li key={bullet} className="flex items-start gap-2 text-base leading-relaxed text-slate-700">
-                <span aria-hidden="true" className="mt-2.5 size-1.5 shrink-0 rounded-full bg-[#2f67e8]" />
+                <span aria-hidden="true" className="mt-2.5 size-1.5 shrink-0 rounded-full bg-slate-400" />
                 {bullet}
               </li>
             ))}
@@ -118,7 +118,7 @@ export function ArticleAIInsights({ ai, rewrittenArticle, trustScore, trendingSc
           <ul className="mt-2 space-y-1.5">
             {keyPoints.map((point) => (
               <li key={point} className="flex items-start gap-2 text-base leading-relaxed text-slate-700">
-                <span aria-hidden="true" className="mt-2.5 size-1.5 shrink-0 rounded-full bg-[#2f67e8]" />
+                <span aria-hidden="true" className="mt-2.5 size-1.5 shrink-0 rounded-full bg-slate-400" />
                 {point}
               </li>
             ))}
@@ -146,7 +146,7 @@ export function ArticleAIInsights({ ai, rewrittenArticle, trustScore, trendingSc
           <h3 className="text-sm font-semibold text-slate-950">Overall Sentiment Analysis</h3>
           <div className="mt-2 flex flex-wrap gap-3">
             {ai?.sentiment && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-4 py-1.5 text-sm font-medium text-[#2f67e8]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-4 py-1.5 text-sm font-medium text-slate-700">
                 {ai.sentiment.label} ({Math.round(ai.sentiment.confidence * 100)}%)
               </span>
             )}
@@ -165,7 +165,7 @@ export function ArticleAIInsights({ ai, rewrittenArticle, trustScore, trendingSc
           <ul className="mt-2 flex flex-wrap gap-2">
             {ai.tags.map((tag) => (
               <li key={tag}>
-                <span className="inline-flex rounded-full bg-blue-50 px-4 py-1.5 text-sm font-medium text-[#2f67e8]">{tag}</span>
+                <span className="inline-flex rounded-full bg-slate-100 px-4 py-1.5 text-sm font-medium text-slate-700">{tag}</span>
               </li>
             ))}
           </ul>

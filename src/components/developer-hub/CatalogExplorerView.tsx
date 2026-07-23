@@ -6,7 +6,7 @@ import { CatalogSortControl } from "@/components/developer-hub/CatalogSortContro
 import { DeveloperHubStatsStrip } from "@/components/developer-hub/DeveloperHubStatsStrip";
 import { NewsExplorerPagination } from "@/components/news-explorer/NewsExplorerPagination";
 import { ScrollToResultsOnPageChange } from "@/components/news-explorer/ScrollToResultsOnPageChange";
-import type { Difficulty, Price } from "@/data/developer-hub";
+import type { CatalogDifficulty as Difficulty, CatalogPrice as Price } from "@/types/database";
 import { CATALOG_PAGE_SIZE, type DeveloperHubSearchParams } from "@/lib/developer-hub/shared";
 import { getCatalogItems, type CatalogResourceType, type CatalogSort } from "@/services/developer-hub/developer-hub-service";
 
@@ -88,7 +88,7 @@ export async function CatalogExplorerView({ title, subtitle, basePath, searchPar
           <DeveloperHubStatsStrip />
 
           <div className="mt-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2f67e8]">Developer Hub</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Developer Hub</p>
             <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{title}</h1>
             <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-500">{subtitle}</p>
           </div>

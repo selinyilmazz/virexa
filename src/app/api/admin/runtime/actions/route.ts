@@ -4,6 +4,7 @@ import { getAdminUserOrNull } from "@/lib/admin/authorization";
 import { runtimeEngine } from "@/runtime/engine";
 import {
   backfillArticleAIEnrichment,
+  backfillArticleCategories,
   backfillArticleContent,
   backfillArticleImages,
   recalculateTrustScores,
@@ -32,6 +33,13 @@ import { recordAuditEvent } from "@/services/admin/admin-audit-service";
  * - backfill-content       -> `admin-runtime-ops-service.ts`'s
  *                              `backfillArticleContent` - same shape,
  *                              for thin/missing article body text
+ * - backfill-categories    -> `admin-runtime-ops-service.ts`'s
+ *                              `backfillArticleCategories` (stabilization
+ *                              pass item 1) - re-runs `inferCategoryFromTitle`
+ *                              against every already-stored article so a
+ *                              keyword vocabulary update (e.g. adding
+ *                              "Mobile Games" aliases) reaches existing
+ *                              rows immediately, not just future imports
  * - backfill-ai-enrichment -> `admin-runtime-ops-service.ts`'s
  *                              `backfillArticleAIEnrichment`, which now
  *                              just calls the shared
@@ -60,6 +68,7 @@ const ACTIONS = [
   "recalculate-trust",
   "backfill-images",
   "backfill-content",
+  "backfill-categories",
   "backfill-ai-enrichment",
 ] as const;
 
@@ -131,6 +140,18 @@ export async function POST(request: Request) {
           result.checked === 0
             ? "No articles needed a content backfill."
             : `Checked ${result.checked} article(s), extracted fuller content for ${result.updated}.`;
+        metadata = result;
+        break;
+      }
+      case "backfill-categories": {
+        const result = await backfillArticleCategories();
+        const breakdown = Object.entries(result.byCategory)
+          .map(([category, count]) => `${category}: ${count}`)
+          .join(", ");
+        message =
+          result.updated === 0
+            ? `Checked ${result.checked} article(s) - every title already matches its current category, nothing to change.`
+            : `Checked ${result.checked} article(s), recategorized ${result.updated} (${breakdown}).`;
         metadata = result;
         break;
       }

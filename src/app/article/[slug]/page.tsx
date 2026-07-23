@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
   const { slug } = await params;
   const article = await getArticleDetail(slug);
 
-  if (!article) {
+  if (!article || !article.visible) {
     return { title: "Article Not Found | Virexa" };
   }
 
@@ -56,7 +56,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const { slug } = await params;
   const article = await getArticleDetail(slug);
 
-  if (!article) {
+  if (!article || !article.visible) {
     notFound();
   }
 

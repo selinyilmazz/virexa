@@ -81,6 +81,18 @@ export function RuntimeActionsPanel() {
         variant="secondary"
       />
       <AdminActionButton
+        label="Backfill Categories"
+        endpoint="/api/admin/runtime/actions"
+        buildBody={() => ({ action: "backfill-categories" })}
+        confirmTitle="Recategorize every existing article?"
+        confirmDescription="Re-runs the current category keyword classifier against every already-stored article's title and updates its category wherever the classifier's answer differs (e.g. picks up newly-added Games/Mobile Games keywords). Runs immediately over the whole table - a title matching no keyword keeps its current category."
+        confirmLabel="Backfill Categories"
+        successMessage={(json) =>
+          typeof json.message === "string" ? json.message : "Category backfill complete."
+        }
+        variant="secondary"
+      />
+      <AdminActionButton
         label="Backfill AI Enrichment"
         endpoint="/api/admin/runtime/actions"
         buildBody={() => ({ action: "backfill-ai-enrichment" })}

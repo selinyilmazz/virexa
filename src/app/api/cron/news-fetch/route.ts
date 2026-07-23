@@ -51,18 +51,19 @@ function isAuthorized(request: NextRequest): boolean {
   const configuredSecret = runtimeConfig.cronSecret;
   const authHeader = request.headers.get("authorization");
 
-  // TEMPORARY DEBUG LOGGING - production 401 investigation (all cron
-  // requests rejected despite CRON_SECRET reportedly being read
-  // correctly). Remove once the mismatch is found - this prints the
-  // real secret value to Vercel's function logs, which must not stay
-  // in place after debugging.
-  console.log("[cron-debug] Configured CRON_SECRET:", configuredSecret);
-  console.log("[cron-debug] Configured CRON_SECRET length:", configuredSecret?.length ?? 0);
-  console.log("[cron-debug] Authorization header:", authHeader);
-  console.log("[cron-debug] Authorization header length:", authHeader?.length ?? 0);
-  console.log("[cron-debug] x-vercel-cron:", request.headers.get("x-vercel-cron"));
-  console.log("[cron-debug] Expected header:", configuredSecret ? `Bearer ${configuredSecret}` : "(no secret configured - configuredSecret is falsy)");
-  console.log("[cron-debug] Exact match:", authHeader === `Bearer ${configuredSecret}`);
+  // Diagnostics for auth-mismatch investigation (kept permanently, unlike
+  // the removed debug block this replaced) - safe by construction: every
+  // value logged below is a boolean, a length, or a non-secret header
+  // (`x-vercel-cron`), never the `CRON_SECRET` value or the raw
+  // `Authorization` header itself. That removed block used to log both
+  // in plaintext, which is never acceptable in production logs even
+  // temporarily - length/boolean comparisons give the same debugging
+  // signal (is a secret configured, do the two values match) without
+  // exposing what the secret actually is.
+  console.log("[cron-auth] CRON_SECRET configured:", Boolean(configuredSecret), "length:", configuredSecret?.length ?? 0);
+  console.log("[cron-auth] Authorization header present:", authHeader !== null, "length:", authHeader?.length ?? 0);
+  console.log("[cron-auth] x-vercel-cron header:", request.headers.get("x-vercel-cron"));
+  console.log("[cron-auth] Header matches expected secret:", Boolean(configuredSecret) && authHeader === `Bearer ${configuredSecret}`);
 
   if (!configuredSecret) return false;
   return authHeader === `Bearer ${configuredSecret}`;

@@ -17,13 +17,13 @@ const PATH_PLACEHOLDER_OVERRIDES: Record<string, string> = {
  * Every unified Explorer route - each owns its own `q` param and should
  * be searched IN PLACE rather than navigated away from. This is what
  * makes the header the ONE search box for the whole app: `/category/*`
- * only lists the three category slugs that render the shared
- * `ExplorerView` (`ai`/`programming`/`security` - see
- * `category/[slug]/page.tsx`); every other real category keeps its
- * original, non-Explorer layout and has no `q`-param-driven content, so
- * typing there still (correctly) navigates to `/search` like before.
- * Every other page not listed here falls back to navigating to
- * `/search` too.
+ * only lists the five category slugs that render the shared
+ * `ExplorerView` (`ai`/`programming`/`security`/`games`/`mobile-games` -
+ * see `category/[slug]/page.tsx`'s `EXPLORER_CATEGORIES`); every other
+ * real category keeps its original, non-Explorer layout and has no
+ * `q`-param-driven content, so typing there still (correctly) navigates
+ * to `/search` like before. Every other page not listed here falls back
+ * to navigating to `/search` too.
  */
 const IN_PLACE_SEARCH_PATHS = [
   "/search",
@@ -31,6 +31,8 @@ const IN_PLACE_SEARCH_PATHS = [
   "/category/ai",
   "/category/programming",
   "/category/security",
+  "/category/games",
+  "/category/mobile-games",
   "/cloud",
   "/open-source",
   "/resources",
@@ -48,9 +50,9 @@ const IN_PLACE_SEARCH_PATHS = [
   "/developer-hub/roadmaps",
   "/developer-hub/releases",
   "/developer-hub/cheat-sheets",
-  // Standalone `/developer-releases` route (Navigation/Profile/Settings
-  // UX update) - same underlying content/params as `/developer-hub/releases`.
-  "/developer-releases",
+  // "/developer-releases" deliberately NOT listed (stabilization pass) -
+  // it's now a redirect to "/developer-hub/releases", not a real Explorer
+  // destination of its own, so it shouldn't be searched in place.
 ];
 
 type HeaderSearchInputProps = {

@@ -91,3 +91,126 @@ export const RESOURCE_TYPE_CTA_LABELS: Record<CatalogResourceType, string> = {
   roadmap: "Open Roadmap",
   "cheat-sheet": "View Cheat Sheet",
 };
+
+// ============================================================================
+// GitHub Explorer redesign ("Developer Knowledge Library") - repositories
+// table-backed types/constants shared between the server-only
+// `github-explorer-service.ts` and Client Components (`GithubFiltersPanel`,
+// `GithubSortControl`, repo cards). See that migration's doc comment
+// (0024_repositories_editorial_and_collections.sql) for why `category` is
+// a small fixed taxonomy rather than free text.
+// ============================================================================
+
+export type RepositoryCategorySlug =
+  | "ai-agents"
+  | "developer-productivity"
+  | "system-design"
+  | "frontend"
+  | "backend"
+  | "devops"
+  | "cyber-security"
+  | "mobile-development"
+  | "learning-resources";
+
+/** Label + emoji for each "Featured Collections" quick-filter card. */
+export const REPOSITORY_CATEGORY_LABELS: Record<RepositoryCategorySlug, { label: string; emoji: string }> = {
+  "ai-agents": { label: "AI Agents", emoji: "🤖" },
+  "developer-productivity": { label: "Developer Productivity", emoji: "⚡" },
+  "system-design": { label: "System Design", emoji: "🏗️" },
+  frontend: { label: "Frontend", emoji: "🎨" },
+  backend: { label: "Backend", emoji: "🗄️" },
+  devops: { label: "DevOps", emoji: "🚀" },
+  "cyber-security": { label: "Cyber Security", emoji: "🔒" },
+  "mobile-development": { label: "Mobile Development", emoji: "📱" },
+  "learning-resources": { label: "Learning Resources", emoji: "📚" },
+};
+
+export const REPOSITORY_CATEGORY_ORDER: RepositoryCategorySlug[] = [
+  "ai-agents",
+  "developer-productivity",
+  "system-design",
+  "frontend",
+  "backend",
+  "devops",
+  "cyber-security",
+  "mobile-development",
+  "learning-resources",
+];
+
+export type RepositoryDifficultySlug = "beginner" | "intermediate" | "advanced";
+
+export const REPOSITORY_DIFFICULTY_LABELS: Record<RepositoryDifficultySlug, string> = {
+  beginner: "Beginner",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
+};
+
+export type GithubLibrarySort =
+  | "editor-pick"
+  | "useful"
+  | "stars"
+  | "forks"
+  | "watchers"
+  | "newest"
+  | "updated"
+  | "health"
+  | "bookmarked";
+
+export const GITHUB_LIBRARY_SORT_OPTIONS: { value: GithubLibrarySort; label: string }[] = [
+  { value: "editor-pick", label: "Editor's Pick" },
+  { value: "useful", label: "Most Useful" },
+  { value: "stars", label: "Most Stars" },
+  { value: "forks", label: "Most Forks" },
+  { value: "watchers", label: "Most Watchers" },
+  { value: "newest", label: "Newest" },
+  { value: "updated", label: "Recently Updated" },
+  { value: "health", label: "Best Health Score" },
+  { value: "bookmarked", label: "Most Bookmarked" },
+];
+
+/** The GitHub Explorer library page's full URL query-param shape - every filter round-trips through `?...` so a reload/share preserves the exact same result set (spec requirement: filters "persist via URL query params across reload"). */
+export type GithubLibrarySearchParams = {
+  q?: string;
+  category?: string;
+  lang?: string;
+  license?: string;
+  minStars?: string;
+  updated?: string;
+  minHealth?: string;
+  difficulty?: string;
+  maintained?: string;
+  verified?: string;
+  editorPick?: string;
+  hiddenGem?: string;
+  beginnerFriendly?: string;
+  aiRelated?: string;
+  devTool?: string;
+  cli?: string;
+  library?: string;
+  framework?: string;
+  template?: string;
+  tutorial?: string;
+  collection?: string;
+  onlyCurated?: string;
+  onlyActive?: string;
+  onlyTrending?: string;
+  bookmarked?: string;
+  sort?: string;
+  page?: string;
+};
+
+/**
+ * `repositories.id` is a real `owner/repo` full name (e.g.
+ * "vercel/next.js") - safe as a Supabase primary key and a bookmark slug,
+ * but not safe as a single Next.js dynamic route segment (the `/` would
+ * be read as two segments). These two helpers are the one place that
+ * boundary is crossed, so `/developer-hub/github/[slug]` always agrees
+ * with whatever built the link.
+ */
+export function repoIdToSlug(id: string): string {
+  return id.replace("/", "--");
+}
+
+export function repoSlugToId(slug: string): string {
+  return slug.replace("--", "/");
+}

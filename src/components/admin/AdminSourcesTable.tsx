@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AdminTable, type AdminTableColumn } from "@/components/admin/AdminTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { AdminSourceActions } from "@/components/admin/AdminSourceActions";
+import { AdminSourceRowActions } from "@/components/admin/AdminSourceRowActions";
 import { AdminActionButton } from "@/components/admin/AdminActionButton";
 import type { AdminSourceListItem } from "@/services/admin/admin-source-service";
 
@@ -12,14 +13,13 @@ type AdminSourcesTableProps = {
 };
 
 /**
- * Client wrapper around the reused `AdminTable`, completing the Sources
- * side of Bulk Operations (requirement 6): bulk Active/Inactive and
- * bulk Trust Score update, via `/api/admin/sources/bulk`. Same
- * selection-checkbox pattern as `AdminArticlesTable.tsx` - this table
- * had no bulk selection UI before this phase; adding it here is what
- * "tamamla" (complete the infrastructure) means for Sources. No
- * deletion, ever ("Silme yapılmayacak" carries over from the per-row
- * `AdminSourceActions`).
+ * Client wrapper around the reused `AdminTable`. Bulk Active/Inactive
+ * and bulk Trust Score update post to `/api/admin/sources/bulk` (same
+ * selection-checkbox pattern as `AdminArticlesTable.tsx`). Per-row,
+ * `AdminSourceActions` keeps the quick Active/Trust Score inline
+ * controls, and `AdminSourceRowActions` (additive "actions" column)
+ * covers Edit/Sync/Delete - completing the full "Create/Edit/Delete/
+ * Enable-Disable/Manual Sync" set from the current Admin Panel spec.
  */
 export function AdminSourcesTable({ items }: AdminSourcesTableProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -71,9 +71,14 @@ export function AdminSourcesTable({ items }: AdminSourcesTableProps) {
     { key: "trust_score", header: "Trust Score", render: (row) => `${row.trust_score}/100` },
     { key: "totalArticles", header: "Total Articles", render: (row) => row.totalArticles.toLocaleString() },
     {
+      key: "quickActions",
+      header: "Trust Score",
+      render: (row) => <AdminSourceActions sourceId={row.id} trustScore={row.trust_score} />,
+    },
+    {
       key: "actions",
       header: "Actions",
-      render: (row) => <AdminSourceActions sourceId={row.id} active={row.active} trustScore={row.trust_score} />,
+      render: (row) => <AdminSourceRowActions id={row.id} name={row.name} active={row.active} totalArticles={row.totalArticles} />,
     },
   ];
 

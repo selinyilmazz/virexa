@@ -59,6 +59,8 @@ export type AdminArticleListItem = {
   viewCount: number;
   bookmarkCount: number;
   aiStatus: AdminArticleAIStatus;
+  featured: boolean;
+  visible: boolean;
 };
 
 export type AdminArticlesPage = {
@@ -136,6 +138,8 @@ export async function getAdminArticlesPage(
       viewCount: metricsByArticleId.get(row.id)?.view_count ?? 0,
       bookmarkCount: metricsByArticleId.get(row.id)?.bookmark_count ?? 0,
       aiStatus: aiByArticleId.has(row.id) ? "enriched" : "pending",
+      featured: row.featured,
+      visible: row.visible,
     }));
 
     return {
@@ -189,9 +193,11 @@ export type AdminArticleDetail = {
   id: string;
   slug: string;
   title: string;
+  subtitle: string;
   image: string;
   content: string;
   description: string;
+  sourceId: string;
   sourceName: string;
   sourceUrl: string;
   publishedDate: string;
@@ -199,8 +205,11 @@ export type AdminArticleDetail = {
   language: string;
   country: string;
   tags: string[];
+  readingTime: number;
   trustScore: number;
   trendingScore: number;
+  featured: boolean;
+  visible: boolean;
   ai: {
     summary: string | null;
     tldr: StoredTldr | null;
@@ -240,9 +249,11 @@ export async function getAdminArticleDetail(id: string): Promise<AdminArticleDet
       id: row.id,
       slug: row.slug,
       title: row.title,
+      subtitle: row.subtitle,
       image: row.image_url,
       content: row.content && row.content.trim().length > 0 ? row.content : row.description,
       description: row.description,
+      sourceId: row.source_id,
       sourceName: source?.name ?? row.source_id,
       // Same discussion_url-preferred fix as the public article-read-service
       // - a Hacker News-labeled source link should open Hacker News's own
@@ -253,8 +264,11 @@ export async function getAdminArticleDetail(id: string): Promise<AdminArticleDet
       language: row.language,
       country: row.country,
       tags: row.tags,
+      readingTime: row.reading_time,
       trustScore: row.trust_score,
       trendingScore: row.trending_score,
+      featured: row.featured,
+      visible: row.visible,
       ai: aiRow
         ? { summary: aiRow.summary, tldr: aiRow.tldr, tags: aiRow.tags, sentiment: aiRow.sentiment, bias: aiRow.bias }
         : null,

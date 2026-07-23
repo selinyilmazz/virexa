@@ -48,6 +48,7 @@ export type Category =
   | "Business"
   | "AI"
   | "Games"
+  | "Mobile Games"
   | "World"
   | "Science"
   | "Security"

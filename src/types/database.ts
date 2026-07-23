@@ -178,6 +178,12 @@ export type ArticleRow = {
   trust_score: number;
   trending_score: number;
   source_id: string;
+  /** Short standalone dek (Admin Panel: Articles CMS - 0021_articles_admin_fields.sql), distinct from `description`. */
+  subtitle: string;
+  /** Manual editorial override (Admin Panel: Articles CMS) - additive alongside the algorithmic `trending_score`, does not replace it. */
+  featured: boolean;
+  /** Publish/unpublish status (Admin Panel: Articles CMS). `false` hides the article from its own detail page; listing/search pages do not yet filter on this - see `getReleaseDetail`-style doc comment on the article detail page for the disclosed scope boundary. */
+  visible: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -322,6 +328,224 @@ export type RuntimeJobRunInsert = Partial<Omit<RuntimeJobRunRow, "id" | "created
   finished_at: string;
 };
 
+// ============================================================================
+// Repositories (supabase/migrations/0018_repositories.sql)
+// ============================================================================
+
+/** Fixed category taxonomy for the GitHub Explorer "Featured Collections" quick-filter cards - see `supabase/migrations/0024_repositories_editorial_and_collections.sql`'s CHECK constraint (the single source of truth this type must stay in sync with). */
+export type RepositoryCategory =
+  | "ai-agents"
+  | "developer-productivity"
+  | "system-design"
+  | "frontend"
+  | "backend"
+  | "devops"
+  | "cyber-security"
+  | "mobile-development"
+  | "learning-resources";
+
+export type RepositoryDifficulty = "beginner" | "intermediate" | "advanced";
+
+export type RepositoryRow = {
+  id: string;
+  owner: string;
+  repo_name: string;
+  description: string;
+  language: string | null;
+  license: string | null;
+  stars: number;
+  forks: number;
+  github_url: string;
+  topics: string[];
+  repo_created_at: string | null;
+  featured: boolean;
+  trending: boolean;
+  visible: boolean;
+  auto_sync: boolean;
+  last_synced_at: string | null;
+  /** Real GitHub `subscribers_count` (the modern "Watch" count, distinct from the legacy `watchers_count` which just mirrors stars) - see `supabase/migrations/0023_repositories_extended.sql`. */
+  watchers: number;
+  /** Real tag name from GitHub's `/releases/latest` endpoint, e.g. "v14.2.3". `null` when the repo has no GitHub Releases. */
+  latest_release_tag: string | null;
+  latest_release_published_at: string | null;
+  /** Admin-only "soft remove from active management" flag, distinct from `visible` - see migration doc comment. */
+  archived: boolean;
+  // --- Editorial fields added by 0024 (GitHub Explorer "Developer
+  // Knowledge Library" redesign) - see that migration's doc comments for
+  // why each one is distinct from a similarly-named existing column.
+  category: RepositoryCategory | null;
+  editor_pick: boolean;
+  hidden_gem: boolean;
+  verified: boolean;
+  maintained: boolean;
+  difficulty: RepositoryDifficulty | null;
+  recommendation_score: number;
+  health_score: number;
+  editor_notes: string;
+  tags: string[];
+  display_order: number;
+  /** Admin-authored visual cover for the curated library card/detail hero. */
+  cover_image_url: string | null;
+  /** Editor-authored guidance for the detail page's "Who should use it?" section. */
+  audience: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RepositoryInsert = Partial<Omit<RepositoryRow, "id" | "created_at" | "updated_at">> & {
+  id: string;
+  owner: string;
+  repo_name: string;
+  github_url: string;
+};
+
+export type RepositoryUpdate = Partial<Omit<RepositoryRow, "id" | "created_at" | "updated_at">>;
+
+// ============================================================================
+// Collections (supabase/migrations/0024_repositories_editorial_and_collections.sql)
+// ============================================================================
+
+export type CollectionRow = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+  display_order: number;
+  visible: boolean;
+  /** Optional admin-provided visual cover for the public collection page. */
+  cover_image_url: string | null;
+  difficulty: RepositoryDifficulty | null;
+  estimated_learning_time: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CollectionInsert = Partial<Omit<CollectionRow, "id" | "created_at" | "updated_at">> & {
+  slug: string;
+  name: string;
+};
+
+export type CollectionUpdate = Partial<Omit<CollectionRow, "id" | "created_at" | "updated_at">>;
+
+export type CollectionRepositoryRow = {
+  collection_id: string;
+  repository_id: string;
+  display_order: number;
+  added_at: string;
+};
+
+export type CollectionRepositoryInsert = Partial<Omit<CollectionRepositoryRow, "added_at">> & {
+  collection_id: string;
+  repository_id: string;
+};
+
+// ============================================================================
+// Developer Releases (supabase/migrations/0019_developer_releases.sql)
+// ============================================================================
+
+export type DeveloperReleaseChannel = "stable" | "beta" | "lts" | "rc";
+
+export type DeveloperReleaseRow = {
+  id: string;
+  slug: string;
+  product: string;
+  version: string;
+  release_date: string;
+  channel: DeveloperReleaseChannel;
+  release_notes: string;
+  maintainer: string;
+  license: string;
+  platform: string;
+  website_url: string | null;
+  docs_url: string | null;
+  github_url: string | null;
+  download_url: string | null;
+  featured: boolean;
+  trending: boolean;
+  visible: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DeveloperReleaseInsert = Partial<Omit<DeveloperReleaseRow, "id" | "created_at" | "updated_at">> & {
+  slug: string;
+  product: string;
+  version: string;
+  release_date: string;
+};
+
+export type DeveloperReleaseUpdate = Partial<Omit<DeveloperReleaseRow, "id" | "created_at" | "updated_at">>;
+
+// ============================================================================
+// Site Settings (supabase/migrations/0020_site_settings.sql)
+// ============================================================================
+
+export type SiteSettingsRow = {
+  id: number;
+  site_name: string;
+  logo_url: string | null;
+  primary_color: string;
+  homepage_featured_count: number;
+  articles_per_page: number;
+  enable_registrations: boolean;
+  maintenance_mode: boolean;
+  default_language: string;
+  default_timezone: string;
+  updated_at: string;
+  updated_by: string | null;
+};
+
+export type SiteSettingsUpdate = Partial<Omit<SiteSettingsRow, "id" | "updated_at">>;
+
+// ============================================================================
+// Developer Hub Catalog Items (supabase/migrations/0022_catalog_items.sql)
+// ============================================================================
+
+export type CatalogResourceTypeDb =
+  | "certification"
+  | "course"
+  | "learning-path"
+  | "developer-tool"
+  | "roadmap"
+  | "cheat-sheet";
+
+export type CatalogDifficulty = "beginner" | "intermediate" | "advanced";
+export type CatalogPrice = "free" | "paid";
+
+export type CatalogItemRow = {
+  id: string;
+  resource_type: CatalogResourceTypeDb;
+  slug: string;
+  title: string;
+  provider: string;
+  description: string;
+  difficulty: CatalogDifficulty | null;
+  price: CatalogPrice | null;
+  url: string;
+  emoji: string;
+  featured: boolean;
+  official: boolean;
+  steps: string[];
+  estimated_time: string | null;
+  file_type: string | null;
+  visible: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CatalogItemInsert = Partial<Omit<CatalogItemRow, "id" | "created_at" | "updated_at">> & {
+  id: string;
+  resource_type: CatalogResourceTypeDb;
+  slug: string;
+  title: string;
+  provider: string;
+  url: string;
+};
+
+export type CatalogItemUpdate = Partial<Omit<CatalogItemRow, "id" | "created_at" | "updated_at">>;
+
 export type Database = {
   public: {
     Tables: {
@@ -373,6 +597,36 @@ export type Database = {
       runtime_job_runs: {
         Row: RuntimeJobRunRow;
         Insert: RuntimeJobRunInsert;
+        Update: never;
+      };
+      repositories: {
+        Row: RepositoryRow;
+        Insert: RepositoryInsert;
+        Update: RepositoryUpdate;
+      };
+      developer_releases: {
+        Row: DeveloperReleaseRow;
+        Insert: DeveloperReleaseInsert;
+        Update: DeveloperReleaseUpdate;
+      };
+      site_settings: {
+        Row: SiteSettingsRow;
+        Insert: never;
+        Update: SiteSettingsUpdate;
+      };
+      catalog_items: {
+        Row: CatalogItemRow;
+        Insert: CatalogItemInsert;
+        Update: CatalogItemUpdate;
+      };
+      collections: {
+        Row: CollectionRow;
+        Insert: CollectionInsert;
+        Update: CollectionUpdate;
+      };
+      collection_repositories: {
+        Row: CollectionRepositoryRow;
+        Insert: CollectionRepositoryInsert;
         Update: never;
       };
     };

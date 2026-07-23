@@ -2,29 +2,29 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ToggleSwitch } from "@/components/settings/ToggleSwitch";
 
 type AdminSourceActionsProps = {
   sourceId: string;
-  active: boolean;
   trustScore: number;
 };
 
 /**
- * The only two Source write actions allowed this phase (requirement 6):
- * Active/Inactive toggle and Trust Score update. No deletion ("Silme
- * yapılmayacak"). Calls the dedicated `/api/admin/sources/[id]` PATCH
- * route (service-role write, admin-checked server-side) and then
- * `router.refresh()` to re-pull the Server Component list - no local
- * optimistic state duplicating what the server already owns.
+ * Inline Trust Score editor - the one Source control that's a real form
+ * (numeric input + submit), not a single-click action, so it stays as its
+ * own table cell rather than moving into the row's overflow menu
+ * (requirement 12's overflow-menu pattern is for action *buttons*; this is
+ * an editable field). The Active/Inactive toggle moved into
+ * `AdminSourceRowActions`'s overflow menu alongside Sync/Delete - its
+ * current state is still visible read-only via the table's "Active"
+ * status badge column.
  */
-export function AdminSourceActions({ sourceId, active, trustScore }: AdminSourceActionsProps) {
+export function AdminSourceActions({ sourceId, trustScore }: AdminSourceActionsProps) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [trustInput, setTrustInput] = useState(String(trustScore));
 
-  async function patchSource(body: { active?: boolean; trustScore?: number }) {
+  async function patchSource(body: { trustScore?: number }) {
     setPending(true);
     setError(null);
     try {
@@ -55,12 +55,7 @@ export function AdminSourceActions({ sourceId, active, trustScore }: AdminSource
   }
 
   return (
-    <div className="min-w-[220px] space-y-2">
-      <ToggleSwitch
-        label={active ? "Active" : "Inactive"}
-        checked={active}
-        onChange={(checked) => void patchSource({ active: checked })}
-      />
+    <div className="min-w-[180px] space-y-2">
       <div className="flex items-center gap-2">
         <input
           type="number"

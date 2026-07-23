@@ -1,6 +1,9 @@
 import { CatalogExplorerView } from "@/components/developer-hub/CatalogExplorerView";
 import type { DeveloperHubSearchParams } from "@/lib/developer-hub/shared";
 
+// Stabilization pass: same force-dynamic reasoning as `/developer-hub/page.tsx`.
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Developer Tools | Developer Hub | VIREXA",
   description: "Essential, free developer tools every engineer should know.",

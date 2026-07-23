@@ -5,6 +5,8 @@ import { createArticleMetricsRepository } from "@/repositories/article-metrics-r
 import { createSourceRepository } from "@/repositories/source-repository";
 import { createProfileRepository } from "@/repositories/profile-repository";
 import { createBookmarkRepository } from "@/repositories/bookmark-repository";
+import { getAdminRepositoryCount } from "@/services/admin/admin-repository-service";
+import { getAdminReleaseCount } from "@/services/admin/admin-release-service";
 
 /**
  * Server-only aggregate reads for the Admin Dashboard home
@@ -32,6 +34,8 @@ export type DashboardStats = {
   articlesLast24h: number;
   totalBookmarks: number;
   totalViews: number;
+  totalRepositories: number;
+  totalDeveloperReleases: number;
 };
 
 const EMPTY_STATS: DashboardStats = {
@@ -41,6 +45,8 @@ const EMPTY_STATS: DashboardStats = {
   articlesLast24h: 0,
   totalBookmarks: 0,
   totalViews: 0,
+  totalRepositories: 0,
+  totalDeveloperReleases: 0,
 };
 
 export async function getDashboardStats(): Promise<DashboardStats> {
@@ -54,16 +60,19 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
     const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-    const [totalArticles, totalSources, articlesLast24h, totalViews, totalUsers, totalBookmarks] = await Promise.all([
-      articleRepository.count(),
-      sourceRepository.count(),
-      articleRepository.countCreatedSince(since24h),
-      metricsRepository.sumViewCounts(),
-      serviceClient ? createProfileRepository(serviceClient).count() : Promise.resolve(0),
-      serviceClient ? createBookmarkRepository(serviceClient).count() : Promise.resolve(0),
-    ]);
+    const [totalArticles, totalSources, articlesLast24h, totalViews, totalUsers, totalBookmarks, totalRepositories, totalDeveloperReleases] =
+      await Promise.all([
+        articleRepository.count(),
+        sourceRepository.count(),
+        articleRepository.countCreatedSince(since24h),
+        metricsRepository.sumViewCounts(),
+        serviceClient ? createProfileRepository(serviceClient).count() : Promise.resolve(0),
+        serviceClient ? createBookmarkRepository(serviceClient).count() : Promise.resolve(0),
+        getAdminRepositoryCount(),
+        getAdminReleaseCount(),
+      ]);
 
-    return { totalArticles, totalSources, totalUsers, articlesLast24h, totalBookmarks, totalViews };
+    return { totalArticles, totalSources, totalUsers, articlesLast24h, totalBookmarks, totalViews, totalRepositories, totalDeveloperReleases };
   } catch (error) {
     console.error("[admin-dashboard-service] getDashboardStats failed:", error);
     return EMPTY_STATS;

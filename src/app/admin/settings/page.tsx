@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { SectionCard } from "@/components/admin/SectionCard";
 import { StatusBadge, type AdminStatus } from "@/components/admin/StatusBadge";
+import { AdminSiteSettingsForm } from "@/components/admin/AdminSiteSettingsForm";
 import { getSettingsCategories, getSystemInfo } from "@/services/admin/admin-settings-service";
+import { getSiteSettings } from "@/services/site-settings/site-settings-service";
 
 export const metadata: Metadata = {
   title: "Settings | Virexa Admin",
@@ -15,21 +17,34 @@ const HEALTH_STATUS_LABEL: Record<string, AdminStatus> = {
 };
 
 /**
- * Admin Settings + System Information (requirements 3-4). Everything on
- * this page is read-only status derived from `admin-settings-service.ts`
- * - no form, no write endpoint, by design ("Secrets istemciye
+ * Admin Settings + System Information (requirements 3-4 + 12). The
+ * `site_settings` block at the top is a real, working edit form
+ * (`AdminSiteSettingsForm` -> `PATCH /api/admin/settings`) - Site Name/
+ * Logo/Primary Color/Homepage Featured Count/Articles Per Page/Enable
+ * Registrations/Maintenance Mode/Default Language/Default Timezone are
+ * all admin-editable and consumed elsewhere in the app (see that
+ * route's doc comment). Everything below it (System Information,
+ * category status cards) stays read-only status derived from
+ * `admin-settings-service.ts`, by design ("Secrets istemciye
  * gönderilmesin. Gerekirse sadece okunabilir durum bilgisi göster.").
- * Server Component, two data sources fetched in parallel.
  */
 export default async function AdminSettingsPage() {
-  const [categories, systemInfo] = await Promise.all([Promise.resolve(getSettingsCategories()), getSystemInfo()]);
+  const [categories, systemInfo, siteSettings] = await Promise.all([
+    Promise.resolve(getSettingsCategories()),
+    getSystemInfo(),
+    getSiteSettings(),
+  ]);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-950">Settings</h1>
-        <p className="mt-1 text-sm text-slate-500">Read-only, category-based configuration and system status.</p>
+        <p className="mt-1 text-sm text-slate-500">Site configuration, plus read-only environment and system status.</p>
       </div>
+
+      <SectionCard title="Site Settings" description="Editable site-wide configuration.">
+        <AdminSiteSettingsForm settings={siteSettings} />
+      </SectionCard>
 
       <SectionCard title="System Information" description="Environment, versions, and live infrastructure status.">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

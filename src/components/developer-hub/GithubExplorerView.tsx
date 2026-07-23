@@ -1,103 +1,87 @@
 import { Header } from "@/components/layout/Header";
-import { DeveloperHubStatsStrip } from "@/components/developer-hub/DeveloperHubStatsStrip";
-import { GithubFiltersPanel } from "@/components/developer-hub/GithubFiltersPanel";
-import { GithubRepoCard } from "@/components/developer-hub/GithubRepoCard";
-import { GithubSortControl } from "@/components/developer-hub/GithubSortControl";
-import { DeveloperPulse } from "@/components/explorer/DeveloperPulse";
+import { FiltersDrawer } from "@/components/explorer/FiltersDrawer";
+import { GithubHero } from "@/components/developer-hub/GithubHero";
+import { GithubFeaturedCollections } from "@/components/developer-hub/GithubFeaturedCollections";
+import { GithubQuickStats } from "@/components/developer-hub/GithubQuickStats";
+import { GithubLibraryFiltersPanel } from "@/components/developer-hub/GithubLibraryFiltersPanel";
+import { GithubLibraryCard } from "@/components/developer-hub/GithubLibraryCard";
+import { GithubLibrarySortControl } from "@/components/developer-hub/GithubLibrarySortControl";
 import { NewsExplorerPagination } from "@/components/news-explorer/NewsExplorerPagination";
 import { ScrollToResultsOnPageChange } from "@/components/news-explorer/ScrollToResultsOnPageChange";
-import { CATALOG_PAGE_SIZE, type GithubExplorerSearchParams } from "@/lib/developer-hub/shared";
-import { getGithubExplorerItems, type GithubExplorerSort, type GithubUpdatedWindow } from "@/services/developer-hub/developer-hub-service";
+import type { GithubLibrarySearchParams } from "@/lib/developer-hub/shared";
+import {
+  getFeaturedCategoryCollections,
+  getGithubLibraryRepos,
+  getGithubQuickStats,
+  getHeroCarouselRepos,
+  getVisibleCollections,
+  parseGithubLibrarySearchParams,
+  GITHUB_LIBRARY_PAGE_SIZE,
+} from "@/services/developer-hub/github-explorer-service";
 
-const RESULTS_ANCHOR_ID = "github-explorer-results";
-
-function splitParam(value: string | undefined): string[] {
-  return value ? value.split(",").filter(Boolean) : [];
-}
+const RESULTS_ANCHOR_ID = "github-library-results";
 
 /**
- * GitHub Explorer's dedicated page template - same overall shell as
- * `CatalogExplorerView` (Header / stats strip / title / sidebar+results+
- * pagination grid / smooth scroll-to-results, matching the News Explorer
- * design language the user asked for) but wired to
- * `getGithubExplorerItems` and its own Language/License/Stars/Updated/
- * Topics/Organization facets instead of the generic Type/Difficulty/
- * Price filters, since a repo has neither a difficulty nor a price.
- * Deliberately a separate component from `CatalogExplorerView` (not a
- * variant/prop-flag on it) so every other Developer Hub sub-page keeps
- * working exactly as before.
+ * GitHub Explorer, rebuilt as a "Developer Knowledge Library" rather than
+ * a GitHub Trending clone (redesign spec). Every section reads real,
+ * admin-curated `repositories` table data via `github-explorer-service.ts`
+ * (built in the migration/service-layer phase of this redesign) - nothing
+ * here is a hardcoded list or a live, un-curatable GitHub API pool
+ * anymore (that's what the OLD `GithubExplorerView` did via
+ * `getGithubExplorerItems`/`getTrendingGithubRepos`, both still used
+ * elsewhere in Developer Hub's generic catalog and intentionally left
+ * alone - this file is the one dedicated surface being redesigned).
  *
- * Also gets its own `DeveloperPulse` sidebar (Developer Pulse redesign
- * pass), scoped to `"open-source"` - the user's explicit example for
- * "GitHub Explorer" is React/Next.js/Supabase/Shadcn/ui/Biome/Bun, i.e.
- * the same open-source-flavored topic set `/open-source` uses.
+ * Section order matches the spec: Hero (auto-sliding curated showcase) ->
+ * Featured Collections (9-category grid + admin collections) -> Quick
+ * Stats (4 real counts) -> Filters/Sort/Results/Pagination. Every filter
+ * round-trips through the URL (`GithubLibrarySearchParams`) so a reload
+ * or shared link reproduces the exact same result set - no client-only
+ * filter state.
  */
-export async function GithubExplorerView({ searchParams }: { searchParams: GithubExplorerSearchParams }) {
-  const query = searchParams.q?.trim() ?? "";
-  const languages = splitParam(searchParams.lang);
-  const licenses = splitParam(searchParams.license);
-  const organizations = splitParam(searchParams.org);
-  const topics = splitParam(searchParams.topic);
-  const minStars = searchParams.stars ? Number(searchParams.stars) : undefined;
-  const updatedWithin = (searchParams.updated as GithubUpdatedWindow | undefined) || undefined;
-  const sort: GithubExplorerSort = searchParams.sort === "updated" ? "updated" : searchParams.sort === "name" ? "name" : "stars";
+export async function GithubExplorerView({ searchParams }: { searchParams: GithubLibrarySearchParams }) {
+  const filters = parseGithubLibrarySearchParams(searchParams);
+  const currentPage = filters.page && filters.page > 0 ? Math.floor(filters.page) : 1;
 
-  const requestedPage = Number(searchParams.page ?? "1");
-  const currentPage = Number.isFinite(requestedPage) && requestedPage > 0 ? Math.floor(requestedPage) : 1;
-
-  const results = await getGithubExplorerItems({
-    query: query || undefined,
-    languages: languages.length > 0 ? languages : undefined,
-    licenses: licenses.length > 0 ? licenses : undefined,
-    organizations: organizations.length > 0 ? organizations : undefined,
-    topics: topics.length > 0 ? topics : undefined,
-    minStars,
-    updatedWithin,
-    sort,
-    page: currentPage,
-    pageSize: CATALOG_PAGE_SIZE,
-  });
+  const [results, quickStats, featuredCategories, namedCollections, heroRepos] = await Promise.all([
+    getGithubLibraryRepos({ ...filters, page: currentPage, pageSize: GITHUB_LIBRARY_PAGE_SIZE }),
+    getGithubQuickStats(),
+    getFeaturedCategoryCollections(),
+    getVisibleCollections(),
+    getHeroCarouselRepos(10),
+  ]);
 
   function buildPageHref(targetPage: number): string {
     const next = new URLSearchParams();
-    if (searchParams.q) next.set("q", searchParams.q);
-    if (searchParams.lang) next.set("lang", searchParams.lang);
-    if (searchParams.license) next.set("license", searchParams.license);
-    if (searchParams.org) next.set("org", searchParams.org);
-    if (searchParams.topic) next.set("topic", searchParams.topic);
-    if (searchParams.stars) next.set("stars", searchParams.stars);
-    if (searchParams.updated) next.set("updated", searchParams.updated);
-    if (searchParams.sort) next.set("sort", searchParams.sort);
+    for (const [key, value] of Object.entries(searchParams)) {
+      if (key === "page" || !value) continue;
+      next.set(key, value as string);
+    }
     next.set("page", String(targetPage));
     return `/developer-hub/github?${next.toString()}`;
   }
 
   return (
     <>
-      <Header initialSearchQuery={query || undefined} />
+      <Header initialSearchQuery={searchParams.q || undefined} />
       <main className="bg-[#f8fafc] px-5 py-8 sm:px-8">
-        <div className="mx-auto max-w-[1820px]">
-          <DeveloperHubStatsStrip />
+        <div className="mx-auto max-w-[1820px] space-y-10">
+          <GithubHero repos={heroRepos} totalCurated={quickStats.curatedRepositoriesCount} />
 
-          <div className="mt-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Developer Hub</p>
-            <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">GitHub Explorer</h1>
-            <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-500">
-              Live stars, forks and activity for well-known open source repositories.
-            </p>
-          </div>
+          <GithubFeaturedCollections categories={featuredCategories} namedCollections={namedCollections} activeCategory={searchParams.category} />
 
-          <div className="mt-8 grid gap-8 xl:grid-cols-[280px_minmax(0,1fr)_360px]">
+          <section>
+            <h2 className="text-xl font-bold tracking-tight text-slate-950">Quick Stats</h2>
+            <div className="mt-4">
+              <GithubQuickStats stats={quickStats} />
+            </div>
+          </section>
+
+          <div className="grid gap-8 xl:grid-cols-[280px_minmax(0,1fr)]">
             <aside className="min-w-0 xl:sticky xl:top-28 xl:h-fit xl:self-start">
-              <GithubFiltersPanel
-                facets={results.facets}
-                languages={languages}
-                licenses={licenses}
-                organizations={organizations}
-                topics={topics}
-                minStars={searchParams.stars}
-                updatedWithin={searchParams.updated}
-              />
+              <FiltersDrawer>
+                <GithubLibraryFiltersPanel facets={results.facets} collections={namedCollections} />
+              </FiltersDrawer>
             </aside>
 
             <div id={RESULTS_ANCHOR_ID} className="min-w-0 scroll-mt-28">
@@ -107,10 +91,20 @@ export async function GithubExplorerView({ searchParams }: { searchParams: Githu
                   <span className="text-slate-400"> • </span>
                   Page {results.page} of {results.totalPages}
                 </p>
-                <GithubSortControl />
+                <GithubLibrarySortControl />
               </div>
 
-              {results.items.length === 0 ? (
+              {results.dataUnavailable ? (
+                <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-dashed border-red-200 bg-red-50/50 px-6 py-16 text-center">
+                  <span aria-hidden="true" className="flex size-16 items-center justify-center rounded-full bg-red-100 text-3xl">
+                    ⚠️
+                  </span>
+                  <h3 className="mt-6 text-xl font-bold tracking-tight text-slate-950">Something went wrong loading repositories</h3>
+                  <p className="mt-2 max-w-md text-base leading-relaxed text-slate-500">
+                    We couldn&apos;t reach the repository library right now. Please try again in a moment.
+                  </p>
+                </div>
+              ) : results.items.length === 0 ? (
                 <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 px-6 py-16 text-center">
                   <span aria-hidden="true" className="flex size-16 items-center justify-center rounded-full bg-slate-100 text-3xl">
                     🔍
@@ -120,18 +114,14 @@ export async function GithubExplorerView({ searchParams }: { searchParams: Githu
                 </div>
               ) : (
                 <div className="mt-6 grid gap-4 lg:grid-cols-2">
-                  {results.items.map((item) => (
-                    <GithubRepoCard key={item.id} item={item} />
+                  {results.items.map((repo) => (
+                    <GithubLibraryCard key={repo.id} repo={repo} />
                   ))}
                 </div>
               )}
 
               <NewsExplorerPagination page={results.page} totalPages={results.totalPages} buildHref={buildPageHref} />
             </div>
-
-            <aside className="min-w-0 xl:sticky xl:top-28 xl:h-fit xl:self-start">
-              <DeveloperPulse topic="open-source" />
-            </aside>
           </div>
         </div>
       </main>

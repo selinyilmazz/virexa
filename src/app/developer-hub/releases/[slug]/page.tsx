@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { ReleaseDetailView } from "@/components/releases/ReleaseDetailView";
-import { getAllTechnologySlugs, getTechnologyRelease } from "@/data/releases";
+import { getAllTechnologySlugs } from "@/data/releases";
+import { getReleaseDetail } from "@/services/developer-hub/release-detail-service";
 import { getRelatedNewsForTechnology } from "@/services/articles/article-read-service";
 
 type ReleaseDetailPageProps = {
@@ -17,7 +18,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: ReleaseDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const release = getTechnologyRelease(slug);
+  const release = await getReleaseDetail(slug);
   if (!release) {
     return { title: "Technology Not Found | Virexa" };
   }
@@ -34,13 +35,15 @@ export async function generateMetadata({ params }: ReleaseDetailPageProps): Prom
  * article. Replaces the previous behavior where a "Developer Releases"
  * homepage row opened whichever real article happened to back it (a
  * category mismatch: a release overview isn't the same thing as a news
- * story about it). Fully data-driven via `getTechnologyRelease` - this
- * file has no technology-specific logic, only page wiring; the entire
- * reusable template lives in `ReleaseDetailView`.
+ * story about it). Fully data-driven via `getReleaseDetail` (overlays
+ * the admin-managed `developer_releases` table onto the curated static
+ * content - see that service's doc comment) - this file has no
+ * technology-specific logic, only page wiring; the entire reusable
+ * template lives in `ReleaseDetailView`.
  */
 export default async function ReleaseDetailPage({ params }: ReleaseDetailPageProps) {
   const { slug } = await params;
-  const release = getTechnologyRelease(slug);
+  const release = await getReleaseDetail(slug);
 
   if (!release) {
     notFound();

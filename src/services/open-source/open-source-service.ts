@@ -1,16 +1,20 @@
-import { getTrendingGithubRepos, type GithubRepo } from "@/lib/developer-hub/github";
+import { createClient } from "@/lib/supabase/server";
+import { createRepositoryRepository } from "@/repositories/repository-repository";
+import type { RepositoryRow } from "@/types/database";
 
 /**
- * Data layer for the Open Source Explorer page - deliberately separate
- * from `developer-hub-service.ts`'s `CatalogItem`/`getGithubExplorerItems`
- * (Developer Hub's GitHub Explorer). That layer normalizes repos into the
- * generic `CatalogItem` shape shared with certifications/courses/tools;
- * this page needs its own bespoke, repository-only model (rank, verified
- * signal, real per-repo topics) and its own five-way sort (Trending/New/
- * Most Starred/Most Forked/Recently Updated) that doesn't map cleanly
- * onto the catalog's generic stars/updated/name sort. Both layers read
- * from the same underlying `getTrendingGithubRepos()` live data source,
- * so there's exactly one place real GitHub data enters the app.
+ * Data layer for the Open Source Explorer page.
+ *
+ * Admin Panel: Repositories - this used to call `getTrendingGithubRepos()`
+ * directly (a fixed in-code list, live-fetched from GitHub on every
+ * request, nothing an admin could manage). It now reads the
+ * admin-managed `repositories` table instead (`visible = true` only, via
+ * the public request-scoped client - RLS enforces that filter even if
+ * this function forgot to, see `supabase/migrations/0018_repositories.sql`),
+ * so `/admin/repositories` genuinely controls what appears here. Stars/
+ * forks/language/etc. are still real GitHub data - just periodically
+ * refreshed into this table (`repository-sync-service.ts`) instead of
+ * fetched inline on every page view.
  */
 
 export type OpenSourceSort = "trending" | "new" | "stars" | "forks" | "updated";
@@ -41,6 +45,8 @@ export type OpenSourceRepoItem = {
   updatedRelative: string;
   url: string;
   topics: string[];
+  /** True if this repo has been hand-curated by an admin (`featured` on the `repositories` row) - not shown as a fake GitHub badge, just an internal editorial signal available to callers that want it. */
+  featured: boolean;
 };
 
 export type OpenSourceTopic = { name: string; count: number };
@@ -82,35 +88,36 @@ function formatRelative(iso: string): string {
   return `${Math.round(diffMs / year)} years ago`;
 }
 
-function toItem(repo: GithubRepo, rank: number): OpenSourceRepoItem {
-  const [owner, ...rest] = repo.fullName.split("/");
+function toItem(repo: RepositoryRow, rank: number): OpenSourceRepoItem {
+  const updatedAtIso = repo.last_synced_at ?? repo.updated_at;
   return {
     rank,
-    id: repo.fullName,
-    owner: owner ?? repo.fullName,
-    repoName: rest.join("/") || repo.fullName,
-    brandKey: repo.fullName,
+    id: repo.id,
+    owner: repo.owner,
+    repoName: repo.repo_name,
+    brandKey: repo.id,
     description: repo.description || "No description provided.",
     language: repo.language,
     license: repo.license,
     stars: repo.stars,
     forks: repo.forks,
-    updatedAtIso: repo.updatedAt,
-    updatedRelative: formatRelative(repo.updatedAt),
-    url: repo.url,
+    updatedAtIso,
+    updatedRelative: formatRelative(updatedAtIso),
+    url: repo.github_url,
     topics: repo.topics,
+    featured: repo.featured,
   };
 }
 
 /**
  * Real topic frequency across the currently tracked repo pool. Honest by
- * construction: with ~12 tracked repos this never produces the
+ * construction: with a small admin-curated pool, this never produces the
  * eye-catching "12.6k" style counts a site-wide GitHub topic browser
  * would show - it shows exactly how many *tracked* repos carry each
  * topic, so clicking one always filters to a real, non-empty result for
  * every topic listed.
  */
-function computeTopics(repos: GithubRepo[]): OpenSourceTopic[] {
+function computeTopics(repos: RepositoryRow[]): OpenSourceTopic[] {
   const counts = new Map<string, number>();
   for (const repo of repos) {
     for (const topic of repo.topics) {
@@ -123,15 +130,32 @@ function computeTopics(repos: GithubRepo[]): OpenSourceTopic[] {
 }
 
 /**
- * Filters/sorts/paginates the live tracked-repo pool for the Open Source
- * Explorer page. `sort: "trending"` (the default tab) intentionally
- * leaves the pool in its original curated order rather than re-sorting
- * by stars - `TRACKED_REPOS` (see `lib/developer-hub/github.ts`) already
- * IS the hand-picked "trending" list, and re-sorting it would make
- * Trending and Most Starred identical tabs.
+ * Filters/sorts/paginates the admin-managed, visible repo pool for the
+ * Open Source Explorer page. `sort: "trending"` (the default tab)
+ * intentionally leaves the pool in its stored order (`stars desc` - see
+ * `repository-repository.ts`'s `list()`) rather than re-deriving a
+ * separate trending order.
  */
 export async function getOpenSourceRepos(params: OpenSourceExplorerParams = {}): Promise<OpenSourceExplorerResult> {
-  const repos = await getTrendingGithubRepos();
+  // Regression fix (stabilization pass): this used to let a Postgrest
+  // error (e.g. the `repositories` table/columns not existing yet in a
+  // not-fully-migrated environment, or a transient RLS/network hiccup)
+  // propagate straight out of this function. Since this runs inside a
+  // Server Component's render with no surrounding try/catch, that turned
+  // into an uncaught rejection and the whole /open-source page rendered
+  // Next.js's generic "Something went wrong" error boundary instead of
+  // the page itself. Same "fail open, never break rendering over a soft
+  // data problem" convention used elsewhere in this codebase (see
+  // `article-read-service.ts`'s `visible !== false` fix) - an empty repo
+  // pool still renders correctly via this page's existing "No
+  // repositories match this filter yet." empty state.
+  let repos: RepositoryRow[] = [];
+  try {
+    const supabase = await createClient();
+    repos = await createRepositoryRepository(supabase).list({ visibleOnly: true });
+  } catch (error) {
+    console.error("[open-source-service] Failed to load repositories, rendering empty pool instead of crashing", error);
+  }
   const topics = computeTopics(repos);
 
   let filtered = repos;
@@ -139,7 +163,7 @@ export async function getOpenSourceRepos(params: OpenSourceExplorerParams = {}):
   if (params.query) {
     const needle = params.query.trim().toLowerCase();
     if (needle) {
-      filtered = filtered.filter((repo) => `${repo.fullName} ${repo.description}`.toLowerCase().includes(needle));
+      filtered = filtered.filter((repo) => `${repo.id} ${repo.description}`.toLowerCase().includes(needle));
     }
   }
 
@@ -153,9 +177,9 @@ export async function getOpenSourceRepos(params: OpenSourceExplorerParams = {}):
       case "forks":
         return b.forks - a.forks;
       case "updated":
-        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
       case "new":
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return new Date(b.repo_created_at ?? b.created_at).getTime() - new Date(a.repo_created_at ?? a.created_at).getTime();
       case "stars":
         return b.stars - a.stars;
       case "trending":

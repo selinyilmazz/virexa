@@ -27,7 +27,7 @@ export function RelatedArticles({ items, viewAllHref }: RelatedArticlesProps) {
 
       <Link
         href={viewAllHref}
-        className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[#2f67e8] px-6 py-3 text-base font-semibold text-[#2f67e8] transition-colors hover:bg-blue-50"
+        className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-300 px-6 py-3 text-base font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50"
       >
         View all related →
       </Link>

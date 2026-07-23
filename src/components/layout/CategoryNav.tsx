@@ -80,32 +80,42 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    // "Games" and "Mobile Games" are real DB categories (see
+    // `SEARCH_CATEGORY_SLUGS`) routed through `/category/[slug]`'s
+    // `EXPLORER_CATEGORIES` map - same unified-Explorer treatment as
+    // AI/Programming/Security, not the legacy `CategoryHeader` template.
+    label: "Games",
+    href: "/category/games",
+    activePrefix: "/category/games",
+    icon: (
+      <svg {...ICON_PROPS}>
+        <rect x="3" y="7.5" width="18" height="10" rx="4" />
+        <path d="M7.5 10.5v4M5.5 12.5h4" strokeLinecap="round" />
+        <circle cx="15" cy="11" r="0.9" fill="currentColor" stroke="none" />
+        <circle cx="17.5" cy="13.5" r="0.9" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+  },
+  {
+    label: "Mobile Games",
+    href: "/category/mobile-games",
+    activePrefix: "/category/mobile-games",
+    icon: (
+      <svg {...ICON_PROPS}>
+        <rect x="7" y="2.5" width="10" height="19" rx="2" />
+        <circle cx="12" cy="18" r="0.9" fill="currentColor" stroke="none" />
+        <path d="M9.5 8.5h5M9.5 11h3" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
     label: "Developer Hub",
     href: "/developer-hub",
-    // Deliberately does NOT match `/developer-hub/releases` (that has its
-    // own, more specific nav item below) - `startsWith` would otherwise
-    // highlight both items at once while on a Release Detail page.
     activePrefix: "/developer-hub",
     icon: (
       <svg {...ICON_PROPS}>
         <path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H16a2 2 0 0 1 2 2v14.5a1.5 1.5 0 0 1-1.5 1.5H6.5A1.5 1.5 0 0 1 5 19.5v-15Z" />
         <path d="M9 8h5M9 11h5" />
-      </svg>
-    ),
-  },
-  {
-    // Developer Releases has grown into a major feature on its own
-    // (Release Detail pages, per-technology bookmarking/view tracking -
-    // see `lib/release-bookmarks.ts`/`lib/release-views.ts`), so it now
-    // gets its own top-level nav item instead of living only inside
-    // Developer Hub's catalog.
-    label: "Developer Releases",
-    href: "/developer-hub/releases",
-    activePrefix: "/developer-hub/releases",
-    icon: (
-      <svg {...ICON_PROPS}>
-        <path d="M12 3v10M12 13l4-4M12 13 8 9" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -133,27 +143,31 @@ const navItems: NavItem[] = [
  * them together - they should breathe" fix - real space between pills,
  * not just each pill's own internal padding.
  *
- * Unified-Explorer design: AI/Programming/Security route to
- * `/category/[slug]` (a real DB category, pre-checked in the Filters
- * sidebar), Cloud routes to `/cloud` (no real "Cloud" category exists, so
- * it locks a search query instead), and Open Source routes to
+ * Unified-Explorer design: AI/Programming/Security/Games/Mobile Games
+ * route to `/category/[slug]` (a real DB category, pre-checked in the
+ * Filters sidebar), Cloud routes to `/cloud` (no real "Cloud" category
+ * exists, so it locks a search query instead), and Open Source routes to
  * `/open-source` (a real heuristic Content Type value, pre-selected in
- * Filters) - all three render the shared `ExplorerView` template.
+ * Filters) - all five render the shared `ExplorerView` template.
  * "Resources" was renamed to "Developer Hub" (Developer Hub redesign) and
  * now routes to `/developer-hub` - a different template entirely
  * (`CatalogExplorerView`'s landing/dashboard page), since certifications,
  * courses, GitHub repos, tools, roadmaps and cheat sheets aren't articles
  * and can't be filtered through the News Explorer. Every item is
  * highlightable via `activePrefix`.
+ *
+ * Stabilization pass: "Developer Releases" was removed from this row
+ * entirely - it's reachable from the homepage `DeveloperReleases` widget's
+ * "View All" link (`/developer-hub/releases`) instead, keeping this row
+ * focused on content categories rather than a mix of categories and
+ * feature areas.
  */
 export function CategoryNav() {
   const pathname = usePathname();
 
   // Picks the LONGEST matching `activePrefix` rather than checking each
-  // item independently - "Developer Hub" (`/developer-hub`) and
-  // "Developer Releases" (`/developer-hub/releases`) would otherwise both
-  // highlight at once on a Release Detail page, since the former's prefix
-  // is a `startsWith` match of the latter's URLs too.
+  // item independently - useful if any future item's prefix is itself a
+  // `startsWith` match of another item's URLs (e.g. a nested route).
   const activeLabel = navItems.reduce<string | null>((best, item) => {
     if (!item.activePrefix || !pathname.startsWith(item.activePrefix)) return best;
     const bestPrefix = best ? (navItems.find((candidate) => candidate.label === best)?.activePrefix ?? "") : "";

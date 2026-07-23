@@ -12,6 +12,7 @@ import {
   getTopLists,
   getAIAnalytics,
   getRuntimeAnalyticsSnapshot,
+  getRepositoryReleaseAnalytics,
   type AnalyticsWindow,
 } from "@/services/admin/admin-analytics-service";
 
@@ -61,12 +62,13 @@ export default async function AdminAnalyticsPage({ searchParams }: AdminAnalytic
   const params = await searchParams;
   const window: AnalyticsWindow = isAnalyticsWindow(params.window) ? params.window : "24h";
 
-  const [summary, timeSeries, topLists, aiAnalytics, runtime] = await Promise.all([
+  const [summary, timeSeries, topLists, aiAnalytics, runtime, repoReleaseAnalytics] = await Promise.all([
     getAnalyticsSummary(),
     getTimeSeries(window),
     getTopLists(),
     getAIAnalytics(),
-    Promise.resolve(getRuntimeAnalyticsSnapshot()),
+    getRuntimeAnalyticsSnapshot(),
+    getRepositoryReleaseAnalytics(),
   ]);
 
   const bucketLabels = timeSeries.map((point) => point.label);
@@ -263,6 +265,43 @@ export default async function AdminAnalyticsPage({ searchParams }: AdminAnalytic
               <div>
                 <h3 className="mb-3 text-sm font-semibold text-slate-950">Bias Distribution</h3>
                 <AdminBarChart items={aiAnalytics.biasDistribution} color="#8b5cf6" emptyMessage="No bias data yet." />
+              </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard
+            title="Repositories & Developer Releases"
+            description="Open Source Explorer repositories and Developer Hub releases, both DB-backed and admin-editable."
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <StatCard label="Total Repositories" value={repoReleaseAnalytics.totalRepositories} />
+              <StatCard label="Total Developer Releases" value={repoReleaseAnalytics.totalReleases} />
+            </div>
+
+            <div className="mt-6 grid gap-6 sm:grid-cols-2">
+              <div>
+                <h3 className="mb-3 text-sm font-semibold text-slate-950">Repositories by Language</h3>
+                <AdminBarChart items={repoReleaseAnalytics.languageDistribution} emptyMessage="No repositories yet." />
+              </div>
+              <div>
+                <h3 className="mb-3 text-sm font-semibold text-slate-950">Top Repositories by Stars</h3>
+                <AdminBarChart
+                  items={repoReleaseAnalytics.topRepositoriesByStars.map((item) => ({
+                    label: item.name,
+                    value: item.value,
+                    href: `/admin/repositories?edit=${encodeURIComponent(item.id)}`,
+                  }))}
+                  color="#10b981"
+                  emptyMessage="No repositories yet."
+                />
+              </div>
+              <div>
+                <h3 className="mb-3 text-sm font-semibold text-slate-950">Releases by Channel</h3>
+                <AdminBarChart items={repoReleaseAnalytics.channelDistribution} color="#f59e0b" emptyMessage="No releases yet." />
+              </div>
+              <div>
+                <h3 className="mb-3 text-sm font-semibold text-slate-950">Releases by Product</h3>
+                <AdminBarChart items={repoReleaseAnalytics.releasesByProduct} color="#8b5cf6" emptyMessage="No releases yet." />
               </div>
             </div>
           </SectionCard>

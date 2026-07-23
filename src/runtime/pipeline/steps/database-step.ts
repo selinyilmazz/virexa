@@ -12,6 +12,17 @@ export type DatabaseStepData = {
   articlesSaved: number;
   articlesRemapped: number;
   metricsEnsured: number;
+  /**
+   * Genuinely-new (not already stored) article count per source name -
+   * added for the Mobile Games RSS end-to-end verification request's
+   * "show how many new articles came from each source" requirement.
+   * `articlesSaved` above is every upserted row (new inserts AND routine
+   * re-upserts of already-stored articles combined) - this is the
+   * new-only subset, broken out by source, computed from
+   * `articleRepository.bulkUpsert()`'s `newIds` (see that function's doc
+   * comment for why a plain "was this remapped" check isn't enough).
+   */
+  newArticlesBySource: Record<string, number>;
 };
 
 function toSourceInput(article: NewsArticle): ArticleSourceInput {
@@ -92,11 +103,11 @@ export async function databaseStep(articles: NewsArticle[]): Promise<PipelineSte
     const supabase = createServiceClient();
     if (!supabase) {
       console.warn("[pipeline:database] SUPABASE_SERVICE_ROLE_KEY not set - skipping persistence (no-op).");
-      return { sourcesSaved: 0, articlesSaved: 0, articlesRemapped: 0, metricsEnsured: 0 };
+      return { sourcesSaved: 0, articlesSaved: 0, articlesRemapped: 0, metricsEnsured: 0, newArticlesBySource: {} };
     }
 
     if (articles.length === 0) {
-      return { sourcesSaved: 0, articlesSaved: 0, articlesRemapped: 0, metricsEnsured: 0 };
+      return { sourcesSaved: 0, articlesSaved: 0, articlesRemapped: 0, metricsEnsured: 0, newArticlesBySource: {} };
     }
 
     const sourceRepository = createSourceRepository(supabase);
@@ -109,9 +120,12 @@ export async function databaseStep(articles: NewsArticle[]): Promise<PipelineSte
     const uniqueSources = new Map(articles.map((article) => [article.source.id, toSourceInput(article)]));
     await sourceRepository.bulkUpsert([...uniqueSources.values()]);
 
-    const { saved: articlesSaved, remapped: articlesRemapped, idMap } = await articleRepository.bulkUpsert(
-      articles.map(toArticleInput)
-    );
+    const {
+      saved: articlesSaved,
+      remapped: articlesRemapped,
+      idMap,
+      newIds,
+    } = await articleRepository.bulkUpsert(articles.map(toArticleInput));
 
     // Resolve every article through `idMap` - a remapped article's row
     // lives under a different id than the pipeline's original
@@ -124,11 +138,20 @@ export async function databaseStep(articles: NewsArticle[]): Promise<PipelineSte
     const articleIds = articles.map((article) => idMap.get(article.id) ?? article.id);
     await metricsRepository.ensureExists(articleIds);
 
+    // Per-source new-article breakdown (see `DatabaseStepData.newArticlesBySource`).
+    const newArticlesBySource: Record<string, number> = {};
+    articles.forEach((article, index) => {
+      if (newIds.has(articleIds[index])) {
+        newArticlesBySource[article.source.name] = (newArticlesBySource[article.source.name] ?? 0) + 1;
+      }
+    });
+
     return {
       sourcesSaved: uniqueSources.size,
       articlesSaved,
       articlesRemapped,
       metricsEnsured: articleIds.length,
+      newArticlesBySource,
     };
   });
 }

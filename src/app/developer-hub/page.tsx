@@ -64,6 +64,11 @@ const HERO_SCREEN_CHIPS = ["React", "Docker", "AWS", "TypeScript"];
 /** Trust-signal pills shown under the Hero's CTAs. */
 const HERO_TRUST_PILLS = ["Updated Daily", "Curated Resources", "Free & Premium Content"];
 
+// Stabilization pass: force-dynamic (never statically cached) so an
+// admin-added/edited/deleted catalog item (`/admin/catalog-items`) shows
+// up here on the very next request, not after the next deploy/cache purge.
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Developer Hub | VIREXA",
   description: "Certifications, courses, learning paths, GitHub repositories, developer tools and roadmaps - all in one place.",
@@ -294,7 +299,7 @@ export default async function DeveloperHubPage() {
                   <Link
                     key={category.href}
                     href={category.href}
-                    className={`group flex flex-col gap-3 rounded-2xl border bg-white p-5 shadow-sm transition-all duration-200 ease-out hover:-translate-y-1 hover:border-[#2f67e8] hover:shadow-lg ${
+                    className={`group flex flex-col gap-3 rounded-2xl border bg-white p-5 shadow-sm transition-all duration-200 ease-out hover:-translate-y-1 hover:border-slate-300 hover:shadow-lg ${
                       category.highlight ? "border-slate-300 shadow-md" : "border-slate-200"
                     }`}
                   >
@@ -325,7 +330,7 @@ export default async function DeveloperHubPage() {
                     {category.extraTags && (
                       <div className="flex flex-wrap gap-1.5">
                         {category.extraTags.map((tag) => (
-                          <span key={tag} className="rounded-full bg-[#2f67e8]/10 px-2 py-0.5 text-[11px] font-semibold text-[#2f67e8]">
+                          <span key={tag} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
                             {tag}
                           </span>
                         ))}

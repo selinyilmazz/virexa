@@ -1,5 +1,6 @@
 import { createServiceClient } from "@/lib/supabase/service-client";
 import { fetchArticleContent, searchStockImage } from "@/lib/news";
+import { inferCategoryFromTitle } from "@/lib/news/category-mapper";
 import { createArticleRepository } from "@/repositories/article-repository";
 import { createSourceRepository } from "@/repositories/source-repository";
 import { runAllAIEnrichmentCapabilities } from "@/services/ai/ai-enrichment-runner";
@@ -191,6 +192,93 @@ export async function backfillArticleContent(): Promise<BackfillContentResult> {
   }
 
   return { checked: candidates.length, updated: updates.length };
+}
+
+export type BackfillCategoriesResult = {
+  checked: number;
+  updated: number;
+  /** Per-category breakdown of how many articles were MOVED INTO each category by this run - lets the admin see e.g. `{ "Mobile Games": 14, "Games": 6 }` confirming the new keyword classifier actually found real matches, not just a bare "12 updated" count. */
+  byCategory: Record<string, number>;
+};
+
+/**
+ * Stabilization pass, item 1: "Run a complete backfill using the new
+ * classifier so existing articles are automatically recategorized...
+ * without waiting for future imports." `inferCategoryFromTitle()`
+ * (`lib/news/category-mapper.ts`) is only ever applied to articles as
+ * they're ingested (`NewsAggregator.normalizeProviderItem`) - adding a
+ * new keyword there (e.g. "Mobile Games"'s "android games"/"unity
+ * mobile"/etc.) has zero effect on the thousands of rows already sitting
+ * in the `articles` table with whatever category they were assigned at
+ * ingestion time under the OLD, narrower keyword list. This is the
+ * retroactive counterpart: re-runs the exact same classifier against
+ * every stored article's title and overwrites `category` wherever the
+ * classifier's answer differs from what's currently stored.
+ *
+ * Deliberately unbounded (unlike `backfillArticleImages`/
+ * `backfillArticleContent`'s capped batches) - see
+ * `listAllForCategoryBackfill`'s doc comment: this is pure, local,
+ * synchronous JS (a handful of regex tests per title), not a network/AI
+ * call, so there's no per-row cost to budget against and no reason to
+ * make an admin click through the whole table in batches.
+ *
+ * Only a title that actually matches one of `inferCategoryFromTitle`'s
+ * keyword patterns is touched. A title matching nothing keeps its
+ * current category untouched (same "only narrows, never invents"
+ * contract `inferCategoryFromTitle` already documents) - this run can
+ * only make the category distribution MORE accurate, never blanket-reset
+ * everything to a fallback.
+ */
+export async function backfillArticleCategories(): Promise<BackfillCategoriesResult> {
+  const supabase = createServiceClient();
+  if (!supabase) {
+    throw new Error("Storage is not configured.");
+  }
+
+  const articleRepository = createArticleRepository(supabase);
+  const articles = await articleRepository.listAllForCategoryBackfill();
+
+  const byCategory: Record<string, number> = {};
+  const updates: { id: string; category: string }[] = [];
+  // TEMPORARY diagnostic logging (Mobile Games 0-articles investigation) -
+  // shows, per article, exactly what the classifier decided and whether
+  // that decision resulted in a write. Safe to remove once the root cause
+  // is confirmed against real production log output - not gated behind a
+  // debug flag since this only runs when an admin explicitly clicks
+  // "Backfill Categories," not on any hot/user-facing path.
+  let gamesMatches = 0;
+  let mobileGamesMatches = 0;
+  for (const article of articles) {
+    const inferred = inferCategoryFromTitle(article.title);
+    const willUpdate = Boolean(inferred && inferred !== article.category);
+    if (inferred === "Games") gamesMatches += 1;
+    if (inferred === "Mobile Games") mobileGamesMatches += 1;
+    console.log("[backfillArticleCategories]", {
+      title: article.title,
+      oldCategory: article.category,
+      detectedCategory: inferred ?? "(no keyword match)",
+      updateExecuted: willUpdate,
+    });
+    if (willUpdate && inferred) {
+      updates.push({ id: article.id, category: inferred });
+      byCategory[inferred] = (byCategory[inferred] ?? 0) + 1;
+    }
+  }
+  console.log("[backfillArticleCategories] SUMMARY", {
+    totalArticlesScanned: articles.length,
+    titlesMatchingGamesKeywords: gamesMatches,
+    titlesMatchingMobileGamesKeywords: mobileGamesMatches,
+    totalUpdatesQueued: updates.length,
+  });
+
+  if (updates.length > 0) {
+    await articleRepository.updateCategories(updates);
+    console.log("[backfillArticleCategories] updateCategories() called with", updates.length, "row(s)");
+  } else {
+    console.log("[backfillArticleCategories] no updates to write - updateCategories() was NOT called");
+  }
+
+  return { checked: articles.length, updated: updates.length, byCategory };
 }
 
 export type BackfillAIEnrichmentResult = {

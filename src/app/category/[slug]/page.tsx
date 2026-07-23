@@ -21,10 +21,17 @@ const PAGE_SIZE = 8;
  * Real categories moved onto the unified Explorer template (per the
  * unified-Explorer design - "Do NOT create different layouts for...
  * categories... reuse the exact same News Explorer template"). Every
- * OTHER real category (Technology, Business, Games, World, Robotics,
- * Mobile, Startup, Space, Science) was NOT named in that request and
- * keeps this route's original `CategoryHeader`/`CategoryNewsGrid`/
- * `CategorySidebar` layout entirely unchanged below.
+ * OTHER real category (Technology, Business, World, Robotics, Mobile,
+ * Startup, Space, Science) was NOT named in that request and keeps this
+ * route's original `CategoryHeader`/`CategoryNewsGrid`/`CategorySidebar`
+ * layout entirely unchanged below.
+ *
+ * Stabilization pass: "Games" and "Mobile Games" (new) join this map so
+ * they behave exactly like AI/Programming/Security - both are now
+ * top-level `CategoryNav` items. Neither has a dedicated Developer Pulse
+ * topic (that widget is developer-audience-specific), so both use the
+ * "general" fallback `pulseTopic`, same as Cloud/Open Source's dedicated
+ * top-level routes.
  */
 const EXPLORER_CATEGORIES: Record<string, { title: string; subtitle: string; pulseTopic: PulseTopicKey }> = {
   ai: { title: "Artificial Intelligence", subtitle: "Latest AI news, model releases, research and developer updates.", pulseTopic: "ai" },
@@ -37,6 +44,16 @@ const EXPLORER_CATEGORIES: Record<string, { title: string; subtitle: string; pul
     title: "Security",
     subtitle: "Security news, CVEs, vulnerabilities and industry advisories.",
     pulseTopic: "security",
+  },
+  games: {
+    title: "Games",
+    subtitle: "Console, PC, and industry gaming news - releases, studios, esports, and the tech behind the games.",
+    pulseTopic: "general",
+  },
+  "mobile-games": {
+    title: "Mobile Games",
+    subtitle: "Mobile gaming news - hit titles, studios, monetization trends, and the platforms powering play on the go.",
+    pulseTopic: "general",
   },
 };
 

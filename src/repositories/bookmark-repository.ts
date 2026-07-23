@@ -125,6 +125,31 @@ export function createBookmarkRepository(supabase: SupabaseClient<Database>) {
       }
       return counts;
     },
+
+    /**
+     * Bookmark count per item (across all users) for a batch of
+     * `article_slug`s of a given `item_type` - GitHub Explorer's "Most
+     * Bookmarked" sort/widget needs a real save count per repository, not
+     * a per-user one. Same "select the narrow column, count in
+     * application code" tradeoff as `getManyByUserIds` above (no `GROUP
+     * BY` in the shimmed query builder) - bounded by one page of repo ids
+     * at a time by the caller, never the whole table.
+     */
+    async getCountsByItemType(itemType: BookmarkItemType, slugs: string[]): Promise<Map<string, number>> {
+      if (slugs.length === 0) return new Map();
+      const { data, error } = await supabase
+        .from("bookmarks")
+        .select("article_slug")
+        .eq("item_type", itemType)
+        .in("article_slug", slugs);
+      if (error) throw error;
+
+      const counts = new Map<string, number>();
+      for (const row of data ?? []) {
+        counts.set(row.article_slug, (counts.get(row.article_slug) ?? 0) + 1);
+      }
+      return counts;
+    },
   };
 }
 

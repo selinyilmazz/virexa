@@ -7,6 +7,11 @@ import { RepositoryListCard } from "@/components/open-source/RepositoryListCard"
 import { OpenSourceSidebar } from "@/components/open-source/OpenSourceSidebar";
 import { getOpenSourceRepos, type OpenSourceSort } from "@/services/open-source/open-source-service";
 
+// Stabilization pass: force-dynamic (never statically cached) so an
+// admin-added/edited/hidden repository (`/admin/repositories`) shows up
+// here on the very next request, not after the next deploy/cache purge.
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Open Source | VIREXA",
   description: "Discover trending open source repositories from GitHub.",

@@ -71,6 +71,7 @@ const VALID_CATEGORIES = new Set<NewsCategory>([
   "Business",
   "AI",
   "Games",
+  "Mobile Games",
   "World",
   "Science",
   "Security",
@@ -1117,6 +1118,8 @@ export type ArticleDetail = {
   trustScore: number;
   trendingScore: number;
   ai: ArticleAIInsights | null;
+  /** Admin Panel: Articles CMS "Published" toggle (0021_articles_admin_fields.sql). `false` means the page itself should 404 - see `/article/[slug]/page.tsx`. */
+  visible: boolean;
 };
 
 /** Flattens a `StoredArticleRewrite` back to plain text - used only to feed `estimateReadingTime` when the rewrite is the resolved primary content (see `getArticleDetail`). */
@@ -1239,6 +1242,19 @@ export async function getArticleDetail(slug: string): Promise<ArticleDetail | nu
             entities: aiRow.entities,
           }
         : null,
+      // Strict `!== false` rather than truthiness: `visible` only exists
+      // because of migration 0021 (articles_admin_fields). If that
+      // migration hasn't been run against this environment's database
+      // yet, Postgrest simply omits the column from the row entirely -
+      // `row.visible` comes back `undefined`, and a plain `!row.visible`
+      // check would then treat every single article as hidden, 404-ing
+      // the Article Detail page for everything while listings (which
+      // never filter on `visible`) kept working fine. Only an explicit
+      // `false` (an admin actually unpublishing the article) should hide
+      // it; a missing/null column must fail open, matching this
+      // codebase's "never break rendering over a soft-config gate"
+      // convention used everywhere else (see `incrementArticleView`).
+      visible: row.visible !== false,
     };
   } catch (error) {
     console.error("[article-read-service] getArticleDetail failed:", error);

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/admin/ToastProvider";
-import { AdminActionButton } from "@/components/admin/AdminActionButton";
+import { AdminRowActionsMenu } from "@/components/admin/AdminRowActionsMenu";
+import { AdminMenuActionButton } from "@/components/admin/AdminMenuActionButton";
 import type { AdminUserRole } from "@/services/admin/admin-user-service";
 
 type AdminUserActionsProps = {
@@ -15,12 +16,12 @@ type AdminUserActionsProps = {
 };
 
 /**
- * Per-row user actions (requirement 1): Role change (Admin verme/alma)
- * and Suspend/Reactivate. Role change uses a plain select + apply
- * button rather than `AdminActionButton`'s own confirm step (a role
- * change is reversible and low-friction); Suspend/Reactivate goes
- * through `AdminActionButton`'s confirmation step since it affects the
- * user's ability to sign in.
+ * Per-row user actions, converted to the shared `AdminRowActionsMenu`
+ * overflow pattern (requirement 12). Users has no dedicated Edit page, so
+ * the Role select + Apply button (the most frequently used control) stays
+ * as the visible "primary" slot instead of an Edit link; Suspend/
+ * Reactivate, Reset Password, and Delete move into the three-dot menu -
+ * consistent with `AdminRepositoryRowActions`/`AdminArticleRowActions`.
  */
 export function AdminUserActions({ userId, role, suspended, isSelf }: AdminUserActionsProps) {
   const router = useRouter();
@@ -56,28 +57,33 @@ export function AdminUserActions({ userId, role, suspended, isSelf }: AdminUserA
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <select
-        value={pendingRole}
-        onChange={(event) => setPendingRole(event.target.value as AdminUserRole)}
-        disabled={savingRole}
-        className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-950 focus:border-[#2f67e8] focus:outline-none"
-      >
-        <option value="user">User</option>
-        <option value="admin">Admin</option>
-      </select>
-      {pendingRole !== role && (
-        <button
-          type="button"
-          onClick={() => void applyRole()}
-          disabled={savingRole}
-          className="rounded-lg bg-[#2f67e8] px-3 py-1 text-xs font-semibold text-white hover:bg-[#2556c9] disabled:opacity-50"
-        >
-          {savingRole ? "Saving…" : "Apply"}
-        </button>
-      )}
-
-      <AdminActionButton
+    <AdminRowActionsMenu
+      label={`More actions for user ${userId}`}
+      primary={
+        <div className="flex items-center gap-1.5">
+          <select
+            value={pendingRole}
+            onChange={(event) => setPendingRole(event.target.value as AdminUserRole)}
+            disabled={savingRole}
+            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-950 focus:border-[#2f67e8] focus:outline-none"
+          >
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+          {pendingRole !== role && (
+            <button
+              type="button"
+              onClick={() => void applyRole()}
+              disabled={savingRole}
+              className="rounded-lg bg-[#2f67e8] px-3 py-1 text-xs font-semibold text-white hover:bg-[#2556c9] disabled:opacity-50"
+            >
+              {savingRole ? "Saving…" : "Apply"}
+            </button>
+          )}
+        </div>
+      }
+    >
+      <AdminMenuActionButton
         label={suspended ? "Reactivate" : "Suspend"}
         pendingLabel={suspended ? "Reactivating…" : "Suspending…"}
         endpoint={`/api/admin/users/${userId}`}
@@ -91,9 +97,29 @@ export function AdminUserActions({ userId, role, suspended, isSelf }: AdminUserA
         }
         confirmLabel={suspended ? "Reactivate" : "Suspend"}
         successMessage={suspended ? "User reactivated." : "User suspended."}
-        variant={suspended ? "secondary" : "warning"}
-        className="!px-3 !py-1 text-xs"
+        destructive={!suspended}
       />
-    </div>
+
+      <AdminMenuActionButton
+        label="Reset Password"
+        pendingLabel="Sending…"
+        endpoint={`/api/admin/users/${userId}/reset-password`}
+        successMessage={(json) => (typeof json.message === "string" ? json.message : "Password reset email sent.")}
+      />
+
+      <div className="my-1 h-px bg-slate-100" />
+
+      <AdminMenuActionButton
+        label="Delete"
+        pendingLabel="Deleting…"
+        endpoint={`/api/admin/users/${userId}`}
+        method="DELETE"
+        destructive
+        confirmTitle="Delete this user?"
+        confirmDescription="This permanently deletes the account and all of its data (profile, bookmarks, settings, reading history). This can't be undone."
+        confirmLabel="Delete"
+        successMessage="User deleted."
+      />
+    </AdminRowActionsMenu>
   );
 }

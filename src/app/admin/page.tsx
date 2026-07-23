@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { StatCard } from "@/components/admin/StatCard";
+import { SectionCard } from "@/components/admin/SectionCard";
+import { EmptyState } from "@/components/admin/EmptyState";
 import { HealthOverviewSection } from "@/components/admin/HealthOverviewSection";
 import { RuntimeStatusSection } from "@/components/admin/RuntimeStatusSection";
 import { getDashboardStats } from "@/services/admin/admin-dashboard-service";
+import { getAdminRecentActivity, type AdminActivityKind } from "@/services/admin/admin-activity-service";
 
 export const metadata: Metadata = {
   title: "Dashboard | Virexa Admin",
@@ -56,6 +59,18 @@ const icons = {
       <circle cx="12" cy="12" r="2.5" />
     </svg>
   ),
+  repositories: (
+    <svg {...ICON_PROPS}>
+      <path d="M4 3.5h16v8.5H4z" strokeLinejoin="round" />
+      <path d="M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6" strokeLinejoin="round" />
+    </svg>
+  ),
+  releases: (
+    <svg {...ICON_PROPS}>
+      <path d="M12 3v10M12 13l4-4M12 13 8 9" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
 };
 
 /**
@@ -65,8 +80,14 @@ const icons = {
  * oluştur") - the same two sections, full-detail, also live at their
  * own sidebar destinations (`/admin/health`, `/admin/runtime`).
  */
+const ACTIVITY_ICON: Record<AdminActivityKind, string> = {
+  article: "📰",
+  user: "👤",
+  audit: "🛠",
+};
+
 export default async function AdminDashboardPage() {
-  const stats = await getDashboardStats();
+  const [stats, activity] = await Promise.all([getDashboardStats(), getAdminRecentActivity()]);
 
   return (
     <div className="space-y-6">
@@ -75,21 +96,48 @@ export default async function AdminDashboardPage() {
         <p className="mt-1 text-sm text-slate-500">Live overview of Virexa&apos;s content, users, and system status.</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Total Articles" value={stats.totalArticles} icon={icons.articles} />
         <StatCard label="Total Sources" value={stats.totalSources} icon={icons.sources} />
+        <StatCard label="Repositories" value={stats.totalRepositories} icon={icons.repositories} />
+        <StatCard label="Developer Releases" value={stats.totalDeveloperReleases} icon={icons.releases} />
         <StatCard label="Total Users" value={stats.totalUsers} icon={icons.users} />
-        <StatCard label="Added in Last 24h" value={stats.articlesLast24h} icon={icons.fresh} />
         <StatCard label="Total Bookmarks" value={stats.totalBookmarks} icon={icons.bookmarks} />
         <StatCard label="Total Views" value={stats.totalViews} icon={icons.views} />
+        <StatCard label="Articles Today" value={stats.articlesLast24h} icon={icons.fresh} />
       </div>
 
-      <HealthOverviewSection compact />
-      <div className="flex justify-end">
-        <Link href="/admin/health" className="text-sm font-semibold text-[#2f67e8] hover:text-[#2556c9]">
-          View full health report →
-        </Link>
-      </div>
+      <SectionCard title="Recent Activity" description="Real-time feed of published articles, new users, and admin actions - the Audit Log lives here now instead of its own page.">
+        {activity.length === 0 ? (
+          <EmptyState icon="🕒" title="No recent activity" description="Activity will show up here as articles are published, users sign up, or admins make changes." />
+        ) : (
+          <ul className="space-y-1">
+            {activity.map((item) => (
+              <li key={item.id}>
+                <Link
+                  href={item.href}
+                  className="flex items-start gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-slate-50"
+                >
+                  <span aria-hidden="true" className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm">
+                    {ACTIVITY_ICON[item.kind]}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold text-slate-950">{item.title}</span>
+                    <span className="block truncate text-xs text-slate-500">{item.description}</span>
+                  </span>
+                  <span className="shrink-0 text-xs text-slate-400">{item.timestamp}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </SectionCard>
+
+      {/* System Health now lives only on the Dashboard (the standalone
+          /admin/health page was removed - see admin-nav-items.tsx). Full
+          detail (raw checks table included), not the compact preview,
+          since there's no separate "view full report" destination anymore. */}
+      <HealthOverviewSection />
 
       <RuntimeStatusSection compact />
       <div className="flex justify-end">

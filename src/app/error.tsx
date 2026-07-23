@@ -58,7 +58,7 @@ export default function GlobalPageError({ error, reset }: { error: Error & { dig
             </button>
             <Link
               href="/"
-              className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-[#2f67e8]/40 hover:text-[#2f67e8]"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
             >
               {t("errors.backToHome")}
             </Link>

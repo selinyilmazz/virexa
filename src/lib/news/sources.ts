@@ -259,6 +259,103 @@ export const SOURCES: Record<string, Source> = {
     trustScore: 82,
     official: false,
   },
+  // --- Mobile Games ecosystem expansion: trade/industry-side outlets,
+  // not general consumer gaming press.
+  //
+  // NOTE on PocketGamer.biz: originally registered here pending manual
+  // verification (see prior version of this comment), but live
+  // verification found no working public RSS endpoint - every plausible
+  // path (/rss, /rss/, /feed, /feed/, /rss.xml, /feed.xml, /news/rss,
+  // /news/index.rss) returned empty/404, and the site's markup exposes no
+  // discoverable feed link. The entry has been removed rather than left
+  // as a permanently-broken placeholder; `deconstructor-of-fun` and
+  // `touch-arcade` below (both verified live) already cover this same
+  // "mobile games industry" niche.
+  "deconstructor-of-fun": {
+    id: "deconstructor-of-fun",
+    name: "Deconstructor of Fun",
+    website: "https://www.deconstructoroffun.com",
+    country: "US",
+    language: "en",
+    trustScore: 75,
+    official: false,
+  },
+  "touch-arcade": {
+    id: "touch-arcade",
+    name: "TouchArcade",
+    website: "https://toucharcade.com",
+    country: "US",
+    language: "en",
+    trustScore: 76,
+    official: false,
+  },
+  // --- Mobile Games ecosystem expansion, round 2: technical/developer
+  // resources (engines, platforms, official docs blogs), not just news -
+  // "Mobile Games sadece haber değil... teknik kaynaklardan da beslensin"
+  // (should also draw from technical sources, not just news). Each entry
+  // below was live-verified to return real, current RSS/Atom content
+  // before being enabled - see feed-sources.ts for the exact URLs tried
+  // and what was swapped out when the requested source had no public
+  // feed (Unity Blog, GDC, PocketGamer.biz).
+  "unity-discussions": {
+    id: "unity-discussions",
+    name: "Unity Discussions",
+    website: "https://discussions.unity.com",
+    country: "US",
+    language: "en",
+    // Community forum, not an edited/official publication - same
+    // reasoning as `hacker-news`'s trustScore, not full official-blog
+    // trust despite being Unity-hosted.
+    trustScore: 68,
+    official: false,
+  },
+  "unreal-engine": {
+    id: "unreal-engine",
+    name: "Unreal Engine",
+    website: "https://www.unrealengine.com",
+    country: "US",
+    language: "en",
+    trustScore: 90,
+    official: true,
+  },
+  "android-developers": {
+    id: "android-developers",
+    name: "Android Developers Blog",
+    website: "https://android-developers.googleblog.com",
+    logo: "/logos/google.svg",
+    country: "US",
+    language: "en",
+    trustScore: 90,
+    official: true,
+  },
+  "firebase": {
+    id: "firebase",
+    name: "Firebase Blog",
+    website: "https://firebase.blog",
+    logo: "/logos/google.svg",
+    country: "US",
+    language: "en",
+    trustScore: 89,
+    official: true,
+  },
+  "apple-developer": {
+    id: "apple-developer",
+    name: "Apple Developer News",
+    website: "https://developer.apple.com/news",
+    country: "US",
+    language: "en",
+    trustScore: 91,
+    official: true,
+  },
+  "game-developer": {
+    id: "game-developer",
+    name: "Game Developer",
+    website: "https://www.gamedeveloper.com",
+    country: "US",
+    language: "en",
+    trustScore: 83,
+    official: false,
+  },
   "stack-overflow-blog": {
     id: "stack-overflow-blog",
     name: "Stack Overflow Blog",

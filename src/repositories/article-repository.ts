@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { MIN_ACCEPTABLE_CONTENT_LENGTH } from "@/lib/news";
 import { articleInputSchema, articleSearchParamsSchema, fullTextSearchParamsSchema } from "@/lib/validation/article-storage-schema";
 import type { ArticleInput, ArticleSearchParams, FullTextSearchParams } from "@/lib/validation/article-storage-schema";
-import type { ArticleInsert, ArticleRow, Database } from "@/types/database";
+import type { ArticleInsert, ArticleRow, ArticleUpdate, Database } from "@/types/database";
 
 function toInsert(input: ArticleInput): ArticleInsert {
   return {
@@ -105,6 +105,34 @@ async function lookupExistingByColumn(
     rows.push(...(result.data ?? []));
   }
   return rows;
+}
+
+/**
+ * Which of the given ids already exist in `articles`, chunked the same
+ * way as `lookupExistingByColumn` above (same request-URL-length reason).
+ * Added for `bulkUpsert()`'s per-source "how many NEW articles came from
+ * each source" reporting (Mobile Games RSS end-to-end verification
+ * request): the existing `remapped` counter only catches duplicates
+ * detected via a DIFFERENT id (same url/slug, different original id) -
+ * it says nothing about a row whose own id already matches an existing
+ * row (e.g. re-ingesting the same feed item on the next pipeline run,
+ * which is the normal/common case, not an edge case). Without this
+ * check, `databaseStep` had no way to tell a genuinely-new insert from a
+ * routine re-upsert of something already stored.
+ */
+async function lookupExistingIds(supabase: SupabaseClient<Database>, ids: string[]): Promise<Set<string>> {
+  if (ids.length === 0) return new Set();
+
+  const results = await Promise.all(
+    chunkArray(ids, LOOKUP_CHUNK_SIZE).map((idsChunk) => supabase.from("articles").select("id").in("id", idsChunk))
+  );
+
+  const existing = new Set<string>();
+  for (const result of results) {
+    if (result.error) throw result.error;
+    for (const row of result.data ?? []) existing.add(row.id);
+  }
+  return existing;
 }
 
 export type ArticleSearchResult = {
@@ -384,8 +412,10 @@ export function createArticleRepository(supabase: SupabaseClient<Database>) {
      * downstream article id through this map instead of reusing the
      * original id blindly.
      */
-    async bulkUpsert(inputs: ArticleInput[]): Promise<{ saved: number; remapped: number; idMap: Map<string, string> }> {
-      if (inputs.length === 0) return { saved: 0, remapped: 0, idMap: new Map() };
+    async bulkUpsert(
+      inputs: ArticleInput[]
+    ): Promise<{ saved: number; remapped: number; idMap: Map<string, string>; newIds: Set<string> }> {
+      if (inputs.length === 0) return { saved: 0, remapped: 0, idMap: new Map(), newIds: new Set() };
 
       const validated = inputs.map((input) => articleInputSchema.parse(input));
       const urls = validated.map((article) => article.url);
@@ -409,10 +439,19 @@ export function createArticleRepository(supabase: SupabaseClient<Database>) {
         return toInsert({ ...input, id: finalId });
       });
 
+      // Genuinely-new-insert detection (see `lookupExistingIds`'s doc
+      // comment) - must run BEFORE the upsert below, since afterward every
+      // id would trivially "already exist".
+      const alreadyExistingIds = await lookupExistingIds(
+        supabase,
+        rows.map((row) => row.id)
+      );
+      const newIds = new Set(rows.map((row) => row.id).filter((id) => !alreadyExistingIds.has(id)));
+
       const { error } = await supabase.from("articles").upsert(rows, { onConflict: "id" });
       if (error) throw error;
 
-      return { saved: rows.length, remapped, idMap };
+      return { saved: rows.length, remapped, idMap, newIds };
     },
 
     /**
@@ -463,6 +502,40 @@ export function createArticleRepository(supabase: SupabaseClient<Database>) {
       const { data, error } = await supabase.from("articles").select("id, source_id, trust_score");
       if (error) throw error;
       return data ?? [];
+    },
+
+    /**
+     * Every stored article's id/title/current category, one round trip -
+     * the read side of Admin Runtime Operations' "Backfill Categories"
+     * (`admin-runtime-ops-service.ts`'s `backfillArticleCategories`).
+     * Safe to read unbounded (same reasoning as `listAllForTrustSync`
+     * above, not the capped `listNeeding*Backfill` pattern used by the
+     * AI/image/content backfills): re-classifying a title against
+     * `inferCategoryFromTitle`'s keyword regexes is pure, local,
+     * near-instant JS - there's no per-article network/AI call to budget
+     * against, so there's no reason to cap the scan window or spread it
+     * across multiple admin clicks.
+     */
+    async listAllForCategoryBackfill(): Promise<{ id: string; title: string; category: string }[]> {
+      const { data, error } = await supabase.from("articles").select("id, title, category");
+      if (error) throw error;
+      return data ?? [];
+    },
+
+    /**
+     * Lightweight, columns-only update of `category` - the write side of
+     * Admin Runtime Operations' "Backfill Categories"
+     * (`admin-runtime-ops-service.ts`'s `backfillArticleCategories`).
+     * Mirrors `updateTrendingScores`/`updateTrustScores`/`updateImages`
+     * exactly: plain parallel `update()` calls, not an upsert.
+     */
+    async updateCategories(updates: { id: string; category: string }[]): Promise<void> {
+      if (updates.length === 0) return;
+      const results = await Promise.all(
+        updates.map(({ id, category }) => supabase.from("articles").update({ category }).eq("id", id))
+      );
+      const failed = results.find((result) => result.error);
+      if (failed?.error) throw failed.error;
     },
 
     /**
@@ -577,6 +650,31 @@ export function createArticleRepository(supabase: SupabaseClient<Database>) {
         .gte("created_at", isoDate);
       if (error) throw error;
       return count ?? 0;
+    },
+
+    /**
+     * Generic create/update/remove for the Admin Panel's Articles CMS
+     * editor (requirement 5) - New Article/Edit/Duplicate/Delete/Publish-
+     * Unpublish. Deliberately separate from `bulkUpsert()` (the
+     * ingestion pipeline's batch path, which validates every input
+     * against `articleInputSchema` and does its own duplicate-remap
+     * logic) - a single admin-authored row doesn't need any of that.
+     */
+    async create(input: ArticleInsert): Promise<ArticleRow> {
+      const { data, error } = await supabase.from("articles").insert(input).select("*").single();
+      if (error) throw error;
+      return data;
+    },
+
+    async update(id: string, patch: ArticleUpdate): Promise<void> {
+      if (Object.keys(patch).length === 0) return;
+      const { error } = await supabase.from("articles").update(patch).eq("id", id);
+      if (error) throw error;
+    },
+
+    async remove(id: string): Promise<void> {
+      const { error } = await supabase.from("articles").delete().eq("id", id);
+      if (error) throw error;
     },
 
     /**

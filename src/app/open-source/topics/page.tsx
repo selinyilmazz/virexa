@@ -3,6 +3,9 @@ import { Header } from "@/components/layout/Header";
 import { Pagination } from "@/components/category/Pagination";
 import { getOpenSourceRepos } from "@/services/open-source/open-source-service";
 
+// Stabilization pass: same force-dynamic reasoning as `/open-source/page.tsx`.
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Open Source Topics | VIREXA",
   description: "Browse every repository topic tracked by Virexa's Open Source Explorer.",

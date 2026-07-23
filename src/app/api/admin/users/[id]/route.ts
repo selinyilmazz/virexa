@@ -84,3 +84,55 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ ok: false, error: "Update failed." }, { status: 500 });
   }
 }
+
+/**
+ * Deletes a user account via the Supabase Admin API
+ * (`auth.admin.deleteUser`). `profiles`/`bookmarks`/`settings`/reading
+ * history all reference `auth.users(id) on delete cascade` (see
+ * `supabase/migrations/0001_production_schema.sql` and the reading
+ * history migration), so this one call also cleans up every table this
+ * app has ever attached to a user - no separate cleanup queries needed.
+ * Same self-protection guard as PATCH: an admin can never delete their
+ * own account through this endpoint.
+ */
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const admin = await getAdminUserOrNull();
+  if (!admin) {
+    return NextResponse.json({ ok: false, error: "Unauthorized." }, { status: 403 });
+  }
+
+  const { id } = await params;
+
+  if (id === admin.id) {
+    return NextResponse.json({ ok: false, error: "You cannot delete your own account." }, { status: 400 });
+  }
+
+  const supabase = createServiceClient();
+  if (!supabase) {
+    return NextResponse.json({ ok: false, error: "Storage is not configured." }, { status: 503 });
+  }
+
+  try {
+    const { data: existingResponse, error: fetchError } = await supabase.auth.admin.getUserById(id);
+    if (fetchError || !existingResponse.user) {
+      return NextResponse.json({ ok: false, error: "User not found." }, { status: 404 });
+    }
+    const existing = existingResponse.user;
+
+    const { error: deleteError } = await supabase.auth.admin.deleteUser(id);
+    if (deleteError) throw deleteError;
+
+    await recordAuditEvent({
+      actor: { id: admin.id, email: admin.email },
+      action: "user.deleted",
+      targetType: "auth_user",
+      targetId: id,
+      metadata: { targetEmail: existing.email },
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("[api/admin/users] delete failed:", error);
+    return NextResponse.json({ ok: false, error: "Delete failed." }, { status: 500 });
+  }
+}

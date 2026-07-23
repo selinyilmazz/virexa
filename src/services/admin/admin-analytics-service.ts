@@ -4,9 +4,12 @@ import { createArticleRepository } from "@/repositories/article-repository";
 import { createArticleAIRepository } from "@/repositories/article-ai-repository";
 import { createArticleMetricsRepository } from "@/repositories/article-metrics-repository";
 import { createSourceRepository } from "@/repositories/source-repository";
+import { createRepositoryRepository } from "@/repositories/repository-repository";
+import { createReleaseRepository } from "@/repositories/release-repository";
+import { createRuntimeJobRunRepository } from "@/repositories/runtime-job-run-repository";
+import { createServiceClient } from "@/lib/supabase/service-client";
 import { getAdminSourcesList } from "@/services/admin/admin-source-service";
-import { runtimeEngine } from "@/runtime/engine";
-import type { RuntimeQueueEntry } from "@/runtime/queue/runtime-queue";
+import { getRuntimeJobHistory, isRuntimeRecentlyActive } from "@/services/admin/admin-runtime-history-service";
 import type { Category } from "@/types/news";
 
 /**
@@ -44,6 +47,8 @@ const getRepositories = cache(async () => {
     ai: createArticleAIRepository(supabase),
     metrics: createArticleMetricsRepository(supabase),
     sources: createSourceRepository(supabase),
+    repositories: createRepositoryRepository(supabase),
+    releases: createReleaseRepository(supabase),
   };
 });
 
@@ -209,12 +214,13 @@ export type AnalyticsTopLists = {
 
 const TOP_LIST_LIMIT = 5;
 
-/** Same fixed 12-value taxonomy used by `AdminArticleFilters`' category dropdown (see `types/news.ts`'s `Category` type) - duplicated as a local literal array the same way that component does, rather than introducing a new shared constants module for one list. */
+/** Same fixed 13-value taxonomy used by `AdminArticleFilters`' category dropdown (see `types/news.ts`'s `Category` type) - duplicated as a local literal array the same way that component does, rather than introducing a new shared constants module for one list. Includes "Mobile Games" (stabilization pass) so its article count actually surfaces in the Most Used Categories list instead of being silently dropped. */
 const CATEGORIES: Category[] = [
   "Technology",
   "Business",
   "AI",
   "Games",
+  "Mobile Games",
   "World",
   "Science",
   "Security",
@@ -402,61 +408,121 @@ const EMPTY_RUNTIME_ANALYTICS: RuntimeAnalytics = {
   isSchedulerRunning: false,
 };
 
-/** Same "pick the entry with the newest of a given timestamp field" helper `RuntimeStatusSection.tsx` uses - duplicated here (not imported from that component) since a component file shouldn't be a logic-sharing module; both copies are small and read the same `runtimeEngine.queue.list()` shape. */
-function mostRecentBy(entries: RuntimeQueueEntry[], pick: (entry: RuntimeQueueEntry) => string | undefined): RuntimeQueueEntry | null {
-  const withTimestamp = entries
-    .map((entry) => ({ entry, timestamp: pick(entry) }))
-    .filter((item): item is { entry: RuntimeQueueEntry; timestamp: string } => Boolean(item.timestamp));
-
-  if (withTimestamp.length === 0) return null;
-
-  return withTimestamp.reduce((latest, current) =>
-    new Date(current.timestamp).getTime() > new Date(latest.timestamp).getTime() ? current : latest
-  ).entry;
-}
-
 /**
- * Runtime pipeline snapshot for Admin Analytics (requirement 5): last
- * run, average completed-job duration, last error, success rate, and
- * queue status. Reads the existing `runtimeEngine` singleton directly
- * (same "reuse the existing runtime infrastructure" approach as
- * `RuntimeStatusSection.tsx`) - synchronous, in-memory, no network call,
- * so this is a plain function rather than a `Promise`. Adds two metrics
- * `RuntimeStatusSection` doesn't show (average duration, success rate)
- * without modifying that component or the runtime engine itself.
+ * Runtime pipeline snapshot for Admin Analytics: last run, average
+ * completed-job duration, last error, success rate, and recent-activity
+ * counts.
+ *
+ * BUG FIX (this pass): this function used to read `runtimeEngine.queue`/
+ * `runtimeEngine.isRunning` directly - in-process, in-memory state. That
+ * is the EXACT anti-pattern already identified and fixed in
+ * `RuntimeStatusSection.tsx`'s doc comment for the Admin Dashboard: on
+ * serverless (Vercel), this page's own render and the cron routes that
+ * actually run jobs (`/api/cron/news-fetch`, `/api/cron/ai-enrichment`)
+ * execute in different, isolated invocations that never share memory -
+ * so this always reported "Scheduler Stopped" and all-zero stats in
+ * production regardless of how recently or successfully cron had
+ * actually run. That fix was only ever applied to the Dashboard's
+ * Runtime Status section, not here - Analytics' "Runtime Monitoring"
+ * kept the same misleading in-memory read. Now reuses the exact same
+ * durable, DB-backed source (`admin-runtime-history-service.ts`'s
+ * `getRuntimeJobHistory()`, reading `runtime_job_runs`) as
+ * `RuntimeStatusSection`, plus one extra query here for average
+ * duration (not something that component needs) over the last 50
+ * completed runs.
  */
-export function getRuntimeAnalyticsSnapshot(): RuntimeAnalytics {
+export async function getRuntimeAnalyticsSnapshot(): Promise<RuntimeAnalytics> {
   try {
-    const entries = runtimeEngine.queue.list();
-    const lastRun = mostRecentBy(entries, (entry) => entry.startedAt ?? entry.enqueuedAt);
-    const lastFailure = mostRecentBy(
-      entries.filter((entry) => entry.status === "failed"),
-      (entry) => entry.finishedAt
-    );
+    const history = await getRuntimeJobHistory();
+    const { lastRun, lastFailure, recentByStatus } = history;
 
-    const completed = entries.filter((entry) => entry.status === "completed");
-    const failed = entries.filter((entry) => entry.status === "failed");
+    const supabase = createServiceClient();
+    let avgDurationMs: number | null = null;
+    if (supabase) {
+      const runtimeJobRunRepository = createRuntimeJobRunRepository(supabase);
+      const recentCompleted = await runtimeJobRunRepository.listRecent({ limit: 50, status: "completed" });
+      const durations = recentCompleted.map((row) => row.duration_ms).filter((value): value is number => value !== null);
+      avgDurationMs = durations.length > 0 ? Math.round(average(durations)) : null;
+    }
 
-    const durations = completed
-      .filter((entry): entry is RuntimeQueueEntry & { startedAt: string; finishedAt: string } => Boolean(entry.startedAt && entry.finishedAt))
-      .map((entry) => new Date(entry.finishedAt).getTime() - new Date(entry.startedAt).getTime());
-    const avgDurationMs = durations.length > 0 ? Math.round(average(durations)) : null;
-
-    const finishedTotal = completed.length + failed.length;
-    const successRatePercent = finishedTotal > 0 ? Math.round((completed.length / finishedTotal) * 100) : null;
+    const finishedTotal = (recentByStatus.completed ?? 0) + (recentByStatus.failed ?? 0);
+    const successRatePercent = finishedTotal > 0 ? Math.round(((recentByStatus.completed ?? 0) / finishedTotal) * 100) : null;
 
     return {
-      lastRunAt: lastRun?.startedAt ?? lastRun?.enqueuedAt ?? null,
-      lastRunJobType: lastRun?.jobType ?? null,
+      lastRunAt: lastRun?.started_at ?? lastRun?.finished_at ?? null,
+      lastRunJobType: lastRun?.job_type ?? null,
       avgDurationMs,
-      lastErrorAt: lastFailure?.finishedAt ?? null,
-      lastErrorMessage: lastFailure?.lastError ?? null,
+      lastErrorAt: lastFailure?.finished_at ?? null,
+      lastErrorMessage: lastFailure?.error ?? null,
       successRatePercent,
-      queueStats: runtimeEngine.queue.getStats(),
-      isSchedulerRunning: runtimeEngine.isRunning,
+      queueStats: recentByStatus,
+      isSchedulerRunning: isRuntimeRecentlyActive(history),
     };
   } catch (error) {
     console.error("[admin-analytics-service] getRuntimeAnalyticsSnapshot failed:", error);
     return EMPTY_RUNTIME_ANALYTICS;
+  }
+}
+
+// ============================================================================
+// 6) Repositories & Developer Releases analytics
+// ============================================================================
+
+export type RepositoryReleaseAnalytics = {
+  totalRepositories: number;
+  totalReleases: number;
+  languageDistribution: AnalyticsDistributionEntry[];
+  topRepositoriesByStars: AnalyticsTopSource[];
+  channelDistribution: AnalyticsDistributionEntry[];
+  releasesByProduct: AnalyticsDistributionEntry[];
+};
+
+const EMPTY_REPO_RELEASE_ANALYTICS: RepositoryReleaseAnalytics = {
+  totalRepositories: 0,
+  totalReleases: 0,
+  languageDistribution: [],
+  topRepositoriesByStars: [],
+  channelDistribution: [],
+  releasesByProduct: [],
+};
+
+const TOP_REPO_LIMIT = 5;
+
+/**
+ * Charts for the two Admin Panel entities added after this file was
+ * first written (Repositories/Developer Releases - `repositories()`/
+ * `releases()` repositories both read via the public request-scoped
+ * client, same as everywhere else in this file: both tables' RLS
+ * permits public `select` with no `visible` filter baked into the
+ * policy itself - see `0018_repositories.sql`/`0019_developer_releases.sql`
+ * - so an admin reading the FULL set (including hidden rows) here is
+ * safe without a service-role client, unlike the write paths).
+ * Single `list()` call per table; every distribution/top-list is
+ * computed in application code over that one result set - no extra
+ * round trips.
+ */
+export async function getRepositoryReleaseAnalytics(): Promise<RepositoryReleaseAnalytics> {
+  try {
+    const { repositories, releases } = await getRepositories();
+    const [repoRows, releaseRows] = await Promise.all([repositories.list(), releases.list()]);
+
+    const topRepositoriesByStars: AnalyticsTopSource[] = [...repoRows]
+      .sort((a, b) => b.stars - a.stars)
+      .slice(0, TOP_REPO_LIMIT)
+      .map((row) => ({ id: row.id, name: row.id, value: row.stars }));
+
+    const releasesByProduct = tally(releaseRows.map((row) => row.product)).slice(0, TOP_REPO_LIMIT);
+
+    return {
+      totalRepositories: repoRows.length,
+      totalReleases: releaseRows.length,
+      languageDistribution: tally(repoRows.map((row) => row.language ?? "Unknown")),
+      topRepositoriesByStars,
+      channelDistribution: tally(releaseRows.map((row) => row.channel)),
+      releasesByProduct,
+    };
+  } catch (error) {
+    console.error("[admin-analytics-service] getRepositoryReleaseAnalytics failed:", error);
+    return EMPTY_REPO_RELEASE_ANALYTICS;
   }
 }

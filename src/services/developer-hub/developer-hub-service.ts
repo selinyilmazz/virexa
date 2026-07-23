@@ -1,16 +1,9 @@
-import {
-  CERTIFICATIONS,
-  CHEAT_SHEETS,
-  COURSES,
-  DEVELOPER_TOOLS,
-  LEARNING_PATHS,
-  ROADMAPS,
-  type Difficulty,
-  type Price,
-} from "@/data/developer-hub";
+import { createClient } from "@/lib/supabase/server";
+import { createCatalogItemRepository } from "@/repositories/catalog-item-repository";
 import { getTrendingGithubRepos } from "@/lib/developer-hub/github";
 import { RESOURCE_TYPE_LABELS, type CatalogResourceType } from "@/lib/developer-hub/shared";
 import { getNewsExplorerArticles } from "@/services/articles/article-read-service";
+import type { CatalogDifficulty as Difficulty, CatalogItemRow, CatalogPrice as Price } from "@/types/database";
 
 /**
  * Developer Hub's unified catalog layer (Developer Hub redesign). Mirrors
@@ -96,95 +89,64 @@ function formatRelativeFromNow(iso: string): string {
   return `${years} year${years === 1 ? "" : "s"} ago`;
 }
 
+/**
+ * Admin Panel: Developer Hub Catalog - certifications/courses/learning
+ * paths/developer tools/roadmaps/cheat sheets used to be hardcoded arrays
+ * in `src/data/developer-hub.ts` with no admin UI. They now come from the
+ * admin-managed `catalog_items` table (`visible = true` only, via the
+ * public request-scoped client - RLS enforces that filter even if this
+ * function forgot to, see `supabase/migrations/0022_catalog_items.sql`),
+ * same pattern `open-source-service.ts` already established for
+ * `repositories`. GitHub repos are the one resource type NOT in that
+ * table - still live GitHub data via `getTrendingGithubRepos()`, unchanged.
+ */
 async function buildCatalogPool(): Promise<CatalogItem[]> {
-  const certifications: CatalogItem[] = CERTIFICATIONS.map((item) => ({
-    id: `certification:${item.slug}`,
-    resourceType: "certification",
-    title: item.title,
-    description: item.description,
-    provider: item.provider,
-    url: item.url,
-    emoji: item.emoji,
-    difficulty: item.difficulty,
-    price: item.price,
-    featured: item.featured,
-    brandKey: item.provider,
-    official: item.official,
-  }));
+  // Regression fix (stabilization pass): a Postgrest error reading
+  // `catalog_items` (table/columns not migrated yet in this environment,
+  // or a transient RLS/network hiccup) used to propagate straight out of
+  // this function with no surrounding try/catch, crashing every
+  // Developer Hub page (landing page, GitHub Explorer, every catalog
+  // sub-page) with Next.js's generic "Something went wrong" error
+  // boundary instead of rendering. Same "fail open, never break
+  // rendering over a soft data problem" convention as
+  // `open-source-service.ts`'s `getOpenSourceRepos()` fix - falling back
+  // to an empty static pool still lets the page render (with live GitHub
+  // repo items still present below), rather than taking down the whole
+  // feature.
+  let dbRows: CatalogItemRow[] = [];
+  try {
+    const supabase = await createClient();
+    dbRows = await createCatalogItemRepository(supabase).list({ visibleOnly: true });
+  } catch (error) {
+    console.error("[developer-hub-service] Failed to load catalog_items, rendering GitHub-only pool instead of crashing", error);
+  }
 
-  const courses: CatalogItem[] = COURSES.map((item) => ({
-    id: `course:${item.slug}`,
-    resourceType: "course",
-    title: item.title,
-    description: item.description,
-    provider: item.provider,
-    url: item.url,
-    emoji: item.emoji,
-    difficulty: item.difficulty,
-    price: item.price,
-    featured: item.featured,
-    brandKey: item.provider,
-  }));
+  const staticItems: CatalogItem[] = dbRows.map((row) => {
+    const base = {
+      id: row.id,
+      resourceType: row.resource_type,
+      title: row.title,
+      description: row.description,
+      provider: row.provider,
+      url: row.url,
+      emoji: row.emoji,
+      difficulty: row.difficulty ?? undefined,
+      price: row.price ?? undefined,
+      featured: row.featured,
+      brandKey: row.resource_type === "cheat-sheet" ? row.slug : row.provider,
+    };
 
-  const learningPaths: CatalogItem[] = LEARNING_PATHS.map((item) => ({
-    id: `learning-path:${item.slug}`,
-    resourceType: "learning-path",
-    title: item.title,
-    description: item.description,
-    provider: item.provider,
-    url: item.url,
-    emoji: item.emoji,
-    difficulty: item.difficulty,
-    price: item.price,
-    featured: item.featured,
-    brandKey: item.provider,
-  }));
-
-  const developerTools: CatalogItem[] = DEVELOPER_TOOLS.map((item) => ({
-    id: `developer-tool:${item.slug}`,
-    resourceType: "developer-tool",
-    title: item.title,
-    description: item.description,
-    provider: item.provider,
-    url: item.url,
-    emoji: item.emoji,
-    price: item.price,
-    featured: item.featured,
-    brandKey: item.provider,
-  }));
-
-  const roadmaps: CatalogItem[] = ROADMAPS.map((item) => ({
-    id: `roadmap:${item.slug}`,
-    resourceType: "roadmap",
-    title: item.title,
-    description: item.description,
-    provider: item.provider,
-    url: item.url,
-    emoji: item.emoji,
-    difficulty: item.difficulty,
-    metaLine: `Est. ${item.estimatedTime}`,
-    featured: item.featured,
-    brandKey: item.provider,
-    steps: item.steps,
-  }));
-
-  const cheatSheets: CatalogItem[] = CHEAT_SHEETS.map((item) => ({
-    id: `cheat-sheet:${item.slug}`,
-    resourceType: "cheat-sheet",
-    title: item.title,
-    description: item.description,
-    provider: item.provider,
-    url: item.url,
-    emoji: item.emoji,
-    price: "free",
-    tag: item.fileType,
-    featured: item.featured,
-    // Keyed by the cheat sheet's own slug (not `item.provider`) so each
-    // one shows the actual technology's brand (Git/Docker/Kubernetes/
-    // Python/Postgres) instead of all sharing one generic "devhints.io"
-    // tile - see `BRAND_VISUALS`' per-slug entries in `brand-icons.tsx`.
-    brandKey: item.slug,
-  }));
+    if (row.resource_type === "certification") {
+      return { ...base, official: row.official };
+    }
+    if (row.resource_type === "roadmap") {
+      return { ...base, metaLine: row.estimated_time ? `Est. ${row.estimated_time}` : undefined, steps: row.steps };
+    }
+    if (row.resource_type === "cheat-sheet") {
+      return { ...base, price: "free" as const, tag: row.file_type ?? undefined };
+    }
+    return base;
+  });
 
   const githubRepos = await getTrendingGithubRepos();
   const githubItems: CatalogItem[] = githubRepos.map((repo) => {
@@ -213,7 +175,7 @@ async function buildCatalogPool(): Promise<CatalogItem[]> {
     };
   });
 
-  return [...certifications, ...courses, ...learningPaths, ...githubItems, ...developerTools, ...roadmaps, ...cheatSheets];
+  return [...staticItems, ...githubItems];
 }
 
 export type CatalogSort = "featured" | "az";
@@ -468,35 +430,31 @@ export type DeveloperHubStats = {
 };
 
 /**
- * Every figure here is a real count - the curated arrays' own `.length`,
- * the live GitHub pool's current size, and a real database count of
- * `contentType: "release"` articles (reusing `getNewsExplorerArticles`
- * rather than a new query). No number is styled to look bigger than it
- * actually is (see `src/data/developer-hub.ts`'s doc comment).
+ * Every figure here is a real count. `buildCatalogPool()` already reads
+ * the admin-managed `catalog_items` table plus the live GitHub pool once
+ * (see its doc comment), so this reuses that single fetch and groups by
+ * `resourceType` rather than issuing six separate counts. Releases come
+ * from a real database count of `contentType: "release"` articles
+ * (reusing `getNewsExplorerArticles` rather than a new query). No number
+ * is styled to look bigger than it actually is.
  */
 export async function getDeveloperHubStats(): Promise<DeveloperHubStats> {
-  const [githubRepos, releasesPage] = await Promise.all([
-    getTrendingGithubRepos(),
+  const [pool, releasesPage] = await Promise.all([
+    buildCatalogPool(),
     getNewsExplorerArticles({ contentType: "release", page: 1, pageSize: 1 }),
   ]);
 
-  const featuredCount =
-    CERTIFICATIONS.filter((item) => item.featured).length +
-    COURSES.filter((item) => item.featured).length +
-    LEARNING_PATHS.filter((item) => item.featured).length +
-    DEVELOPER_TOOLS.filter((item) => item.featured).length +
-    ROADMAPS.filter((item) => item.featured).length +
-    CHEAT_SHEETS.filter((item) => item.featured).length +
-    githubRepos.filter((repo) => repo.stars > 50000).length;
+  const countOf = (type: CatalogResourceType) => pool.filter((item) => item.resourceType === type).length;
+  const featuredCount = pool.filter((item) => item.featured).length;
 
   return {
-    certificationsCount: CERTIFICATIONS.length,
-    coursesCount: COURSES.length,
-    learningPathsCount: LEARNING_PATHS.length,
-    githubReposCount: githubRepos.length,
-    developerToolsCount: DEVELOPER_TOOLS.length,
-    roadmapsCount: ROADMAPS.length,
-    cheatSheetsCount: CHEAT_SHEETS.length,
+    certificationsCount: countOf("certification"),
+    coursesCount: countOf("course"),
+    learningPathsCount: countOf("learning-path"),
+    githubReposCount: countOf("github-repo"),
+    developerToolsCount: countOf("developer-tool"),
+    roadmapsCount: countOf("roadmap"),
+    cheatSheetsCount: countOf("cheat-sheet"),
     releasesCount: releasesPage.total,
     featuredCount,
     lastUpdatedRelative: "Today",

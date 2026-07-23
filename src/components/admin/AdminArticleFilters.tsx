@@ -8,6 +8,7 @@ const CATEGORIES = [
   "Business",
   "AI",
   "Games",
+  "Mobile Games",
   "World",
   "Science",
   "Security",

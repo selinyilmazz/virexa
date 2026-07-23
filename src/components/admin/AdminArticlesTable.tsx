@@ -6,6 +6,7 @@ import { useState } from "react";
 import { AdminTable, type AdminTableColumn } from "@/components/admin/AdminTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { AdminActionButton } from "@/components/admin/AdminActionButton";
+import { AdminArticleRowActions } from "@/components/admin/AdminArticleRowActions";
 import type { AdminArticleListItem } from "@/services/admin/admin-article-service";
 
 type AdminArticlesTableProps = {
@@ -89,13 +90,28 @@ export function AdminArticlesTable({ items }: AdminArticlesTableProps) {
     { key: "bookmarkCount", header: "Bookmarks", render: (row) => row.bookmarkCount.toLocaleString() },
     {
       key: "aiStatus",
-      header: "Status",
+      header: "AI Status",
       render: (row) =>
         row.aiStatus === "enriched" ? (
           <StatusBadge status="healthy" label="AI Enriched" />
         ) : (
           <StatusBadge status="unknown" label="Pending AI" />
         ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (row) => (
+        <div className="flex flex-wrap gap-1.5">
+          <StatusBadge status={row.visible ? "healthy" : "offline"} label={row.visible ? "Published" : "Unpublished"} />
+          {row.featured && <StatusBadge status="warning" label="Featured" />}
+        </div>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      render: (row) => <AdminArticleRowActions id={row.id} visible={row.visible} />,
     },
   ];
 

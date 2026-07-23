@@ -3,7 +3,7 @@ import { SectionCard } from "@/components/admin/SectionCard";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { AdminTable, type AdminTableColumn } from "@/components/admin/AdminTable";
-import { Pagination } from "@/components/category/Pagination";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import { AdminUserFilters } from "@/components/admin/AdminUserFilters";
 import { AdminUserActions } from "@/components/admin/AdminUserActions";
 import { getAdminUserOrNull } from "@/lib/admin/authorization";
@@ -13,7 +13,8 @@ export const metadata: Metadata = {
   title: "Users | Virexa Admin",
 };
 
-const PAGE_SIZE = 20;
+const DEFAULT_PAGE_SIZE = 25;
+const ALLOWED_PAGE_SIZES = [10, 25, 50, 100];
 
 type AdminUsersPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -23,6 +24,12 @@ function toStringParam(value: string | string[] | undefined): string | undefined
   const raw = Array.isArray(value) ? value[0] : value;
   const trimmed = raw?.trim();
   return trimmed && trimmed.length > 0 ? trimmed : undefined;
+}
+
+function toPageSizeParam(value: string | string[] | undefined): number {
+  const raw = toStringParam(value);
+  const parsed = raw ? Number(raw) : undefined;
+  return parsed && ALLOWED_PAGE_SIZES.includes(parsed) ? parsed : DEFAULT_PAGE_SIZE;
 }
 
 function toBooleanParam(value: string | string[] | undefined): boolean | undefined {
@@ -50,6 +57,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
   const currentAdmin = await getAdminUserOrNull();
 
   const page = Math.max(1, Number(toStringParam(params.page)) || 1);
+  const pageSize = toPageSizeParam(params.pageSize);
   const filters: UserFilters = {
     search: toStringParam(params.q),
     role: toStringParam(params.role) === "admin" || toStringParam(params.role) === "user" ? (toStringParam(params.role) as "admin" | "user") : undefined,
@@ -57,18 +65,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
     suspended: toBooleanParam(params.suspended),
   };
 
-  const usersPage = await getAdminUsersPage(filters, page, PAGE_SIZE);
-
-  function buildPageHref(targetPage: number): string {
-    const query = new URLSearchParams();
-    for (const [key, value] of Object.entries(params)) {
-      if (key === "page") continue;
-      const raw = toStringParam(value);
-      if (raw) query.set(key, raw);
-    }
-    query.set("page", String(targetPage));
-    return `/admin/users?${query.toString()}`;
-  }
+  const usersPage = await getAdminUsersPage(filters, page, pageSize);
 
   const columns: AdminTableColumn<AdminUserListItem>[] = [
     { key: "displayName", header: "User", className: "font-medium text-slate-950" },
@@ -125,7 +122,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
         ) : (
           <>
             <AdminTable columns={columns} rows={usersPage.items} getRowKey={(row) => row.id} emptyMessage="No users found." />
-            <Pagination currentPage={usersPage.page} totalPages={usersPage.totalPages} buildHref={buildPageHref} />
+            <AdminPagination page={usersPage.page} pageSize={pageSize} totalItems={usersPage.total} itemLabel="users" />
           </>
         )}
       </SectionCard>

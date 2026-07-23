@@ -29,7 +29,7 @@ export default function ReadingHistoryPage() {
             <span className="font-medium text-slate-700">Reading History</span>
           </nav>
 
-          <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-[#2f67e8]">Reading History</p>
+          <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Reading History</p>
           <h1 className="mt-2 text-4xl font-bold tracking-tight text-slate-950">Reading History</h1>
           <p className="mt-2 max-w-xl text-base leading-relaxed text-slate-500">
             Articles you've opened, most recent first.

@@ -8,6 +8,7 @@ import { LogoutButton } from "@/components/auth/LogoutButton";
 import { useAuth } from "@/hooks/useAuth";
 import { getAvatarUrl, getDisplayName } from "@/lib/supabase/utils";
 import { useTranslations } from "@/i18n/i18n-provider";
+import { isAdminUser } from "@/lib/admin/is-admin";
 
 // Reading History and Developer Releases moved from Profile-tab/Developer
 // Hub sub-page deep links to their own standalone top-level routes
@@ -45,7 +46,11 @@ const dropdownLinks = [
     ),
   },
   {
-    href: "/developer-releases",
+    // Points straight at the canonical listing now (stabilization pass) -
+    // the old standalone `/developer-releases` route redirects here too,
+    // but linking directly avoids an unnecessary redirect hop from this
+    // primary nav surface.
+    href: "/developer-hub/releases",
     label: "Developer Releases",
     icon: (
       <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -111,7 +116,7 @@ export function HeaderAuthArea() {
       <div className="hidden shrink-0 items-center gap-3 md:flex">
         <Link
           href="/signin"
-          className="rounded-2xl border-2 border-[#2f67e8] px-6 py-2 text-xl font-semibold text-[#2f67e8] transition-colors hover:bg-blue-50"
+          className="rounded-2xl border-2 border-slate-300 px-6 py-2 text-xl font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50"
         >
           {t("nav.signIn")}
         </Link>
@@ -127,6 +132,12 @@ export function HeaderAuthArea() {
 
   const displayName = getDisplayName(user);
   const avatarUrl = getAvatarUrl(user);
+  // Reads the same `app_metadata.role` field `middleware.ts`/`is-admin.ts`
+  // trust for the real `/admin` gate - this is purely a UI convenience
+  // (hide the link from users who'd just get redirected away), not a
+  // second source of truth, so a non-admin can never see it change
+  // anything security-relevant.
+  const isAdmin = isAdminUser(user);
 
   return (
     <div ref={containerRef} className="relative hidden shrink-0 items-center md:flex">
@@ -185,6 +196,24 @@ export function HeaderAuthArea() {
             </Link>
           );
         })}
+
+        {isAdmin && (
+          <>
+            <div className="my-1 h-px bg-slate-100 dark:bg-slate-800" />
+            <Link
+              href="/admin"
+              role="menuitem"
+              tabIndex={isOpen ? 0 : -1}
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              <span aria-hidden="true" className="text-lg leading-none">
+                🛠
+              </span>
+              Admin Panel
+            </Link>
+          </>
+        )}
 
         <div className="my-1 h-px bg-slate-100 dark:bg-slate-800" />
 

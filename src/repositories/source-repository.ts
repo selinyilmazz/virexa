@@ -80,6 +80,45 @@ export function createSourceRepository(supabase: SupabaseClient<Database>) {
       const { error } = await supabase.from("article_sources").update(update).eq("id", id);
       if (error) throw error;
     },
+
+    /**
+     * Full create for the Admin Sources CMS ("Create/Edit/Delete" -
+     * supersedes the earlier "Silme yapılmayacak" design note above,
+     * which predates the current Admin Panel spec that explicitly asks
+     * for source deletion). Validates through the same
+     * `articleSourceInputSchema` the news pipeline's `bulkUpsert` uses,
+     * then a plain `insert` (not `upsert`) so creating a source with an
+     * id that already exists fails loudly instead of silently
+     * overwriting an existing row.
+     */
+    async create(input: ArticleSourceInput): Promise<ArticleSourceRow> {
+      const parsed = articleSourceInputSchema.parse(input);
+      const { data, error } = await supabase.from("article_sources").insert(toInsert(parsed)).select("*").single();
+      if (error) throw error;
+      return data;
+    },
+
+    /**
+     * Full-record edit for the Admin Sources CMS - unlike `updateFields`
+     * (deliberately narrow, toggle-only), this lets an admin correct
+     * name/domain/logo/official/country in addition to active/trustScore.
+     */
+    async updateAll(id: string, patch: Partial<Omit<ArticleSourceRow, "id" | "created_at" | "updated_at">>): Promise<void> {
+      if (Object.keys(patch).length === 0) return;
+      const { error } = await supabase.from("article_sources").update(patch).eq("id", id);
+      if (error) throw error;
+    },
+
+    /**
+     * Deletes a source row. `articles.source_id` has `on delete cascade`
+     * (see `supabase/migrations/0002_article_storage.sql`), so this also
+     * deletes every article ever ingested from this source - callers
+     * (the admin API route) must surface that clearly before confirming.
+     */
+    async remove(id: string): Promise<void> {
+      const { error } = await supabase.from("article_sources").delete().eq("id", id);
+      if (error) throw error;
+    },
   };
 }
 

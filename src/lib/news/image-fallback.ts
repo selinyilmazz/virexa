@@ -11,6 +11,10 @@ const CATEGORY_FALLBACK_IMAGES: Record<Category, string> = {
   AI: "/images/news/fallback/ai.svg",
   Business: "/images/news/fallback/business.svg",
   Games: "/images/news/fallback/games.svg",
+  // No dedicated asset yet (stabilization pass added this category) -
+  // reuses the Games artwork rather than falling through to Technology,
+  // since it's the closer visual match until a bespoke SVG is added.
+  "Mobile Games": "/images/news/fallback/games.svg",
   World: "/images/news/fallback/world.svg",
   Science: "/images/news/fallback/science.svg",
   Security: "/images/news/fallback/security.svg",

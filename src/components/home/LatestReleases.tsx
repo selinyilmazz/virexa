@@ -28,6 +28,13 @@ const STATUS_BADGE_CLASSES: Record<ReleaseStatus, string> = {
  * real chosen article - see `getLatestReleases`'s `status`/`relativeDate`
  * fields. Expanded from 6 to 7 rows (matches `WATCHED_RELEASES`'s full
  * watch list).
+ *
+ * Stabilization pass: added a "View All" link to `/developer-hub/releases`
+ * - the one canonical Releases listing (the former duplicate standalone
+ * `/developer-releases` route now redirects there) - now that "Developer
+ * Releases" itself was removed from the top `CategoryNav` row, this
+ * widget's "View All" is the only way to reach the full listing from the
+ * homepage.
  */
 export async function LatestReleases() {
   const releases = await getLatestReleases(7);
@@ -39,6 +46,9 @@ export async function LatestReleases() {
         <h2 id="latest-releases-title" className="text-lg font-bold tracking-tight text-slate-950">
           Developer Releases
         </h2>
+        <Link href="/developer-hub/releases" className="text-sm font-semibold text-[#2f67e8] hover:text-[#2556c9]">
+          View All
+        </Link>
       </div>
 
       <ul className="mt-4 space-y-1">

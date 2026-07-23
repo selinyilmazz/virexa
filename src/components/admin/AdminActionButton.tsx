@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/admin/ToastProvider";
 
 type AdminActionButtonVariant = "primary" | "secondary" | "warning";
 
 type AdminActionButtonProps = {
-  label: string;
-  pendingLabel?: string;
+  label: ReactNode;
+  pendingLabel?: ReactNode;
   endpoint: string;
-  method?: "POST" | "PATCH";
+  method?: "POST" | "PATCH" | "DELETE";
   /** Computed at click time (not render time) - lets callers read current UI state, e.g. a bulk-selection Set or a trust-score input value, at the moment the action actually runs. */
   buildBody?: () => unknown;
   /** When set, clicking shows an inline confirmation step before the request fires (requirement 7: "Confirmation"). Omit for genuinely low-stakes actions. */

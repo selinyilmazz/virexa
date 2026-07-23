@@ -59,10 +59,10 @@ export function NewsExplorerPagination({ page, totalPages, buildHref }: NewsExpl
   const isLast = page >= totalPages;
 
   const pageButtonBase = "flex h-11 min-w-11 items-center justify-center rounded-xl border px-3 text-sm font-semibold transition-colors";
-  const inactivePageClass = `${pageButtonBase} border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50`;
+  const inactivePageClass = `${pageButtonBase} border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50`;
   const activePageClass = `${pageButtonBase} border-[#2f67e8] bg-[#2f67e8] text-white`;
   const navButtonClass =
-    "flex h-11 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:border-blue-200 hover:bg-blue-50";
+    "flex h-11 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50";
   const navButtonDisabledClass =
     "flex h-11 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-300 opacity-50 cursor-not-allowed";
 
