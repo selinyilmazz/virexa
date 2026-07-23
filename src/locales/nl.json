@@ -112,7 +112,7 @@
     },
     "divider": "of ga verder met",
     "google": "Doorgaan met Google",
-    "googleUnavailable": "Inloggen met Google is nog niet beschikbaar. Gebruik e-mail en wachtwoord.",
+    "googleSigningIn": "Bezig met inloggen...",
     "termsNotice": "Door {action} ga je akkoord met onze {terms} en ons {privacy}",
     "termsOfService": "Gebruiksvoorwaarden",
     "privacyPolicy": "Privacybeleid",

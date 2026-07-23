@@ -38,14 +38,14 @@ export function TopSources({ sources }: TopSourcesProps) {
               className="group block rounded-xl px-1 py-1 transition-colors hover:bg-slate-50"
             >
               <div className="flex items-center justify-between gap-3 text-sm">
-                <span className="min-w-0 truncate font-semibold text-slate-800 group-hover:text-[#2f67e8]">
+                <span className="min-w-0 truncate font-semibold text-slate-800 group-hover:text-slate-700">
                   {source.name}
                 </span>
                 <span className="shrink-0 text-xs font-medium text-slate-400">{source.count}</span>
               </div>
               <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                 <div
-                  className="h-full rounded-full bg-[#2f67e8]/70 transition-all group-hover:bg-[#2f67e8]"
+                  className="h-full rounded-full bg-slate-400 transition-all group-hover:bg-slate-500"
                   style={{ width: `${Math.max(8, Math.round((source.count / maxCount) * 100))}%` }}
                 />
               </div>

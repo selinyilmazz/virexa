@@ -53,6 +53,30 @@ export function retryReadingHistory(): Promise<void> {
   return store.retry();
 }
 
+/**
+ * Settings/Privacy "Clear Reading History" (Settings redesign). Unlike
+ * `clearBookmarks()`, this can't call the repository directly - there is
+ * no delete RLS policy for the `authenticated` role on `reading_history`
+ * (see migration `0011_reading_history.sql`'s doc comment: every write
+ * goes through the service-role client from a trusted server path).
+ * Clears the local cache optimistically, then calls the server route
+ * that performs the real, service-role-authenticated delete; rolls the
+ * cache back to whatever the next background refresh loads if the
+ * request fails.
+ */
+export async function clearReadingHistory(): Promise<void> {
+  await store.mutate(
+    () => [],
+    async () => {
+      const response = await fetch("/api/reading-history/clear", { method: "POST" });
+      const body = (await response.json().catch(() => ({ ok: false }))) as { ok: boolean };
+      if (!response.ok || !body.ok) {
+        throw new Error("Failed to clear reading history.");
+      }
+    }
+  );
+}
+
 function subscribeToReadingHistory(callback: () => void) {
   return store.subscribe(callback);
 }

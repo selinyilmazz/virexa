@@ -9,6 +9,8 @@ export type ReadingHistoryRecord = {
   image: string;
   category: string;
   source: string;
+  /** Denormalized display string (e.g. "5 min read") - see migration 0017. Empty string for rows recorded before this field existed. */
+  readingTime: string;
   readAt: string;
 };
 
@@ -20,6 +22,7 @@ function toRecord(row: ReadingHistoryRow): ReadingHistoryRecord {
     image: row.article_image,
     category: row.article_category,
     source: row.article_source,
+    readingTime: row.article_reading_time,
     readAt: row.read_at,
   };
 }
@@ -71,6 +74,7 @@ export function createReadingHistoryRepository(supabase: SupabaseClient<Database
           article_image: item.image,
           article_category: item.category,
           article_source: item.source,
+          article_reading_time: item.readingTime,
           read_at: new Date().toISOString(),
         },
         { onConflict: "user_id,article_id" }

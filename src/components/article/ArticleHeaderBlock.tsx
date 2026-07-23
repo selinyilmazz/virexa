@@ -22,7 +22,7 @@ type ArticleHeaderBlockProps = {
 export function ArticleHeaderBlock({ category, title, deck }: ArticleHeaderBlockProps) {
   return (
     <div>
-      <span className="inline-flex rounded-full bg-blue-50 px-4 py-1 text-sm font-medium text-[#2f67e8]">{category}</span>
+      <span className="inline-flex rounded-full bg-slate-100 px-4 py-1 text-sm font-medium text-slate-600">{category}</span>
       <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tight text-slate-950 sm:text-4xl lg:text-[2.75rem]">{title}</h1>
       {deck && <p className="mt-4 line-clamp-3 max-w-3xl text-lg leading-relaxed text-slate-600">{deck}</p>}
     </div>

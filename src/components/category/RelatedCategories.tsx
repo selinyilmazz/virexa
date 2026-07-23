@@ -43,7 +43,7 @@ export function RelatedCategories({ categories }: RelatedCategoriesProps) {
                 {category.icon}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold text-slate-800 group-hover:text-[#2f67e8]">
+                <span className="block truncate text-sm font-semibold text-slate-800 group-hover:text-slate-700">
                   {category.name}
                 </span>
                 <span className="block text-xs text-slate-400">{category.count} articles</span>

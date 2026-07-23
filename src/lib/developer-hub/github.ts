@@ -27,6 +27,8 @@ export type GithubRepo = {
   license: string | null;
   /** Real repo topics as set by the maintainers on GitHub (`repo.topics`), e.g. `["react", "frontend"]`. Empty array when none are set. */
   topics: string[];
+  /** Real repo creation date from GitHub (`repo.created_at`) - powers an honest "New" sort on the Open Source Explorer instead of a fabricated one. */
+  createdAt: string;
 };
 
 /** Real, well-known repositories - a stand-in for "trending" since GitHub doesn't expose that ranking publicly. */
@@ -52,6 +54,7 @@ type GithubApiRepo = {
   stargazers_count: number;
   forks_count: number;
   updated_at: string;
+  created_at: string;
   html_url: string;
   license: { spdx_id: string | null; name: string } | null;
   topics?: string[];
@@ -88,6 +91,7 @@ async function fetchRepo(fullName: string): Promise<GithubRepo | null> {
       url: data.html_url,
       license,
       topics: data.topics ?? [],
+      createdAt: data.created_at,
     };
   } catch {
     // A single repo failing to fetch (rate limit, network hiccup) should

@@ -57,3 +57,23 @@ export function useReleaseBookmark(techSlug: string): [boolean, () => void] {
 
   return [isSaved, toggle];
 }
+
+/**
+ * Every saved technology slug (Bookmarks page redesign - "Developer
+ * Release" bookmark cards). Resolves nothing on its own; the caller
+ * (`BookmarksContent.tsx`) looks each slug up against the static
+ * `src/data/releases.tsx` catalog via `getTechnologyRelease` to get real
+ * display fields, so a slug whose release was since removed from the
+ * catalog is simply dropped rather than rendered with fake data. Reads
+ * localStorage only after mount, same SSR-safe convention as
+ * `useReleaseBookmark` above.
+ */
+export function useSavedReleaseSlugs(): string[] {
+  const [slugs, setSlugs] = useState<string[]>([]);
+
+  useEffect(() => {
+    setSlugs(readAll());
+  }, []);
+
+  return slugs;
+}

@@ -1,37 +1,28 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
-import { toggleBookmark, useIsBookmarked, type BookmarkItem } from "@/lib/bookmarks";
-import { useAuth } from "@/hooks/useAuth";
+import { useBookmarkAction } from "@/hooks/useBookmarkAction";
+import { AuthToast } from "@/components/auth/AuthToast";
+import type { BookmarkItem } from "@/lib/bookmarks";
 
 type BookmarkButtonProps = {
   item: BookmarkItem;
   variant?: "icon" | "pill";
   className?: string;
-  /** Called if the Supabase write fails, after the optimistic state has already rolled back. */
+  /**
+   * Called if the Supabase write fails, after the optimistic state has
+   * already rolled back. Optional - if omitted, `useBookmarkAction`
+   * surfaces the real error itself via a built-in toast (see below), so
+   * a failure is never silent regardless of whether the caller wires
+   * this up.
+   */
   onError?: (message: string) => void;
 };
 
 export function BookmarkButton({ item, variant = "icon", className = "", onError }: BookmarkButtonProps) {
-  const storedBookmarked = useIsBookmarked(item.slug);
-  const { user } = useAuth();
-  const bookmarked = user ? storedBookmarked : false;
-  const router = useRouter();
-  const pathname = usePathname();
+  const { bookmarked, trigger, error } = useBookmarkAction(item, { onError });
 
   function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!user) {
-      router.push(`/signin?redirect=${encodeURIComponent(pathname)}`);
-      return;
-    }
-    // Optimistic: the icon flips immediately. `toggleBookmark` persists
-    // to Supabase in the background and rolls the local state back on
-    // its own if that write fails - this just reports the failure.
-    toggleBookmark(item).catch(() => {
-      onError?.("Couldn't update your bookmark. Please try again.");
-    });
+    trigger(event);
   }
 
   const icon = (
@@ -49,19 +40,22 @@ export function BookmarkButton({ item, variant = "icon", className = "", onError
 
   if (variant === "pill") {
     return (
-      <button
-        type="button"
-        onClick={handleClick}
-        aria-pressed={bookmarked}
-        className={`inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-base font-medium transition-colors ${
-          bookmarked
-            ? "border-[#2f67e8] bg-blue-50 text-[#2f67e8]"
-            : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-        } ${className}`}
-      >
-        {icon}
-        {bookmarked ? "Bookmarked" : "Bookmark"}
-      </button>
+      <>
+        {error && <AuthToast message={error} variant="error" />}
+        <button
+          type="button"
+          onClick={handleClick}
+          aria-pressed={bookmarked}
+          className={`inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-base font-medium transition-colors ${
+            bookmarked
+              ? "border-[#2f67e8] bg-blue-50 text-[#2f67e8]"
+              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+          } ${className}`}
+        >
+          {icon}
+          {bookmarked ? "Bookmarked" : "Bookmark"}
+        </button>
+      </>
     );
   }
 
@@ -83,16 +77,19 @@ export function BookmarkButton({ item, variant = "icon", className = "", onError
   // carry. `hover:scale-110`/`active:scale-95` is the "hover animations
   // welcome" touch.
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      aria-pressed={bookmarked}
-      aria-label={bookmarked ? "Remove bookmark" : "Add bookmark"}
-      className={`z-10 transition-all duration-150 hover:scale-110 active:scale-95 ${
-        bookmarked ? "text-[#2f67e8]" : "text-slate-400 hover:text-slate-600"
-      } ${className}`}
-    >
-      {icon}
-    </button>
+    <>
+      {error && <AuthToast message={error} variant="error" />}
+      <button
+        type="button"
+        onClick={handleClick}
+        aria-pressed={bookmarked}
+        aria-label={bookmarked ? "Remove bookmark" : "Add bookmark"}
+        className={`z-10 transition-all duration-150 hover:scale-110 active:scale-95 ${
+          bookmarked ? "text-[#2f67e8]" : "text-slate-400 hover:text-slate-600"
+        } ${className}`}
+      >
+        {icon}
+      </button>
+    </>
   );
 }

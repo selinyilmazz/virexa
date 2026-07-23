@@ -1,10 +1,17 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "@/i18n/i18n-provider";
 
 const DEBOUNCE_MS = 400;
+
+/** Premium-navbar search placeholder (Linear/GitHub style) - see `Header.tsx`'s matching constant for the SSR fallback `<input>` shown before this client component hydrates. */
+const SEARCH_PLACEHOLDER = "Search articles, releases, repositories, technologies...";
+
+/** Per-page placeholder override - text only, same input/box/behavior everywhere (no navbar redesign). Falls back to `SEARCH_PLACEHOLDER` for every page not listed. */
+const PATH_PLACEHOLDER_OVERRIDES: Record<string, string> = {
+  "/open-source": "Search repositories, developers, organizations...",
+};
 
 /**
  * Every unified Explorer route - each owns its own `q` param and should
@@ -41,6 +48,9 @@ const IN_PLACE_SEARCH_PATHS = [
   "/developer-hub/roadmaps",
   "/developer-hub/releases",
   "/developer-hub/cheat-sheets",
+  // Standalone `/developer-releases` route (Navigation/Profile/Settings
+  // UX update) - same underlying content/params as `/developer-hub/releases`.
+  "/developer-releases",
 ];
 
 type HeaderSearchInputProps = {
@@ -64,13 +74,40 @@ type HeaderSearchInputProps = {
  * back/forward). This avoids syncing state via a `useEffect`.
  */
 export function HeaderSearchInput({ initialQuery }: HeaderSearchInputProps) {
-  const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isInPlaceSearchPage = IN_PLACE_SEARCH_PATHS.includes(pathname);
   const currentQuery = isInPlaceSearchPage ? (searchParams.get("q") ?? initialQuery ?? "") : "";
+  const placeholder = PATH_PLACEHOLDER_OVERRIDES[pathname] ?? SEARCH_PLACEHOLDER;
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Cmd+K on Mac, Ctrl+K everywhere else - standard command-palette-style
+  // convention (Linear/GitHub). Kept even though the visible "Ctrl K"
+  // badge was removed from `Header.tsx` (Search Bar UX update): it's
+  // still a nice, discoverable-enough power-user shortcut on its own.
+  // Skipped while focus is already inside a text field/textarea/select
+  // elsewhere on the page, so it never steals a keystroke from another
+  // input the visitor is actively typing into.
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "k") return;
+      const active = document.activeElement;
+      const isTypingElsewhere =
+        active instanceof HTMLElement &&
+        active !== inputRef.current &&
+        (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable);
+      if (isTypingElsewhere) return;
+
+      event.preventDefault();
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   function handleChange(nextValue: string) {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -99,14 +136,15 @@ export function HeaderSearchInput({ initialQuery }: HeaderSearchInputProps) {
   return (
     <input
       key={currentQuery}
+      ref={inputRef}
       id="site-search"
       name="q"
       type="search"
       defaultValue={currentQuery}
       onChange={(event) => handleChange(event.target.value)}
-      placeholder={t("nav.searchPlaceholder")}
+      placeholder={placeholder}
       autoComplete="off"
-      className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-900 outline-none placeholder:text-slate-500"
+      className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-900 outline-none placeholder:text-slate-500 dark:text-slate-100 dark:placeholder:text-slate-500"
     />
   );
 }

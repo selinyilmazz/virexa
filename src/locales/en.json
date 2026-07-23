@@ -112,7 +112,7 @@
     },
     "divider": "or continue with",
     "google": "Continue with Google",
-    "googleUnavailable": "Google sign-in isn't available yet. Please use email and password.",
+    "googleSigningIn": "Signing in...",
     "termsNotice": "By {action}, you agree to our {terms} and {privacy}",
     "termsOfService": "Terms of Service",
     "privacyPolicy": "Privacy Policy",

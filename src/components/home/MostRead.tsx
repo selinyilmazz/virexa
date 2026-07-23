@@ -65,11 +65,11 @@ export async function MostRead() {
                 />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="line-clamp-2 block text-sm font-semibold leading-snug text-slate-950 group-hover:text-[#2f67e8]">
+                <span className="line-clamp-2 block text-sm font-semibold leading-snug text-slate-950 group-hover:text-slate-700">
                   {item.title}
                 </span>
                 <span className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-slate-500">
-                  <span className="font-semibold text-[#2f67e8]">{item.category}</span>
+                  <span className="font-semibold text-slate-500">{item.category}</span>
                   {item.readingTime && (
                     <>
                       <span aria-hidden="true">·</span>

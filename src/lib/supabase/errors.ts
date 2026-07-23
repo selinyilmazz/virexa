@@ -32,9 +32,47 @@ export function getAuthErrorMessage(error: AuthError): string {
   if (normalized.includes("failed to fetch") || normalized.includes("network")) {
     return "Network error. Please check your connection and try again.";
   }
+  if (normalized.includes("provider is not enabled") || normalized.includes("unsupported provider")) {
+    // The one legitimate case where "not available" copy is still shown -
+    // but now it's driven by a real error Supabase returned (the provider
+    // toggle is off in the dashboard), not a hardcoded placeholder that
+    // fired unconditionally regardless of configuration.
+    return "Google sign-in isn't enabled for this app yet. Please use email and password.";
+  }
+  if (normalized.includes("session") && (normalized.includes("expired") || normalized.includes("invalid"))) {
+    return "Your session has expired. Please sign in again.";
+  }
   if (normalized.length === 0) {
     return "Something went wrong. Please try again in a moment.";
   }
 
   return error.message;
+}
+
+/**
+ * Maps the `error`/`error_code` query params Supabase (or Google itself)
+ * appends to the OAuth callback redirect - a different surface than
+ * `getAuthErrorMessage` above, since these never reach the app as a JS
+ * `AuthError` object; they arrive as plain URL params on the redirect
+ * `src/app/auth/callback/route.ts` forwards to `/signin?authError=...`.
+ * Kept in this file (not duplicated elsewhere) so every user-facing auth
+ * error - password-based or OAuth - is mapped to friendly copy in one
+ * place.
+ */
+export function getOAuthErrorMessage(errorCode: string | null): string | null {
+  if (!errorCode) return null;
+
+  switch (errorCode) {
+    case "access_denied":
+      return "Google sign-in was cancelled.";
+    case "server_error":
+    case "temporarily_unavailable":
+      return "Google is temporarily unavailable. Please try again in a moment.";
+    case "exchange_failed":
+      return "We couldn't complete your Google sign-in. Please try again.";
+    case "missing_code":
+      return "Google sign-in didn't return the expected response. Please try again.";
+    default:
+      return "Something went wrong signing in with Google. Please try again.";
+  }
 }

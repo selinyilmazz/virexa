@@ -15,7 +15,6 @@ import {
 } from "@/components/developer-hub/CategoryIcons";
 import { LANGUAGE_DOT_COLORS, formatStat } from "@/components/developer-hub/CatalogCard";
 import { ContinueLearningSection } from "@/components/developer-hub/ContinueLearningSection";
-import { DeveloperHubStatsStrip } from "@/components/developer-hub/DeveloperHubStatsStrip";
 import { FeaturedResourcesCarousel } from "@/components/developer-hub/FeaturedResourcesCarousel";
 import {
   AwsIcon,
@@ -181,9 +180,7 @@ export default async function DeveloperHubPage() {
       <Header />
       <main className="bg-[#f8fafc] px-5 py-8 sm:px-8">
         <div className="mx-auto max-w-[1820px]">
-          <DeveloperHubStatsStrip />
-
-          <nav aria-label="Breadcrumb" className="mt-6 flex items-center gap-2 text-sm text-slate-500">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-slate-500">
             <Link href="/" className="transition-colors duration-200 hover:text-slate-700">
               Home
             </Link>
@@ -214,7 +211,7 @@ export default async function DeveloperHubPage() {
                 </a>
                 <Link
                   href="/developer-hub/learning-paths"
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#2f67e8] hover:text-[#2f67e8] hover:shadow-sm"
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm"
                 >
                   <RouteIcon className="size-4" />
                   Start Learning

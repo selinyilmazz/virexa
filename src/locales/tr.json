@@ -112,7 +112,7 @@
     },
     "divider": "veya şununla devam et",
     "google": "Google ile devam et",
-    "googleUnavailable": "Google ile giriş henüz kullanılamıyor. Lütfen e-posta ve şifre ile devam et.",
+    "googleSigningIn": "Giriş yapılıyor...",
     "termsNotice": "{action}, {terms} ve {privacy} kabul etmiş olursun",
     "termsOfService": "Kullanım Şartları",
     "privacyPolicy": "Gizlilik Politikası",

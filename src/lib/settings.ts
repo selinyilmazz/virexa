@@ -17,16 +17,34 @@ export type { UserSettings } from "@/types/settings";
  */
 export const defaultSettings: UserSettings = {
   language: "en",
+  timezone: "UTC",
   summaryLength: "medium",
   preferredCategories: ["Technology", "AI"],
+  theme: "system",
+  readingWidth: "comfortable",
+  readingProgressBar: true,
+  rememberScrollPosition: false,
   notifications: {
     email: true,
     push: false,
     weeklyDigest: true,
+    breakingNews: true,
+    developerReleases: true,
+    securityAlerts: true,
+    dailyDigest: false,
+    bookmarkReminders: true,
+    developerHubUpdates: false,
   },
   emailPreferences: {
     productUpdates: true,
     accountActivity: true,
+  },
+  privacy: {
+    profileVisibility: "private",
+    analyticsConsent: true,
+    personalizedRecommendations: true,
+    trackSearchHistory: true,
+    trackReadingHistory: true,
   },
   openLinksInNewTab: true,
 };

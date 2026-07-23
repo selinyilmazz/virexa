@@ -28,7 +28,7 @@ export function GithubSortControl() {
       <select
         value={currentSort}
         onChange={(event) => handleChange(event.target.value)}
-        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 outline-none transition-colors duration-200 focus:border-[#2f67e8]"
+        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 outline-none transition-colors duration-200 focus:border-slate-300"
       >
         {SORT_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>

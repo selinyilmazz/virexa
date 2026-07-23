@@ -1,39 +1,35 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Header } from "@/components/layout/Header";
+import { SettingsPageHeader } from "@/components/settings/SettingsPageHeader";
 import { SettingsForm } from "@/components/settings/SettingsForm";
-import { getServerTranslations } from "@/i18n/get-server-translations";
+import { AuthedThemeScope } from "@/components/providers/AuthedThemeScope";
 
 export const metadata: Metadata = {
   title: "Settings | Virexa",
 };
 
-export default async function SettingsPage() {
-  const { t } = await getServerTranslations();
-
+/**
+ * Settings page (redesign) - "Manage your Virexa experience.": page
+ * header (breadcrumb/eyebrow/title/subtitle - `SettingsPageHeader`) above
+ * the categorized settings form (General/Reading/Notifications/Privacy/
+ * Appearance/Account - `SettingsForm`). Same 16px-radius/soft-shadow
+ * language as the redesigned Bookmarks/Profile pages. Wrapped in
+ * `AuthedThemeScope` (Navigation/Profile/Settings UX update) - real,
+ * instant dark mode for this page and its Header.
+ */
+export default function SettingsPage() {
   return (
-    <>
+    <AuthedThemeScope>
       <Header />
-      <main className="bg-[#f8fafc] px-5 py-8 sm:px-8">
-        <div className="mx-auto max-w-4xl">
-          <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-            <Link href="/" className="transition-colors hover:text-[#2f67e8]">
-              {t("common.home")}
-            </Link>
-            <span aria-hidden="true">›</span>
-            <span className="font-medium text-slate-950">{t("settings.title")}</span>
-          </nav>
-
-          <div className="mt-4">
-            <h1 className="text-4xl font-bold tracking-tight text-slate-950">{t("settings.title")}</h1>
-            <p className="mt-2 text-base text-slate-500">{t("settings.subtitle")}</p>
-          </div>
+      <main className="bg-[#f8fafc] px-5 py-10 sm:px-8 dark:bg-slate-950">
+        <div className="mx-auto max-w-[1100px]">
+          <SettingsPageHeader />
 
           <div className="mt-8">
             <SettingsForm />
           </div>
         </div>
       </main>
-    </>
+    </AuthedThemeScope>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AuthInput } from "@/components/auth/AuthInput";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { AuthDivider } from "@/components/auth/AuthDivider";
@@ -12,7 +12,8 @@ import { Spinner } from "@/components/auth/Spinner";
 import { AuthToast } from "@/components/auth/AuthToast";
 import { isRequired, isStrongEnoughPassword, isValidEmail } from "@/lib/validators";
 import { createClient } from "@/lib/supabase/client";
-import { getAuthErrorMessage } from "@/lib/supabase/errors";
+import { getAuthErrorMessage, getOAuthErrorMessage } from "@/lib/supabase/errors";
+import { signInWithOAuthProvider } from "@/lib/supabase/oauth";
 import { useTranslations } from "@/i18n/i18n-provider";
 
 type FormErrors = {
@@ -49,6 +50,7 @@ type SignUpFormProps = {
 export function SignUpForm({ redirectTo }: SignUpFormProps) {
   const t = useTranslations();
   const router = useRouter();
+  const searchParams = useSearchParams();
   // Guards against open redirects: must be an internal path (starts with
   // "/") and NOT protocol-relative ("//evil.com" also starts with "/" but
   // browsers resolve it as an absolute URL to a different origin - a
@@ -67,6 +69,18 @@ export function SignUpForm({ redirectTo }: SignUpFormProps) {
     setToast({ message, variant });
     setTimeout(() => setToast(null), durationMs);
   }
+
+  useEffect(() => {
+    // See `SignInForm`'s identical effect - `/auth/callback` always
+    // redirects OAuth failures to `/signin`, but a visitor can still land
+    // here (e.g. a bookmarked `/signup` tab) with a stale `authError`
+    // param, so this page honors it too.
+    const message = getOAuthErrorMessage(searchParams.get("authError"));
+    if (message) {
+      showToast(message, "error", 5000);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function validate(): boolean {
     const nextErrors: FormErrors = {};
@@ -127,8 +141,13 @@ export function SignUpForm({ redirectTo }: SignUpFormProps) {
     router.refresh();
   }
 
-  function handleGoogleClick() {
-    showToast(t("auth.googleUnavailable"), "info", 3500);
+  async function handleGoogleClick() {
+    const result = await signInWithOAuthProvider("google", safeRedirectTo);
+    if (!result.ok) {
+      showToast(result.message, "error", 5000);
+    }
+    // On success the browser is already navigating to Google's consent
+    // screen - there's nothing further to do here.
   }
 
   return (

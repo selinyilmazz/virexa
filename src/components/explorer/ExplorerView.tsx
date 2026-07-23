@@ -7,7 +7,6 @@ import { NewsExplorerFilters } from "@/components/news-explorer/NewsExplorerFilt
 import { NewsExplorerPagination } from "@/components/news-explorer/NewsExplorerPagination";
 import { NewsExplorerResults } from "@/components/news-explorer/NewsExplorerResults";
 import { NewsExplorerSortControl } from "@/components/news-explorer/NewsExplorerSortControl";
-import { NewsExplorerStatsStrip } from "@/components/news-explorer/NewsExplorerStatsStrip";
 import { ScrollToResultsOnPageChange } from "@/components/news-explorer/ScrollToResultsOnPageChange";
 import type { PulseTopicKey } from "@/lib/explorer/developer-pulse-data";
 import { SEARCH_CATEGORY_SLUGS } from "@/lib/news";
@@ -71,7 +70,7 @@ type ExplorerViewProps = {
  * AI/Programming/Cloud/Security/Open Source/Resources pages. Per the
  * unified-Explorer design: these pages only ever differ in their
  * title/subtitle and which filters start pre-applied - the Header,
- * Breadcrumb, Stats Strip, Filters sidebar (`FiltersDrawer` - sticky
+ * Breadcrumb, Filters sidebar (`FiltersDrawer` - sticky
  * column at `xl`+, off-canvas drawer below it), Sort control, Article
  * Cards, right-hand `ExplorerSidebar` (a single `DeveloperPulse` panel -
  * collapses below the results on narrower screens), and
@@ -146,9 +145,7 @@ export async function ExplorerView({
       <Header initialSearchQuery={query || undefined} />
       <main className="bg-[#f8fafc] px-5 py-8 sm:px-8">
         <div className="mx-auto max-w-[1820px]">
-          <NewsExplorerStatsStrip />
-
-          <nav aria-label="Breadcrumb" className="mt-6 flex items-center gap-2 text-sm text-slate-500">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-slate-500">
             <Link href="/" className="transition-colors duration-200 hover:text-slate-700">
               Home
             </Link>
@@ -157,7 +154,7 @@ export async function ExplorerView({
           </nav>
 
           <div className="mt-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2f67e8]">Explore</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Explore</p>
             <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{title}</h1>
             <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-500">{subtitle}</p>
           </div>

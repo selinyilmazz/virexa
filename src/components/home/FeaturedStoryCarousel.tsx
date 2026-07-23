@@ -121,7 +121,7 @@ export function FeaturedStoryCarousel({ slides }: { slides: FeaturedSlide[] }) {
         <p className="line-clamp-3 max-w-xl text-base leading-relaxed text-white/70">{slide.summary}</p>
 
         <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-white/60">
-          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#2f67e8] text-[11px] font-bold text-white">
+          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-slate-700 text-[11px] font-bold text-white">
             {slide.source.charAt(0).toUpperCase()}
           </span>
           <span className="text-white/85">{slide.source}</span>

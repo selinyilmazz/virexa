@@ -39,9 +39,9 @@ export function DangerZoneCard() {
   }
 
   return (
-    <div className="rounded-3xl border border-red-200 bg-red-50/40 p-6 shadow-sm sm:p-8">
+    <div className="rounded-3xl border border-red-200 dark:border-red-900 bg-red-50/40 dark:bg-red-950/20 p-6 shadow-sm sm:p-8">
       <h2 className="text-2xl font-bold tracking-tight text-red-600">Danger Zone</h2>
-      <p className="mt-1 text-base text-slate-500">
+      <p className="mt-1 text-base text-slate-500 dark:text-slate-400">
         Deleting your account permanently clears your saved articles, profile and preferences from this device.
       </p>
       <button

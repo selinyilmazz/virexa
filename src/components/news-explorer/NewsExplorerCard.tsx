@@ -117,7 +117,7 @@ export function NewsExplorerCard({ item, highlightQuery }: NewsExplorerCardProps
         )}
 
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="rounded-full bg-blue-50 px-2.5 py-1 font-semibold text-[#2f67e8]">{item.category}</span>
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-700">{item.category}</span>
           <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">
             {CONTENT_TYPE_LABELS[item.contentType]}
           </span>

@@ -37,10 +37,10 @@ function TrendingTopicCard({ topic }: { topic: TrendingCategoryStat | TrendingTo
   return (
     <li className="rounded-xl border border-slate-200 p-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
       <Link href={categoryHref} className="group flex items-center gap-2">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-sm">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-sm">
           {topic.icon}
         </span>
-        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-950 group-hover:text-[#2f67e8]">
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-950 group-hover:text-slate-700">
           {topic.name}
         </span>
         <TrendBadge direction={topic.trendDirection} percent={topic.trendPercent} />
@@ -73,7 +73,7 @@ export async function TrendingTopics() {
   return (
     <section aria-labelledby="trending-topics-title">
       <div className="px-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2f67e8]">This Week</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">This Week</p>
         <h2 id="trending-topics-title" className="mt-1 text-xl font-bold tracking-tight text-slate-950">
           🔥 Trending Topics
         </h2>

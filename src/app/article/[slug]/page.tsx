@@ -84,6 +84,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         image: article.image,
         category: article.category,
         source: article.source,
+        readingTime: article.readingTime,
       });
     }
   } catch (error) {

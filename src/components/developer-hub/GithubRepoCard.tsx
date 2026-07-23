@@ -1,5 +1,6 @@
 import { LANGUAGE_DOT_COLORS, formatStat } from "@/components/developer-hub/CatalogCard";
 import { resolveBrandVisual } from "@/components/developer-hub/brand-icons";
+import { RepoBookmarkButton } from "@/components/developer-hub/RepoBookmarkButton";
 import type { CatalogItem } from "@/services/developer-hub/developer-hub-service";
 
 function StarIcon({ className = "size-3.5" }: { className?: string }) {
@@ -43,7 +44,7 @@ export function GithubRepoCard({ item }: GithubRepoCardProps) {
   const visual = resolveBrandVisual(item.brandKey);
 
   return (
-    <article className="group relative flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-[#2f67e8]/40 hover:shadow-md sm:p-5">
+    <article className="group relative flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-md sm:p-5">
       <div className="flex items-start gap-4">
         <span
           aria-hidden="true"
@@ -59,6 +60,20 @@ export function GithubRepoCard({ item }: GithubRepoCardProps) {
           </h3>
           <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-500">{item.description}</p>
         </div>
+
+        <RepoBookmarkButton
+          repo={{
+            id: item.id,
+            owner: item.owner ?? "",
+            repoName: item.repoName ?? item.title,
+            description: item.description,
+            stars: item.stars ?? 0,
+            language: item.tag ?? null,
+            license: item.license ?? null,
+            url: item.url,
+            brandKey: item.brandKey,
+          }}
+        />
       </div>
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-slate-500">
@@ -83,7 +98,7 @@ export function GithubRepoCard({ item }: GithubRepoCardProps) {
       {item.topics && item.topics.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {item.topics.slice(0, 6).map((topic) => (
-            <span key={topic} className="rounded-full bg-[#2f67e8]/5 px-2 py-0.5 text-[11px] font-medium text-[#2f67e8]">
+            <span key={topic} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
               {topic}
             </span>
           ))}

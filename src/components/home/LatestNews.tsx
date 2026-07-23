@@ -30,7 +30,7 @@ export async function LatestNews() {
   return (
     <section aria-labelledby="latest-news-title" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2f67e8]">Newsroom</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Newsroom</p>
         <h2 id="latest-news-title" className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
           Top Stories
         </h2>
@@ -57,7 +57,7 @@ export async function LatestNews() {
           <div className="mt-8 flex justify-center">
             <Link
               href="/news"
-              className="inline-flex items-center gap-2 rounded-2xl border-2 border-[#2f67e8] px-6 py-3 text-base font-semibold text-[#2f67e8] transition-colors hover:bg-blue-50"
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 px-6 py-3 text-base font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50"
             >
               View All News
               <span aria-hidden="true">→</span>

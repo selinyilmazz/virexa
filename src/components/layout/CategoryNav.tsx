@@ -82,11 +82,30 @@ const navItems: NavItem[] = [
   {
     label: "Developer Hub",
     href: "/developer-hub",
+    // Deliberately does NOT match `/developer-hub/releases` (that has its
+    // own, more specific nav item below) - `startsWith` would otherwise
+    // highlight both items at once while on a Release Detail page.
     activePrefix: "/developer-hub",
     icon: (
       <svg {...ICON_PROPS}>
         <path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H16a2 2 0 0 1 2 2v14.5a1.5 1.5 0 0 1-1.5 1.5H6.5A1.5 1.5 0 0 1 5 19.5v-15Z" />
         <path d="M9 8h5M9 11h5" />
+      </svg>
+    ),
+  },
+  {
+    // Developer Releases has grown into a major feature on its own
+    // (Release Detail pages, per-technology bookmarking/view tracking -
+    // see `lib/release-bookmarks.ts`/`lib/release-views.ts`), so it now
+    // gets its own top-level nav item instead of living only inside
+    // Developer Hub's catalog.
+    label: "Developer Releases",
+    href: "/developer-hub/releases",
+    activePrefix: "/developer-hub/releases",
+    icon: (
+      <svg {...ICON_PROPS}>
+        <path d="M12 3v10M12 13l4-4M12 13 8 9" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -130,17 +149,30 @@ const navItems: NavItem[] = [
 export function CategoryNav() {
   const pathname = usePathname();
 
+  // Picks the LONGEST matching `activePrefix` rather than checking each
+  // item independently - "Developer Hub" (`/developer-hub`) and
+  // "Developer Releases" (`/developer-hub/releases`) would otherwise both
+  // highlight at once on a Release Detail page, since the former's prefix
+  // is a `startsWith` match of the latter's URLs too.
+  const activeLabel = navItems.reduce<string | null>((best, item) => {
+    if (!item.activePrefix || !pathname.startsWith(item.activePrefix)) return best;
+    const bestPrefix = best ? (navItems.find((candidate) => candidate.label === best)?.activePrefix ?? "") : "";
+    return item.activePrefix.length > bestPrefix.length ? item.label : best;
+  }, null);
+
   return (
-    <nav aria-label="Category navigation" className="border-b border-slate-200 bg-white">
+    <nav aria-label="Category navigation" className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
       <div className="mx-auto flex h-12 max-w-[1820px] items-center justify-start gap-2 overflow-x-auto px-5 sm:justify-center sm:gap-3 sm:px-8 lg:gap-5">
         {navItems.map((item) => {
-          const isActive = Boolean(item.activePrefix && pathname.startsWith(item.activePrefix));
+          const isActive = item.label === activeLabel;
           return (
             <Link
               key={item.label}
               href={item.href}
               className={`flex shrink-0 items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-                isActive ? "bg-blue-50 text-[#2f67e8]" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                isActive
+                  ? "bg-blue-50 text-[#2f67e8] dark:bg-blue-950/40 dark:text-blue-400"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
               }`}
             >
               {item.icon}

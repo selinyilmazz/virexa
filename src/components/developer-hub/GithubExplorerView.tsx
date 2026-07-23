@@ -80,7 +80,7 @@ export async function GithubExplorerView({ searchParams }: { searchParams: Githu
           <DeveloperHubStatsStrip />
 
           <div className="mt-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2f67e8]">Developer Hub</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Developer Hub</p>
             <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">GitHub Explorer</h1>
             <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-500">
               Live stars, forks and activity for well-known open source repositories.

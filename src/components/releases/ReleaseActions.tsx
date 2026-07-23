@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AuthToast, type AuthToastVariant } from "@/components/auth/AuthToast";
 import { useReleaseBookmark } from "@/lib/release-bookmarks";
+import { recordReleaseView } from "@/lib/release-views";
 
 type ReleaseActionsProps = {
   techSlug: string;
@@ -59,6 +60,13 @@ export function ReleaseActions({ techSlug, technologyName }: ReleaseActionsProps
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; variant: AuthToastVariant } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Real, distinct-technology view count (Profile page's "Developer
+  // Releases Viewed" stat) - recorded once per mount, i.e. once per real
+  // page open. See `lib/release-views.ts`'s doc comment.
+  useEffect(() => {
+    recordReleaseView(techSlug);
+  }, [techSlug]);
 
   useEffect(() => {
     if (!isPopoverOpen) return;

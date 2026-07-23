@@ -38,7 +38,7 @@ export function SidebarMiniCard({ slug, image, category, title, source, publishe
         />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="line-clamp-2 block text-sm font-semibold leading-snug text-slate-950 group-hover:text-[#2f67e8]">
+        <span className="line-clamp-2 block text-sm font-semibold leading-snug text-slate-950 group-hover:text-slate-700">
           {title}
         </span>
         <span className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">

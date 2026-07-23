@@ -11,7 +11,7 @@ export function RelatedArticleCard({ article }: RelatedArticleCardProps) {
   return (
     <Link
       href={`/article/${article.slug}`}
-      className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#2f67e8]/30 hover:shadow-md"
+      className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
     >
       <span className="relative size-20 shrink-0 overflow-hidden rounded-xl">
         <NewsImage

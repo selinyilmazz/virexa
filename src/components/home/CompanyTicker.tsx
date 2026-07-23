@@ -22,7 +22,7 @@ export function CompanyTicker() {
   return (
     <section aria-labelledby="trending-companies-title">
       <div className="px-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2f67e8]">Markets</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Markets</p>
         <h2 id="trending-companies-title" className="mt-1 text-xl font-bold tracking-tight text-slate-950">
           Trending Companies
         </h2>

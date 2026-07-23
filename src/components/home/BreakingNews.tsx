@@ -53,7 +53,7 @@ export async function BreakingNews() {
                   Just In
                 </span>
               )}
-              <span className="line-clamp-2 block text-sm font-semibold leading-snug text-slate-950 group-hover:text-[#2f67e8]">
+              <span className="line-clamp-2 block text-sm font-semibold leading-snug text-slate-950 group-hover:text-slate-700">
                 {item.title}
               </span>
               <span className="mt-1 block truncate text-xs text-slate-500">

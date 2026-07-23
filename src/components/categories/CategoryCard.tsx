@@ -25,13 +25,13 @@ export function CategoryCard({ slug, icon, name, tags, articleCount }: CategoryC
       className="flex flex-col gap-2.5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
     >
       <div className="flex items-center gap-3">
-        <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-xl">
+        <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xl">
           {icon}
         </span>
         <h2 className="min-w-0 truncate text-base font-bold tracking-tight text-slate-950">{name}</h2>
       </div>
       {tags.length > 0 && <p className="truncate text-xs font-medium text-slate-400">{tags.join(" • ")}</p>}
-      <p className="text-xs font-semibold text-[#2f67e8]">{articleCount} articles</p>
+      <p className="text-xs font-semibold text-slate-500">{articleCount} articles</p>
     </Link>
   );
 }

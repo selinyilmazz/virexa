@@ -22,7 +22,7 @@ export function HeaderBookmarkLink() {
       href="/bookmarks"
       aria-label={t("nav.bookmarks")}
       onClick={handleClick}
-      className="hidden shrink-0 items-center justify-center text-slate-500 transition-colors hover:text-[#2f67e8] md:flex"
+      className="hidden shrink-0 items-center justify-center text-slate-500 transition-colors hover:text-[#2f67e8] md:flex dark:text-slate-400 dark:hover:text-blue-400"
     >
       <svg
         aria-hidden="true"

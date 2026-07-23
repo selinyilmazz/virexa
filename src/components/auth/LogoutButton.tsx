@@ -7,9 +7,10 @@ type LogoutButtonProps = {
   className?: string;
   children: React.ReactNode;
   onBeforeNavigate?: () => void;
+  tabIndex?: number;
 };
 
-export function LogoutButton({ className, children, onBeforeNavigate }: LogoutButtonProps) {
+export function LogoutButton({ className, children, onBeforeNavigate, tabIndex }: LogoutButtonProps) {
   const router = useRouter();
 
   async function handleClick() {
@@ -21,7 +22,7 @@ export function LogoutButton({ className, children, onBeforeNavigate }: LogoutBu
   }
 
   return (
-    <button type="button" onClick={() => void handleClick()} className={className}>
+    <button type="button" onClick={() => void handleClick()} className={className} tabIndex={tabIndex}>
       {children}
     </button>
   );

@@ -3,7 +3,7 @@ export const TREND_COLOR: Record<"up" | "down" | "flat" | "new", string> = {
   up: "#16a34a",
   down: "#dc2626",
   flat: "#94a3b8",
-  new: "#2f67e8",
+  new: "#64748b",
 };
 
 type SparklineProps = {

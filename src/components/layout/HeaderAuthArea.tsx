@@ -3,11 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { useAuth } from "@/hooks/useAuth";
 import { getAvatarUrl, getDisplayName } from "@/lib/supabase/utils";
 import { useTranslations } from "@/i18n/i18n-provider";
 
+// Reading History and Developer Releases moved from Profile-tab/Developer
+// Hub sub-page deep links to their own standalone top-level routes
+// (Navigation/Profile/Settings UX update) - the Profile page itself now
+// only shows overview/stats, so this dropdown is the one place all five
+// authenticated destinations are reachable from.
 const dropdownLinks = [
   {
     href: "/profile",
@@ -25,6 +31,26 @@ const dropdownLinks = [
     icon: (
       <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
         <path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-3.75L6 21V4.5Z" />
+      </svg>
+    ),
+  },
+  {
+    href: "/reading-history",
+    label: "Reading History",
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M12 7.5V12l3 2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    href: "/developer-releases",
+    label: "Developer Releases",
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M12 3v10M12 13l4-4M12 13 8 9" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -47,6 +73,7 @@ const dropdownLinks = [
 export function HeaderAuthArea() {
   const t = useTranslations();
   const { user, isLoading } = useAuth();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -59,8 +86,16 @@ export function HeaderAuthArea() {
       }
     }
 
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsOpen(false);
+    }
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [isOpen]);
 
   if (isLoading) {
@@ -100,16 +135,16 @@ export function HeaderAuthArea() {
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
         aria-haspopup="true"
-        className="flex items-center gap-2.5 rounded-2xl border border-slate-200 px-3 py-2 transition-colors hover:bg-slate-50"
+        className="flex items-center gap-2.5 rounded-2xl border border-slate-200 px-3 py-2 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
       >
         <span className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full">
           <Image src={avatarUrl} alt={displayName} fill unoptimized className="object-cover" />
         </span>
-        <span className="max-w-[140px] truncate text-lg font-semibold text-slate-950">{displayName}</span>
+        <span className="max-w-[140px] truncate text-lg font-semibold text-slate-950 dark:text-white">{displayName}</span>
         <svg
           aria-hidden="true"
           viewBox="0 0 24 24"
-          className={`size-4 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`size-4 shrink-0 text-slate-500 transition-transform dark:text-slate-400 ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
@@ -118,37 +153,56 @@ export function HeaderAuthArea() {
         </svg>
       </button>
 
-      {isOpen && (
-        <div className="absolute right-0 top-full z-20 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
-          {dropdownLinks.map((item) => (
+      {/* Always mounted (never conditionally rendered) so opacity/scale can
+          actually transition instead of popping in/out instantly -
+          `pointer-events-none` + `invisible` keep it fully inert while
+          closed (unreachable by mouse or keyboard tab order). */}
+      <div
+        role="menu"
+        aria-hidden={!isOpen}
+        className={`absolute right-0 top-full z-20 mt-2 w-56 origin-top-right rounded-2xl border border-slate-200 bg-white p-2 shadow-lg transition-all duration-150 ease-out dark:border-slate-700 dark:bg-slate-900 ${
+          isOpen ? "visible scale-100 opacity-100" : "invisible scale-95 opacity-0 pointer-events-none"
+        }`}
+      >
+        {dropdownLinks.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          return (
             <Link
               key={item.href}
               href={item.href}
+              role="menuitem"
+              tabIndex={isOpen ? 0 : -1}
+              aria-current={isActive ? "page" : undefined}
               onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-base font-medium transition-colors ${
+                isActive
+                  ? "bg-blue-50 text-[#2f67e8] dark:bg-blue-950/40 dark:text-blue-400"
+                  : "text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+              }`}
             >
               {item.icon}
-              {t(item.labelKey)}
+              {"label" in item ? item.label : t(item.labelKey)}
             </Link>
-          ))}
+          );
+        })}
 
-          <div className="my-1 h-px bg-slate-100" />
+        <div className="my-1 h-px bg-slate-100 dark:bg-slate-800" />
 
-          <LogoutButton
-            onBeforeNavigate={() => setIsOpen(false)}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-base font-medium text-red-600 transition-colors hover:bg-red-50"
-          >
-            <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path
-                d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            {t("nav.logout")}
-          </LogoutButton>
-        </div>
-      )}
+        <LogoutButton
+          onBeforeNavigate={() => setIsOpen(false)}
+          tabIndex={isOpen ? 0 : -1}
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-base font-medium text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-950/40"
+        >
+          <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <path
+              d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          {t("nav.logout")}
+        </LogoutButton>
+      </div>
     </div>
   );
 }

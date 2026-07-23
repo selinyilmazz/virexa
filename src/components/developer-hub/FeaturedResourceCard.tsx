@@ -50,7 +50,7 @@ export function FeaturedResourceCard({ item }: FeaturedResourceCardProps) {
   const visual = resolveBrandVisual(item.brandKey);
 
   return (
-    <article className="group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 ease-out hover:-translate-y-1 hover:scale-[1.015] hover:border-[#2f67e8]/50 hover:shadow-lg">
+    <article className="group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 ease-out hover:-translate-y-1 hover:scale-[1.015] hover:border-slate-300 hover:shadow-lg">
       <div className={`relative flex h-24 shrink-0 items-center overflow-hidden border-b border-slate-100 px-5 sm:h-28 ${visual.bg} ${visual.fg}`}>
         <span aria-hidden="true" className="absolute -right-6 -top-8 size-24 rounded-full bg-white/15 blur-xl transition-transform duration-300 ease-out group-hover:scale-110" />
         <span aria-hidden="true" className="absolute -bottom-8 -left-6 size-20 rounded-full bg-black/10 blur-lg transition-transform duration-300 ease-out group-hover:scale-110" />

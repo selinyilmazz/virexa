@@ -18,11 +18,32 @@ export type NotificationSettings = {
   email: boolean;
   push: boolean;
   weeklyDigest: boolean;
+  /** Notification category preferences (Settings redesign) - persisted for real, same "saved preference, delivery infra to follow" convention `emailPreferences` already established below. */
+  breakingNews: boolean;
+  developerReleases: boolean;
+  securityAlerts: boolean;
+  dailyDigest: boolean;
+  /** Navigation/Profile/Settings UX update - see migration 0017. */
+  bookmarkReminders: boolean;
+  developerHubUpdates: boolean;
 };
 
 export type EmailPreferenceSettings = {
   productUpdates: boolean;
   accountActivity: boolean;
+};
+
+/**
+ * Real Privacy category preferences (Navigation/Profile/Settings UX
+ * update - see migration 0017's doc comment for why this replaces the
+ * `privacy` column's original, never-wired-up placeholder shape).
+ */
+export type PrivacySettings = {
+  profileVisibility: "public" | "private";
+  analyticsConsent: boolean;
+  personalizedRecommendations: boolean;
+  trackSearchHistory: boolean;
+  trackReadingHistory: boolean;
 };
 
 export type ProfileRow = {
@@ -40,6 +61,9 @@ export type ProfileInsert = Partial<Omit<ProfileRow, "id">> & { id: string };
 
 export type ProfileUpdate = Partial<Omit<ProfileRow, "id" | "created_at" | "updated_at">>;
 
+/** Additive, forward-compatible - `tutorial`/`resource` have no producer yet (same convention as `ArticleContentBlock`'s image/table/code variants). See migration 0015. */
+export type BookmarkItemType = "article" | "release" | "repository" | "tutorial" | "resource";
+
 export type BookmarkRow = {
   id: string;
   user_id: string;
@@ -50,6 +74,10 @@ export type BookmarkRow = {
   article_category: string;
   article_source: string;
   article_published_date: string;
+  /** Defaults to `"article"` - every row created before migration 0015 is implicitly an article. */
+  item_type: BookmarkItemType;
+  /** Free-form extras for non-article types (a release's version, a repository's stars/language/url). Empty object for articles. */
+  item_meta: Record<string, string>;
   created_at: string;
 };
 
@@ -69,6 +97,8 @@ export type ReadingHistoryRow = {
   article_image: string;
   article_category: string;
   article_source: string;
+  /** Denormalized display string (e.g. "5 min read") - see migration 0017. */
+  article_reading_time: string;
   read_at: string;
 };
 
@@ -79,6 +109,9 @@ export type ReadingHistoryInsert = Partial<Omit<ReadingHistoryRow, "id">> & {
 
 export type ReadingHistoryUpdate = Partial<Omit<ReadingHistoryRow, "id" | "user_id" | "article_id">>;
 
+export type ThemePreference = "light" | "dark" | "system";
+export type ReadingWidthPreference = "comfortable" | "compact";
+
 export type UserSettingsRow = {
   id: string;
   language: string;
@@ -86,7 +119,14 @@ export type UserSettingsRow = {
   preferred_categories: string[];
   notifications: NotificationSettings;
   email_preferences: EmailPreferenceSettings;
+  privacy: PrivacySettings;
   open_links_in_new_tab: boolean;
+  /** Saved preference only - see migration 0015's column comment (no dark theme implemented app-wide yet). */
+  theme: ThemePreference;
+  reading_width: ReadingWidthPreference;
+  reading_progress_bar: boolean;
+  remember_scroll_position: boolean;
+  timezone: string;
   created_at: string;
   updated_at: string;
 };

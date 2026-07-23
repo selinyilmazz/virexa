@@ -120,7 +120,16 @@ export function createUserResourceStore<T>(options: {
       } catch (error) {
         if (currentUserId !== userId) return;
         console.error("[resource-store] Failed to load data:", error);
-        setState({ status: "error", error: error instanceof Error ? error.message : "Failed to load data." });
+        // Deliberately `null` (not a generic "Failed to load data." string)
+        // when the thrown value isn't a real `Error` - every consumer's
+        // own error-state UI already has its own friendly, context-specific
+        // fallback message (e.g. "Couldn't load your reading history.") for
+        // exactly this case via `error ?? "..."`. Setting a generic string
+        // here would otherwise leak through as the literal displayed text
+        // on every store built on this engine (bookmarks/profile/settings/
+        // reading history), which is explicitly not allowed anywhere in
+        // the product.
+        setState({ status: "error", error: error instanceof Error ? error.message : null });
       } finally {
         inFlight = null;
       }

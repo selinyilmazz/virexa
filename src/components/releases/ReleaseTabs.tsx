@@ -55,7 +55,7 @@ export function ReleaseTabs({ release }: { release: TechnologyRelease }) {
           <ol className="space-y-5 border-l border-slate-200 pl-5">
             {release.changelog.map((entry) => (
               <li key={entry.version} className="relative">
-                <span className="absolute -left-[26px] top-1 size-2.5 rounded-full bg-[#2f67e8]" aria-hidden="true" />
+                <span className="absolute -left-[26px] top-1 size-2.5 rounded-full bg-slate-300" aria-hidden="true" />
                 <div className="flex flex-wrap items-baseline gap-2">
                   <span className="text-sm font-bold text-slate-950">v{entry.version.replace(/^v/i, "")}</span>
                   <span className="text-xs text-slate-400">

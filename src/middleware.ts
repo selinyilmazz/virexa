@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { isAdminUser } from "@/lib/admin/is-admin";
 
-/** Routes that require a signed-in user (see task: Protected Routes). */
-const PROTECTED_PATHS = ["/bookmarks", "/profile", "/settings"];
+/** Routes that require a signed-in user (see task: Protected Routes). `/reading-history` is a standalone route now (Navigation/Profile/Settings UX update - was `/profile?tab=history`, gated the same way `/profile` already was). `/developer-releases` is intentionally NOT here - it's a public release catalog (same content as `/developer-hub/releases`), not personal data. */
+const PROTECTED_PATHS = ["/bookmarks", "/profile", "/settings", "/reading-history"];
 
 /** Routes that require a signed-in ADMIN user (see task: Admin Foundation). Checked separately from PROTECTED_PATHS below since a non-admin signed-in user is redirected differently (to "/", not "/signin"). */
 const ADMIN_PATHS = ["/admin"];

@@ -39,6 +39,15 @@
  * SQL function behaves like a regular queryable result set through
  * PostgREST - this keeps `rpc()` usage syntactically consistent with
  * the rest of this file's query patterns.
+ *
+ * Google Auth feature addition: `Provider`, `auth.signInWithOAuth()`, and
+ * `auth.exchangeCodeForSession()` - the surface
+ * `src/lib/supabase/oauth.ts` (client-side OAuth trigger) and
+ * `src/app/auth/callback/route.ts` (server-side code exchange) need.
+ * `Provider` is a deliberately small subset of Supabase's real (much
+ * larger) union - only the ids this app actually references (today:
+ * `"google"`; the commented-out ids in `oauth.ts` for future GitHub/
+ * Discord/Microsoft support) - add more here if/when those are enabled.
  */
 declare module "@supabase/supabase-js" {
   export interface User {
@@ -80,6 +89,14 @@ declare module "@supabase/supabase-js" {
 
   export interface AuthResponse {
     data: { session: Session | null; user: User | null };
+    error: AuthError | null;
+  }
+
+  /** See this file's "Google Auth feature addition" note above. */
+  export type Provider = "google" | "github" | "discord" | "azure";
+
+  export interface OAuthResponse {
+    data: { provider: Provider; url: string | null };
     error: AuthError | null;
   }
 
@@ -171,6 +188,13 @@ declare module "@supabase/supabase-js" {
       }): Promise<AuthResponse>;
       signOut(): Promise<{ error: AuthError | null }>;
       updateUser(attributes: { email?: string; password?: string; data?: Record<string, unknown> }): Promise<AuthResponse>;
+      /** Starts a redirect-based OAuth flow (`options.redirectTo` is where the provider sends the browser back to after consent - see `src/app/auth/callback/route.ts`). The browser navigates away to `data.url` before this promise's resolution is ever observed on a successful call; `error` is only populated for a failure to even START the flow (provider disabled, network error). */
+      signInWithOAuth(params: {
+        provider: Provider;
+        options?: { redirectTo?: string; queryParams?: Record<string, string> };
+      }): Promise<OAuthResponse>;
+      /** Exchanges the one-time `code` param `/auth/callback` receives for a real session, setting the auth cookies via whichever client (browser/server) this was called on. */
+      exchangeCodeForSession(code: string): Promise<AuthResponse>;
       onAuthStateChange(callback: (event: AuthChangeEvent, session: Session | null) => void): {
         data: { subscription: { unsubscribe(): void } };
       };

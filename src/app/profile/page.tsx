@@ -1,41 +1,42 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Header } from "@/components/layout/Header";
+import { ProfilePageHeader } from "@/components/profile/ProfilePageHeader";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
-import { ProfileTabs } from "@/components/profile/ProfileTabs";
+import { ProfileStatsSection } from "@/components/profile/ProfileStatsSection";
+import { ProfileOverviewTab } from "@/components/profile/ProfileOverviewTab";
+import { AuthedThemeScope } from "@/components/providers/AuthedThemeScope";
 
 export const metadata: Metadata = {
   title: "Profile | Virexa",
 };
 
 /**
- * Profile page (product polishing phase, 2nd pass - "daha modern bir
- * kullanıcı profili"): a summary header (avatar, name, join date, saved/
- * read/top-category stats - `ProfileHeader`) above a tabbed content area
- * (Profile / Bookmarks / Reading History / Security - `ProfileTabs`),
- * replacing the old two-column "sidebar card stack next to a form stack"
- * layout that read like an admin panel.
+ * Profile page (Navigation/Profile/Settings UX update): profile info,
+ * statistics, and reading-activity overview only - no more Bookmarks/
+ * Reading History/Settings tabs (those moved to their own standalone
+ * routes: `/bookmarks`, `/reading-history`, `/settings`). Page header
+ * (breadcrumb/eyebrow/title/subtitle - `ProfilePageHeader`), a hero card
+ * (avatar/name/email/member since/country/Edit Profile - `ProfileHeader`),
+ * a four-card statistics row (`ProfileStatsSection`), and the former
+ * "Overview" tab's content (`ProfileOverviewTab`) rendered directly. Same
+ * 16px-radius/soft-shadow/32px-section-spacing language as the rest of
+ * the authenticated shell.
  */
 export default function ProfilePage() {
   return (
-    <>
+    <AuthedThemeScope>
       <Header />
-      <main className="bg-[#f8fafc] px-5 py-8 sm:px-8">
-        <div className="mx-auto max-w-[900px]">
-          <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-            <Link href="/" className="transition-colors hover:text-[#2f67e8]">
-              Home
-            </Link>
-            <span aria-hidden="true">›</span>
-            <span className="font-medium text-slate-950">Profile</span>
-          </nav>
+      <main className="bg-[#f8fafc] px-5 py-10 sm:px-8 dark:bg-slate-950">
+        <div className="mx-auto max-w-[1100px]">
+          <ProfilePageHeader />
 
-          <div className="mt-6 space-y-6">
+          <div className="mt-8 space-y-8">
             <ProfileHeader />
-            <ProfileTabs />
+            <ProfileStatsSection />
+            <ProfileOverviewTab />
           </div>
         </div>
       </main>
-    </>
+    </AuthedThemeScope>
   );
 }

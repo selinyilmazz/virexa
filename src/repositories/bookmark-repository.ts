@@ -1,13 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, BookmarkRow } from "@/types/database";
+import type { Database, BookmarkRow, BookmarkItemType } from "@/types/database";
 
 /**
- * The article fields a bookmark needs, in the same shape
- * `src/lib/bookmarks.ts` / `BookmarkButton` already work with
- * (`BookmarkItem`) - kept independent of that type name here so this
- * file has no dependency on the store layer above it.
+ * The fields a bookmark needs, in the same shape `src/lib/bookmarks.ts` /
+ * `BookmarkButton` already work with (`BookmarkItem`) - kept independent of
+ * that type name here so this file has no dependency on the store layer
+ * above it. `type` defaults to `"article"` everywhere it's optional -
+ * see migration 0015's doc comment: every bookmark before that migration
+ * was implicitly an article, and every existing call site (article cards
+ * across the app) still never sets it.
  */
 export type BookmarkRecord = {
+  type: BookmarkItemType;
   slug: string;
   title: string;
   description: string;
@@ -15,10 +19,12 @@ export type BookmarkRecord = {
   category: string;
   source: string;
   publishedDate: string;
+  meta: Record<string, string>;
 };
 
 function toRecord(row: BookmarkRow): BookmarkRecord {
   return {
+    type: row.item_type,
     slug: row.article_slug,
     title: row.article_title,
     description: row.article_description,
@@ -26,13 +32,16 @@ function toRecord(row: BookmarkRow): BookmarkRecord {
     category: row.article_category,
     source: row.article_source,
     publishedDate: row.article_published_date,
+    meta: row.item_meta,
   };
 }
 
 /**
  * Data access for the `bookmarks` table. See `profile-repository.ts` for
  * the reasoning on taking a `SupabaseClient` as a parameter instead of
- * importing one.
+ * importing one. Extended by migration 0015 to carry `item_type`/
+ * `item_meta` alongside the original article-shaped columns, so a single
+ * table can hold saved articles, Developer Releases, and repositories.
  */
 export function createBookmarkRepository(supabase: SupabaseClient<Database>) {
   return {
@@ -46,11 +55,12 @@ export function createBookmarkRepository(supabase: SupabaseClient<Database>) {
       return (data ?? []).map(toRecord);
     },
 
-    /** Upsert so re-saving an already-bookmarked article is a harmless no-op, not a unique-constraint error. */
+    /** Upsert so re-saving an already-bookmarked item is a harmless no-op, not a unique-constraint error. */
     async add(userId: string, item: BookmarkRecord): Promise<void> {
       const { error } = await supabase.from("bookmarks").upsert(
         {
           user_id: userId,
+          item_type: item.type,
           article_slug: item.slug,
           article_title: item.title,
           article_description: item.description,
@@ -58,14 +68,20 @@ export function createBookmarkRepository(supabase: SupabaseClient<Database>) {
           article_category: item.category,
           article_source: item.source,
           article_published_date: item.publishedDate,
+          item_meta: item.meta,
         },
-        { onConflict: "user_id,article_slug" }
+        { onConflict: "user_id,item_type,article_slug" }
       );
       if (error) throw error;
     },
 
-    async remove(userId: string, slug: string): Promise<void> {
-      const { error } = await supabase.from("bookmarks").delete().eq("user_id", userId).eq("article_slug", slug);
+    async remove(userId: string, slug: string, type: BookmarkItemType = "article"): Promise<void> {
+      const { error } = await supabase
+        .from("bookmarks")
+        .delete()
+        .eq("user_id", userId)
+        .eq("item_type", type)
+        .eq("article_slug", slug);
       if (error) throw error;
     },
 

@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+/* Real, working dark mode (Navigation/Profile/Settings UX update),
+   scoped to exactly the Navbar/Profile/Bookmarks/Settings surfaces per
+   the agreed scope - NOT applied to `<html>` globally. `AuthedThemeScope`
+   (`src/components/providers/AuthedThemeScope.tsx`) puts the `.dark`
+   class on a wrapper `<div>` that only exists on those pages, wrapping
+   both `<Header />` and that page's `<main>` - `&:where(.dark, .dark *)`
+   means every `dark:` utility below fires for that wrapper's own class
+   AND any descendant, so the Header/CategoryNav go dark together with
+   the page content while every other page (homepage, article, Developer
+   Hub, admin, etc.) - which never renders that wrapper - stays
+   untouched. This replaces Tailwind v4's default `prefers-color-scheme`-
+   based dark: variant with the class-strategy one production apps use. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -10,13 +24,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {

@@ -87,11 +87,11 @@ export function SecurityCard() {
   }
 
   return (
-    <form onSubmit={(event) => void handleSubmit(event)} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+    <form onSubmit={(event) => void handleSubmit(event)} className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm sm:p-8">
       {toast && <AuthToast message={toast.message} variant={toast.variant} />}
 
-      <h2 className="text-2xl font-bold tracking-tight text-slate-950">Security</h2>
-      <p className="mt-1 text-base text-slate-500">Change your password to keep your account secure.</p>
+      <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">Security</h2>
+      <p className="mt-1 text-base text-slate-500 dark:text-slate-400">Change your password to keep your account secure.</p>
 
       <div className="mt-6 space-y-5">
         <PasswordInput
