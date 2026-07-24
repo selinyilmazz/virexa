@@ -22,6 +22,18 @@ import type { RepositoryUpdate } from "@/types/database";
 
 const AUTO_SYNC_FIELDS = ["description", "language", "license", "stars", "forks", "topics"] as const;
 
+const CATEGORY_VALUES = [
+  "ai-agents",
+  "developer-productivity",
+  "system-design",
+  "frontend",
+  "backend",
+  "devops",
+  "cyber-security",
+  "mobile-development",
+  "learning-resources",
+] as const;
+
 const bodySchema = z.object({
   description: z.string().trim().optional(),
   language: z.string().trim().nullable().optional(),
@@ -33,6 +45,21 @@ const bodySchema = z.object({
   trending: z.boolean().optional(),
   visible: z.boolean().optional(),
   archived: z.boolean().optional(),
+  // --- Editorial fields (GitHub Explorer "Developer Knowledge Library"
+  // redesign, 0024_repositories_editorial_and_collections.sql) - the
+  // spec's explicit "Admin Panel extensions to the Repositories page"
+  // requirement.
+  category: z.enum(CATEGORY_VALUES).nullable().optional(),
+  editorPick: z.boolean().optional(),
+  hiddenGem: z.boolean().optional(),
+  verified: z.boolean().optional(),
+  maintained: z.boolean().optional(),
+  difficulty: z.enum(["beginner", "intermediate", "advanced"]).nullable().optional(),
+  recommendationScore: z.number().int().min(0).max(100).optional(),
+  healthScore: z.number().int().min(0).max(100).optional(),
+  editorNotes: z.string().trim().optional(),
+  tags: z.array(z.string().trim().min(1)).optional(),
+  displayOrder: z.number().int().optional(),
 });
 
 function decodeId(raw: string): string {
@@ -81,6 +108,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (body.trending !== undefined) patch.trending = body.trending;
     if (body.visible !== undefined) patch.visible = body.visible;
     if (body.archived !== undefined) patch.archived = body.archived;
+    if (body.category !== undefined) patch.category = body.category;
+    if (body.editorPick !== undefined) patch.editor_pick = body.editorPick;
+    if (body.hiddenGem !== undefined) patch.hidden_gem = body.hiddenGem;
+    if (body.verified !== undefined) patch.verified = body.verified;
+    if (body.maintained !== undefined) patch.maintained = body.maintained;
+    if (body.difficulty !== undefined) patch.difficulty = body.difficulty;
+    if (body.recommendationScore !== undefined) patch.recommendation_score = body.recommendationScore;
+    if (body.healthScore !== undefined) patch.health_score = body.healthScore;
+    if (body.editorNotes !== undefined) patch.editor_notes = body.editorNotes;
+    if (body.tags !== undefined) patch.tags = body.tags;
+    if (body.displayOrder !== undefined) patch.display_order = body.displayOrder;
 
     const touchedAutoSyncField = AUTO_SYNC_FIELDS.some((field) => field in body);
     if (touchedAutoSyncField) patch.auto_sync = false;

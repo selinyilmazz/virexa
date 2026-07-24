@@ -22,6 +22,7 @@ export function createCatalogItemRepository(supabase: SupabaseClient<Database>) 
     async create(input: CatalogItemInsert): Promise<CatalogItemRow> {
       const { data, error } = await supabase.from("catalog_items").insert(input).select("*").single();
       if (error) throw error;
+      if (!data) throw new Error("Insert into catalog_items returned no row.");
       return data;
     },
 

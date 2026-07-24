@@ -133,6 +133,7 @@ export function createRepositoryRepository(supabase: SupabaseClient<Database>) {
     async create(input: RepositoryInsert): Promise<RepositoryRow> {
       const { data, error } = await supabase.from("repositories").insert(input).select("*").single();
       if (error) throw error;
+      if (!data) throw new Error("Insert into repositories returned no row.");
       return data;
     },
 

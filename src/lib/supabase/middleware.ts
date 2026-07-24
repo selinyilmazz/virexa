@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createServerClient, type SupabaseClient } from "@supabase/ssr";
-import type { User } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { env } from "@/lib/env";
 
 /**

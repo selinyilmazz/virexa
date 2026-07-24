@@ -95,6 +95,7 @@ export function createSourceRepository(supabase: SupabaseClient<Database>) {
       const parsed = articleSourceInputSchema.parse(input);
       const { data, error } = await supabase.from("article_sources").insert(toInsert(parsed)).select("*").single();
       if (error) throw error;
+      if (!data) throw new Error("Insert into article_sources returned no row.");
       return data;
     },
 

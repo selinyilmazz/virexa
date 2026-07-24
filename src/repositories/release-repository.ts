@@ -27,6 +27,7 @@ export function createReleaseRepository(supabase: SupabaseClient<Database>) {
     async create(input: DeveloperReleaseInsert): Promise<DeveloperReleaseRow> {
       const { data, error } = await supabase.from("developer_releases").insert(input).select("*").single();
       if (error) throw error;
+      if (!data) throw new Error("Insert into developer_releases returned no row.");
       return data;
     },
 

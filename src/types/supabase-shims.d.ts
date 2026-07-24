@@ -168,6 +168,8 @@ declare module "@supabase/supabase-js" {
       uid: string,
       attributes: { app_metadata?: Record<string, unknown>; ban_duration?: string }
     ): Promise<{ data: { user: User | null }; error: AuthError | null }>;
+    /** Permanently deletes an auth user (`src/app/api/admin/users/[id]/route.ts` DELETE handler - Admin "Delete User" action). */
+    deleteUser(uid: string): Promise<{ data: { user: User | null }; error: AuthError | null }>;
   }
 
   type AnyDatabase = {
@@ -188,6 +190,8 @@ declare module "@supabase/supabase-js" {
       }): Promise<AuthResponse>;
       signOut(): Promise<{ error: AuthError | null }>;
       updateUser(attributes: { email?: string; password?: string; data?: Record<string, unknown> }): Promise<AuthResponse>;
+      /** Sends a password-recovery email whose link redirects to `options.redirectTo` (used by both `/forgot-password` and the admin "Reset Password" action). Succeeds even for an unregistered email - see `ForgotPasswordForm`'s doc comment for why. */
+      resetPasswordForEmail(email: string, options?: { redirectTo?: string }): Promise<{ error: AuthError | null }>;
       /** Starts a redirect-based OAuth flow (`options.redirectTo` is where the provider sends the browser back to after consent - see `src/app/auth/callback/route.ts`). The browser navigates away to `data.url` before this promise's resolution is ever observed on a successful call; `error` is only populated for a failure to even START the flow (provider disabled, network error). */
       signInWithOAuth(params: {
         provider: Provider;

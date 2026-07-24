@@ -663,6 +663,7 @@ export function createArticleRepository(supabase: SupabaseClient<Database>) {
     async create(input: ArticleInsert): Promise<ArticleRow> {
       const { data, error } = await supabase.from("articles").insert(input).select("*").single();
       if (error) throw error;
+      if (!data) throw new Error("Insert into articles returned no row.");
       return data;
     },
 

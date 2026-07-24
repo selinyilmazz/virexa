@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/admin/ToastProvider";
+import { REPOSITORY_CATEGORY_LABELS, REPOSITORY_CATEGORY_ORDER, REPOSITORY_DIFFICULTY_LABELS, type RepositoryDifficultySlug } from "@/lib/developer-hub/shared";
 import type { RepositoryRow } from "@/types/database";
 
 type AdminRepositoryEditDrawerProps = {
@@ -10,12 +11,19 @@ type AdminRepositoryEditDrawerProps = {
   closeHref: string;
 };
 
+const DIFFICULTY_VALUES: RepositoryDifficultySlug[] = ["beginner", "intermediate", "advanced"];
+
 /**
  * Full edit form for a single repository (requirement 7: "Allow editing:
- * Description, Stars, Language, License, GitHub URL"). Saving any of
- * description/language/license/stars/forks turns `auto_sync` off
- * server-side (see `/api/admin/repositories/[id]/route.ts`) so a later
- * GitHub sync never overwrites the admin's manual correction.
+ * Description, Stars, Language, License, GitHub URL"), extended for the
+ * GitHub Explorer "Developer Knowledge Library" redesign with every
+ * editorial field from `0024_repositories_editorial_and_collections.sql`
+ * (Category, Editor's Pick, Hidden Gem, Verified, Maintained, Difficulty,
+ * Recommendation Score, Health Score, Editor Notes, Tags, Order). Saving
+ * any of description/language/license/stars/forks still turns
+ * `auto_sync` off server-side (see `/api/admin/repositories/[id]/route.ts`)
+ * - the new editorial fields are NOT auto-sync fields (GitHub has no
+ * concept of them), so touching only those never disables syncing.
  */
 export function AdminRepositoryEditDrawer({ repository, closeHref }: AdminRepositoryEditDrawerProps) {
   const router = useRouter();
@@ -28,6 +36,17 @@ export function AdminRepositoryEditDrawer({ repository, closeHref }: AdminReposi
     stars: String(repository.stars),
     forks: String(repository.forks),
     githubUrl: repository.github_url,
+    category: repository.category ?? "",
+    editorPick: repository.editor_pick,
+    hiddenGem: repository.hidden_gem,
+    verified: repository.verified,
+    maintained: repository.maintained,
+    difficulty: repository.difficulty ?? "",
+    recommendationScore: String(repository.recommendation_score),
+    healthScore: String(repository.health_score),
+    editorNotes: repository.editor_notes,
+    tags: repository.tags.join(", "),
+    displayOrder: String(repository.display_order),
   });
 
   function close() {
@@ -48,6 +67,20 @@ export function AdminRepositoryEditDrawer({ repository, closeHref }: AdminReposi
           stars: Number(form.stars) || 0,
           forks: Number(form.forks) || 0,
           githubUrl: form.githubUrl,
+          category: form.category || null,
+          editorPick: form.editorPick,
+          hiddenGem: form.hiddenGem,
+          verified: form.verified,
+          maintained: form.maintained,
+          difficulty: form.difficulty || null,
+          recommendationScore: Number(form.recommendationScore) || 0,
+          healthScore: Number(form.healthScore) || 0,
+          editorNotes: form.editorNotes,
+          tags: form.tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean),
+          displayOrder: Number(form.displayOrder) || 0,
         }),
       });
       const json = await response.json().catch(() => ({}));
@@ -126,6 +159,119 @@ export function AdminRepositoryEditDrawer({ repository, closeHref }: AdminReposi
                 className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-[#2f67e8] focus:bg-white"
               />
             </div>
+          </div>
+
+          <div className="border-t border-slate-100 pt-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Developer Knowledge Library</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-slate-700">Category</label>
+              <select
+                value={form.category}
+                onChange={(event) => setForm((prev) => ({ ...prev, category: event.target.value }))}
+                className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-none focus:border-[#2f67e8] focus:bg-white"
+              >
+                <option value="">None</option>
+                {REPOSITORY_CATEGORY_ORDER.map((slug) => (
+                  <option key={slug} value={slug}>
+                    {REPOSITORY_CATEGORY_LABELS[slug].emoji} {REPOSITORY_CATEGORY_LABELS[slug].label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Difficulty</label>
+              <select
+                value={form.difficulty}
+                onChange={(event) => setForm((prev) => ({ ...prev, difficulty: event.target.value }))}
+                className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-none focus:border-[#2f67e8] focus:bg-white"
+              >
+                <option value="">None</option>
+                {DIFFICULTY_VALUES.map((slug) => (
+                  <option key={slug} value={slug}>
+                    {REPOSITORY_DIFFICULTY_LABELS[slug]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            {(
+              [
+                ["editorPick", "Editor's Pick"],
+                ["hiddenGem", "Hidden Gem"],
+                ["verified", "Verified"],
+                ["maintained", "Actively Maintained"],
+              ] as const
+            ).map(([key, label]) => (
+              <label key={key} className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={form[key]}
+                  onChange={(event) => setForm((prev) => ({ ...prev, [key]: event.target.checked }))}
+                  className="size-4 rounded accent-[#2f67e8]"
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="text-sm font-medium text-slate-700">Recommendation Score</label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={form.recommendationScore}
+                onChange={(event) => setForm((prev) => ({ ...prev, recommendationScore: event.target.value }))}
+                className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-[#2f67e8] focus:bg-white"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Health Score</label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={form.healthScore}
+                onChange={(event) => setForm((prev) => ({ ...prev, healthScore: event.target.value }))}
+                className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-[#2f67e8] focus:bg-white"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Order</label>
+              <input
+                type="number"
+                value={form.displayOrder}
+                onChange={(event) => setForm((prev) => ({ ...prev, displayOrder: event.target.value }))}
+                className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-[#2f67e8] focus:bg-white"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-slate-700">Tags (comma-separated)</label>
+            <input
+              value={form.tags}
+              onChange={(event) => setForm((prev) => ({ ...prev, tags: event.target.value }))}
+              placeholder="AI Related, CLI, Dev Tool"
+              className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-[#2f67e8] focus:bg-white"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-slate-700">Editor Notes ("Why We Recommend This")</label>
+            <textarea
+              value={form.editorNotes}
+              onChange={(event) => setForm((prev) => ({ ...prev, editorNotes: event.target.value }))}
+              rows={3}
+              placeholder="2-3 sentences on why a developer should know about this repository."
+              className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#2f67e8] focus:bg-white"
+            />
           </div>
 
           <div>

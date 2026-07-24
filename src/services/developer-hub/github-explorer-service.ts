@@ -665,7 +665,6 @@ export function parseGithubLibrarySearchParams(sp: {
     tags: tags.length > 0 ? tags : undefined,
     collectionSlug: sp.collection,
     onlyTrending: sp.onlyTrending === "1",
-    bookmarked: sp.bookmarked === "1",
     sort,
     page: sp.page ? Number(sp.page) : undefined,
   };
