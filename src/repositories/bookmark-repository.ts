@@ -25,13 +25,13 @@ export type BookmarkRecord = {
 function toRecord(row: BookmarkRow): BookmarkRecord {
   return {
     type: row.item_type,
-    slug: row.article_slug,
-    title: row.article_title,
-    description: row.article_description,
-    image: row.article_image,
-    category: row.article_category,
-    source: row.article_source,
-    publishedDate: row.article_published_date,
+    slug: row.item_slug,
+    title: row.item_title,
+    description: row.item_description,
+    image: row.item_image,
+    category: row.item_category,
+    source: row.item_source,
+    publishedDate: row.item_published_date,
     meta: row.item_meta,
   };
 }
@@ -39,9 +39,11 @@ function toRecord(row: BookmarkRow): BookmarkRecord {
 /**
  * Data access for the `bookmarks` table. See `profile-repository.ts` for
  * the reasoning on taking a `SupabaseClient` as a parameter instead of
- * importing one. Extended by migration 0015 to carry `item_type`/
- * `item_meta` alongside the original article-shaped columns, so a single
- * table can hold saved articles, Developer Releases, and repositories.
+ * importing one. Migration 0029 upgraded the live table (confirmed still
+ * its original 0001 article-only shape - no `item_type` column existed in
+ * production) to a real generic `item_*` model, so a single table can
+ * hold saved articles, GitHub repositories, courses, certifications, and
+ * Developer Releases without overloading article-shaped column names.
  */
 export function createBookmarkRepository(supabase: SupabaseClient<Database>) {
   return {
@@ -61,16 +63,16 @@ export function createBookmarkRepository(supabase: SupabaseClient<Database>) {
         {
           user_id: userId,
           item_type: item.type,
-          article_slug: item.slug,
-          article_title: item.title,
-          article_description: item.description,
-          article_image: item.image,
-          article_category: item.category,
-          article_source: item.source,
-          article_published_date: item.publishedDate,
+          item_slug: item.slug,
+          item_title: item.title,
+          item_description: item.description,
+          item_image: item.image,
+          item_category: item.category,
+          item_source: item.source,
+          item_published_date: item.publishedDate,
           item_meta: item.meta,
         },
-        { onConflict: "user_id,item_type,article_slug" }
+        { onConflict: "user_id,item_type,item_slug" }
       );
       if (error) throw error;
     },
@@ -81,7 +83,7 @@ export function createBookmarkRepository(supabase: SupabaseClient<Database>) {
         .delete()
         .eq("user_id", userId)
         .eq("item_type", type)
-        .eq("article_slug", slug);
+        .eq("item_slug", slug);
       if (error) throw error;
     },
 
@@ -128,7 +130,7 @@ export function createBookmarkRepository(supabase: SupabaseClient<Database>) {
 
     /**
      * Bookmark count per item (across all users) for a batch of
-     * `article_slug`s of a given `item_type` - GitHub Explorer's "Most
+     * `item_slug`s of a given `item_type` - GitHub Explorer's "Most
      * Bookmarked" sort/widget needs a real save count per repository, not
      * a per-user one. Same "select the narrow column, count in
      * application code" tradeoff as `getManyByUserIds` above (no `GROUP
@@ -139,14 +141,14 @@ export function createBookmarkRepository(supabase: SupabaseClient<Database>) {
       if (slugs.length === 0) return new Map();
       const { data, error } = await supabase
         .from("bookmarks")
-        .select("article_slug")
+        .select("item_slug")
         .eq("item_type", itemType)
-        .in("article_slug", slugs);
+        .in("item_slug", slugs);
       if (error) throw error;
 
       const counts = new Map<string, number>();
       for (const row of data ?? []) {
-        counts.set(row.article_slug, (counts.get(row.article_slug) ?? 0) + 1);
+        counts.set(row.item_slug, (counts.get(row.item_slug) ?? 0) + 1);
       }
       return counts;
     },

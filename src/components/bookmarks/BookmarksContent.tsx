@@ -1,69 +1,95 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { getTechnologyRelease } from "@/data/releases";
-import { clearBookmarks, retryBookmarks, useBookmarks, useBookmarksError, useBookmarksStatus } from "@/lib/bookmarks";
-import { useSavedReleaseSlugs } from "@/lib/release-bookmarks";
+import { useEffect, useMemo, useState } from "react";
+import { clearBookmarks, retryBookmarks, useBookmarks, useBookmarksError, useBookmarksStatus, type BookmarkItem } from "@/lib/bookmarks";
 import { useReadingHistory } from "@/lib/reading-history";
 import { AuthToast } from "@/components/auth/AuthToast";
 import { ArticleBookmarkCard } from "@/components/bookmarks/ArticleBookmarkCard";
 import { ReleaseBookmarkCard } from "@/components/bookmarks/ReleaseBookmarkCard";
 import { RepositoryBookmarkCard } from "@/components/bookmarks/RepositoryBookmarkCard";
+import { CatalogBookmarkCard } from "@/components/bookmarks/CatalogBookmarkCard";
 import { BookmarksHeader } from "@/components/bookmarks/BookmarksHeader";
 import { BookmarksStats } from "@/components/bookmarks/BookmarksStats";
-import { BookmarksToolbar, type BookmarksFilter, type BookmarksSort } from "@/components/bookmarks/BookmarksToolbar";
+import { BookmarksToolbar, type BookmarksSort } from "@/components/bookmarks/BookmarksToolbar";
+import { BookmarksTabs, type BookmarksTabId, type BookmarksTabDefinition } from "@/components/bookmarks/BookmarksTabs";
+import { BookmarksPagination } from "@/components/bookmarks/BookmarksPagination";
 import { BookmarksEmptyState } from "@/components/bookmarks/BookmarksEmptyState";
 import { BookmarksSidebar, type RecentBookmarkItem } from "@/components/bookmarks/BookmarksSidebar";
 
+const PAGE_SIZE = 8;
+
+const TAB_LABELS: Record<BookmarksTabId, string> = {
+  article: "Articles",
+  repository: "Repositories",
+  course: "Courses",
+  certification: "Certificates",
+  release: "Releases",
+};
+
+const TAB_ORDER: BookmarksTabId[] = ["article", "repository", "course", "certification", "release"];
+
 /**
- * Bookmarks page - aggregates every saved-item type into one unified,
- * filterable/sortable "Developer Reading Library" view. Articles and
- * repositories both come from the shared, Supabase-backed
- * `lib/bookmarks.ts` store (`useBookmarks()`, split here by `type`);
- * releases still come from `lib/release-bookmarks.ts`'s separate
- * localStorage store (see that file's doc comment for why - a release
- * isn't `/article/[slug]`-addressable either, same reasoning that used
- * to justify a separate repo store before repos were unified onto the
- * real `bookmarks` table). `tutorial`/`resource` filter options exist
- * per spec but currently have no producer anywhere in the app, so
- * selecting them honestly shows zero results rather than fake items.
+ * Bookmarks page - the unified "Bookmark Center". Every content type
+ * (articles, GitHub repositories, courses, certifications, Developer
+ * Releases) now comes from the exact same Supabase-backed
+ * `lib/bookmarks.ts` store (`useBookmarks()`, split here by `item.type`) -
+ * no per-type storage system anymore (releases used to live in a separate
+ * localStorage store; see `ReleaseActions`'/`ReleaseBookmarkCard`'s doc
+ * comments for that migration). Real tabs (`BookmarksTabs`) replace the
+ * old single filtered list, each with its own client-side pagination
+ * (`BookmarksPagination`) and empty state (`BookmarksEmptyState`) - all
+ * bookmarks for the signed-in user are already loaded into memory by the
+ * store's one `list()` call, so "pagination" here pages through the
+ * already-fetched per-type array rather than re-querying Supabase.
  */
 export function BookmarksContent() {
   const allBookmarks = useBookmarks();
   const status = useBookmarksStatus();
   const loadError = useBookmarksError();
-  const savedReleaseSlugs = useSavedReleaseSlugs();
-  const articles = useMemo(() => allBookmarks.filter((item) => (item.type ?? "article") === "article"), [allBookmarks]);
-  const savedRepos = useMemo(() => allBookmarks.filter((item) => item.type === "repository"), [allBookmarks]);
   const readingHistory = useReadingHistory();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [sort, setSort] = useState<BookmarksSort>("newest");
-  const [filter, setFilter] = useState<BookmarksFilter>("all");
+  const [activeTab, setActiveTab] = useState<BookmarksTabId>("article");
+  const [page, setPage] = useState(1);
 
-  // `articles`/`savedRepos` arrive newest-first from the DB already;
-  // `savedReleaseSlugs` is stored oldest-first (new slugs are appended),
-  // so it's reversed here to match.
-  const releases = useMemo(
-    () =>
-      [...savedReleaseSlugs]
-        .reverse()
-        .map((slug) => getTechnologyRelease(slug))
-        .filter((release): release is NonNullable<typeof release> => Boolean(release)),
-    [savedReleaseSlugs]
-  );
+  const byType = useMemo(() => {
+    const groups: Record<BookmarksTabId, BookmarkItem[]> = {
+      article: [],
+      repository: [],
+      course: [],
+      certification: [],
+      release: [],
+    };
+    for (const item of allBookmarks) {
+      const type = (item.type ?? "article") as BookmarksTabId;
+      if (type in groups) groups[type].push(item);
+    }
+    return groups;
+  }, [allBookmarks]);
 
-  const total = articles.length + releases.length + savedRepos.length;
+  const total = allBookmarks.length;
   const readingHistorySlugs = useMemo(() => new Set(readingHistory.map((entry) => entry.slug)), [readingHistory]);
-  const readCount = articles.filter((item) => readingHistorySlugs.has(item.slug)).length;
+  const readCount = byType.article.filter((item) => readingHistorySlugs.has(item.slug)).length;
 
   const recentItems = useMemo<RecentBookmarkItem[]>(() => {
-    const items: RecentBookmarkItem[] = [
-      ...articles.map((item) => ({ id: item.slug, type: "article" as const, title: item.title, href: `/article/${item.slug}` })),
-      ...releases.map((release) => ({ id: release.slug, type: "release" as const, title: release.name, href: `/developer-hub/releases/${release.slug}` })),
-      ...savedRepos.map((repo) => ({ id: repo.slug, type: "repository" as const, title: repo.title, href: repo.meta?.url ?? "#", external: true })),
-    ];
-    return items.slice(0, 5);
-  }, [articles, releases, savedRepos]);
+    const hrefFor = (item: BookmarkItem, type: BookmarksTabId): { href: string; external?: boolean } => {
+      if (type === "article") return { href: `/article/${item.slug}` };
+      if (type === "release") return { href: `/developer-hub/releases/${item.slug}` };
+      return { href: item.meta?.url ?? "#", external: true };
+    };
+    return [...allBookmarks]
+      .slice(0, 5)
+      .map((item) => {
+        const type = (item.type ?? "article") as BookmarksTabId;
+        return { id: item.slug, type, title: item.title, ...hrefFor(item, type) };
+      });
+  }, [allBookmarks]);
+
+  // Switching tabs (or re-sorting) always lands on page 1 - a stale page
+  // number from a longer tab would otherwise render an empty page.
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, sort]);
 
   function handleClearAll() {
     clearBookmarks().catch(() => {
@@ -72,13 +98,38 @@ export function BookmarksContent() {
     });
   }
 
-  const showArticles = filter === "all" || filter === "article";
-  const showReleases = filter === "all" || filter === "release";
-  const showRepos = filter === "all" || filter === "repository";
-  const orderedArticles = sort === "newest" ? articles : [...articles].reverse();
-  const orderedReleases = sort === "newest" ? releases : [...releases].reverse();
-  const orderedRepos = sort === "newest" ? savedRepos : [...savedRepos].reverse();
-  const visibleCount = (showArticles ? orderedArticles.length : 0) + (showReleases ? orderedReleases.length : 0) + (showRepos ? orderedRepos.length : 0);
+  const tabs: BookmarksTabDefinition[] = TAB_ORDER.map((id) => ({ id, label: TAB_LABELS[id], count: byType[id].length }));
+  const activeItems = byType[activeTab];
+  const orderedItems = sort === "newest" ? activeItems : [...activeItems].reverse();
+  const totalPages = Math.max(1, Math.ceil(orderedItems.length / PAGE_SIZE));
+  const pageItems = orderedItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  function renderCard(item: BookmarkItem) {
+    switch (activeTab) {
+      case "article":
+        return (
+          <ArticleBookmarkCard
+            key={`article-${item.slug}`}
+            slug={item.slug}
+            image={item.image}
+            category={item.category}
+            title={item.title}
+            description={item.description}
+            source={item.source}
+            publishedDate={item.publishedDate}
+          />
+        );
+      case "repository":
+        return <RepositoryBookmarkCard key={`repository-${item.slug}`} repo={item} />;
+      case "release":
+        return <ReleaseBookmarkCard key={`release-${item.slug}`} release={item} />;
+      case "course":
+      case "certification":
+        return <CatalogBookmarkCard key={`${activeTab}-${item.slug}`} item={item} />;
+      default:
+        return null;
+    }
+  }
 
   return (
     <div>
@@ -98,7 +149,14 @@ export function BookmarksContent() {
       </div>
 
       <div className="mt-8">
-        <BookmarksStats total={total} articles={articles.length} releases={releases.length} resources={savedRepos.length} />
+        <BookmarksStats
+          total={total}
+          articles={byType.article.length}
+          repositories={byType.repository.length}
+          courses={byType.course.length}
+          certifications={byType.certification.length}
+          releases={byType.release.length}
+        />
       </div>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -122,27 +180,22 @@ export function BookmarksContent() {
             <BookmarksEmptyState />
           ) : (
             <>
-              <div className="flex justify-end">
-                <BookmarksToolbar sort={sort} onSortChange={setSort} filter={filter} onFilterChange={setFilter} />
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <BookmarksTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
+                <BookmarksToolbar sort={sort} onSortChange={setSort} />
               </div>
 
               <div className="mt-5 space-y-3">
-                {showArticles && orderedArticles.map((item) => <ArticleBookmarkCard key={`article-${item.slug}`} {...item} />)}
-                {showReleases && orderedReleases.map((release) => <ReleaseBookmarkCard key={`release-${release.slug}`} release={release} />)}
-                {showRepos && orderedRepos.map((repo) => <RepositoryBookmarkCard key={`repo-${repo.slug}`} repo={repo} />)}
-
-                {visibleCount === 0 && (
-                  <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-400 shadow-sm">
-                    No saved items match this filter yet.
-                  </div>
-                )}
+                {pageItems.length === 0 ? <BookmarksEmptyState type={activeTab} /> : pageItems.map((item) => renderCard(item))}
               </div>
+
+              <BookmarksPagination page={page} totalPages={totalPages} onPageChange={setPage} />
             </>
           )}
         </div>
 
         <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-          <BookmarksSidebar recentItems={recentItems} saved={total} read={readCount} unread={Math.max(total - readCount, 0)} />
+          <BookmarksSidebar recentItems={recentItems} saved={total} read={readCount} unread={Math.max(byType.article.length - readCount, 0)} />
         </aside>
       </div>
     </div>

@@ -8,7 +8,10 @@ import {
   getCollectionsForRepository,
   getGithubRepoBySlug,
   getGithubSidebarWidgets,
+  getRelatedArticlesForRepository,
+  getRelatedReleasesForRepository,
   getRelatedRepositories,
+  getRepositoryAISummary,
   getYouMayAlsoLike,
 } from "@/services/developer-hub/github-explorer-service";
 
@@ -41,12 +44,14 @@ export default async function GithubRepoDetailPage({ params }: PageProps) {
   const repo = await getGithubRepoBySlug(slug);
   if (!repo) notFound();
 
-  const [readmeExcerpt, releases, related, collections, sidebarWidgets] = await Promise.all([
+  const [readmeExcerpt, releases, related, collections, sidebarWidgets, relatedArticles, relatedReleases] = await Promise.all([
     fetchReadmeExcerpt(repo.fullName),
     fetchRecentReleases(repo.fullName),
     getRelatedRepositories(repo, 6),
     getCollectionsForRepository(repo.id),
     getGithubSidebarWidgets(repo.id, 5),
+    getRelatedArticlesForRepository(repo, 3),
+    getRelatedReleasesForRepository(repo, 3),
   ]);
 
   const alternatives = await getAlternativeRepositories(repo, 4);
@@ -54,6 +59,7 @@ export default async function GithubRepoDetailPage({ params }: PageProps) {
     [repo.id, ...related.map((r) => r.id), ...alternatives.map((r) => r.id)],
     6
   );
+  const aiSummary = await getRepositoryAISummary(repo, readmeExcerpt);
 
   return (
     <>
@@ -68,6 +74,9 @@ export default async function GithubRepoDetailPage({ params }: PageProps) {
           collections={collections}
           sidebarWidgets={sidebarWidgets}
           youMayAlsoLike={youMayAlsoLike}
+          aiSummary={aiSummary}
+          relatedArticles={relatedArticles}
+          relatedReleases={relatedReleases}
         />
       </main>
     </>

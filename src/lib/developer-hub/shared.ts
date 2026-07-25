@@ -110,7 +110,9 @@ export type RepositoryCategorySlug =
   | "devops"
   | "cyber-security"
   | "mobile-development"
-  | "learning-resources";
+  | "learning-resources"
+  | "cloud"
+  | "databases";
 
 /** Label + emoji for each "Featured Collections" quick-filter card. */
 export const REPOSITORY_CATEGORY_LABELS: Record<RepositoryCategorySlug, { label: string; emoji: string }> = {
@@ -118,22 +120,26 @@ export const REPOSITORY_CATEGORY_LABELS: Record<RepositoryCategorySlug, { label:
   "developer-productivity": { label: "Developer Productivity", emoji: "⚡" },
   "system-design": { label: "System Design", emoji: "🏗️" },
   frontend: { label: "Frontend", emoji: "🎨" },
-  backend: { label: "Backend", emoji: "🗄️" },
+  backend: { label: "Backend", emoji: "🧩" },
   devops: { label: "DevOps", emoji: "🚀" },
-  "cyber-security": { label: "Cyber Security", emoji: "🔒" },
-  "mobile-development": { label: "Mobile Development", emoji: "📱" },
+  "cyber-security": { label: "Security", emoji: "🔒" },
+  "mobile-development": { label: "Mobile", emoji: "📱" },
   "learning-resources": { label: "Learning Resources", emoji: "📚" },
+  cloud: { label: "Cloud", emoji: "☁️" },
+  databases: { label: "Databases", emoji: "🛢️" },
 };
 
 export const REPOSITORY_CATEGORY_ORDER: RepositoryCategorySlug[] = [
   "ai-agents",
   "developer-productivity",
-  "system-design",
   "frontend",
   "backend",
+  "cloud",
   "devops",
   "cyber-security",
   "mobile-development",
+  "databases",
+  "system-design",
   "learning-resources",
 ];
 
@@ -147,6 +153,7 @@ export const REPOSITORY_DIFFICULTY_LABELS: Record<RepositoryDifficultySlug, stri
 
 export type GithubLibrarySort =
   | "editor-pick"
+  | "trending"
   | "useful"
   | "stars"
   | "forks"
@@ -156,16 +163,18 @@ export type GithubLibrarySort =
   | "health"
   | "bookmarked";
 
+/** The redesign spec's exact sort list (Editor's Pick, Trending, Most Stars, Most Forks, Recently Updated, Most Popular, Newest), plus a few pre-existing bonus options (Watchers/Health/Useful) left in place since they're real, useful signals nothing asked to remove. "Most Popular" reuses the `bookmarked` value/logic - a real per-repo save count is Virexa's own most honest popularity signal, distinct from raw GitHub stars (`stars`, listed separately). */
 export const GITHUB_LIBRARY_SORT_OPTIONS: { value: GithubLibrarySort; label: string }[] = [
   { value: "editor-pick", label: "Editor's Pick" },
-  { value: "useful", label: "Most Useful" },
+  { value: "trending", label: "Trending" },
   { value: "stars", label: "Most Stars" },
   { value: "forks", label: "Most Forks" },
-  { value: "watchers", label: "Most Watchers" },
-  { value: "newest", label: "Newest" },
   { value: "updated", label: "Recently Updated" },
+  { value: "bookmarked", label: "Most Popular" },
+  { value: "newest", label: "Newest" },
+  { value: "watchers", label: "Most Watchers" },
   { value: "health", label: "Best Health Score" },
-  { value: "bookmarked", label: "Most Bookmarked" },
+  { value: "useful", label: "Most Useful" },
 ];
 
 /** The GitHub Explorer library page's full URL query-param shape - every filter round-trips through `?...` so a reload/share preserves the exact same result set (spec requirement: filters "persist via URL query params across reload"). */
@@ -182,6 +191,7 @@ export type GithubLibrarySearchParams = {
   verified?: string;
   editorPick?: string;
   hiddenGem?: string;
+  featured?: string;
   beginnerFriendly?: string;
   aiRelated?: string;
   devTool?: string;

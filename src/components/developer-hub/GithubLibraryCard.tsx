@@ -50,6 +50,24 @@ function ExternalLinkIcon({ className = "size-3.5" }: { className?: string }) {
   );
 }
 
+function DocsIcon({ className = "size-3.5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 3h9l4 4v14H6z" />
+      <path d="M15 3v4h4M9 12h6M9 16h6" />
+    </svg>
+  );
+}
+
+function GlobeIcon({ className = "size-3.5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18Z" />
+    </svg>
+  );
+}
+
 function healthColor(score: number): string {
   if (score >= 75) return "bg-emerald-500";
   if (score >= 45) return "bg-amber-500";
@@ -101,7 +119,7 @@ export function GithubLibraryCard({ repo }: GithubLibraryCardProps) {
               <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700">Hidden Gem</span>
             )}
           </div>
-          <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-500">{repo.description}</p>
+          {repo.description && <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-500">{repo.description}</p>}
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5">
@@ -134,18 +152,28 @@ export function GithubLibraryCard({ repo }: GithubLibraryCardProps) {
           </span>
         )}
         {repo.license && <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-600">{repo.license}</span>}
-        <span className="inline-flex items-center gap-1">
-          <StarIcon />
-          {formatStat(repo.stars)}
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <ForkIcon />
-          {formatStat(repo.forks)}
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <EyeIcon />
-          {formatStat(repo.watchers)}
-        </span>
+        {repo.stars > 0 && (
+          <span className="inline-flex items-center gap-1">
+            <StarIcon />
+            {formatStat(repo.stars)}
+          </span>
+        )}
+        {repo.forks > 0 && (
+          <span className="inline-flex items-center gap-1">
+            <ForkIcon />
+            {formatStat(repo.forks)}
+          </span>
+        )}
+        {repo.watchers > 0 && (
+          <span className="inline-flex items-center gap-1">
+            <EyeIcon />
+            {formatStat(repo.watchers)}
+          </span>
+        )}
+        {repo.openIssuesCount > 0 && <span>{formatStat(repo.openIssuesCount)} open issues</span>}
+        {typeof repo.contributorsCount === "number" && repo.contributorsCount > 0 && (
+          <span>{formatStat(repo.contributorsCount)} contributors</span>
+        )}
         <span>Updated {repo.updatedRelative}</span>
       </div>
 
@@ -157,6 +185,12 @@ export function GithubLibraryCard({ repo }: GithubLibraryCardProps) {
           </span>
           <span className="text-[11px] font-semibold text-slate-600">{repo.healthScore}</span>
         </div>
+        {repo.communityScore > 0 && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-medium text-slate-500">Community</span>
+            <span className="text-[11px] font-semibold text-slate-600">{repo.communityScore}</span>
+          </div>
+        )}
         {category && (
           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
             {category.emoji} {category.label}
@@ -177,7 +211,29 @@ export function GithubLibraryCard({ repo }: GithubLibraryCardProps) {
         </div>
       )}
 
-      <div className="mt-1 flex justify-end">
+      <div className="mt-1 flex flex-wrap items-center justify-end gap-2">
+        {repo.documentationUrl && (
+          <a
+            href={repo.documentationUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors duration-200 hover:border-[#2f67e8] hover:text-[#2f67e8]"
+          >
+            <DocsIcon className="size-3.5" />
+            Docs
+          </a>
+        )}
+        {repo.websiteUrl && (
+          <a
+            href={repo.websiteUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors duration-200 hover:border-[#2f67e8] hover:text-[#2f67e8]"
+          >
+            <GlobeIcon className="size-3.5" />
+            Website
+          </a>
+        )}
         <a
           href={repo.githubUrl}
           target="_blank"

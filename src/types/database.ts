@@ -61,21 +61,36 @@ export type ProfileInsert = Partial<Omit<ProfileRow, "id">> & { id: string };
 
 export type ProfileUpdate = Partial<Omit<ProfileRow, "id" | "created_at" | "updated_at">>;
 
-/** Additive, forward-compatible - `tutorial`/`resource` have no producer yet (same convention as `ArticleContentBlock`'s image/table/code variants). See migration 0015. */
-export type BookmarkItemType = "article" | "release" | "repository" | "tutorial" | "resource";
+/**
+ * Every content type the unified Bookmark Center supports. `course`/
+ * `certification` (migration 0028) match `CatalogResourceTypeDb`'s own
+ * naming. `tutorial`/`resource` remain additive, forward-compatible slots
+ * with no producer yet (same convention as `ArticleContentBlock`'s image/
+ * table/code variants). See migration 0015.
+ */
+export type BookmarkItemType = "article" | "release" | "repository" | "course" | "certification" | "tutorial" | "resource";
 
+/**
+ * Generic bookmark shape (migration 0029 - the real production upgrade;
+ * the live `bookmarks` table turned out to still be the original 0001
+ * article-only shape, so this replaces the `article_*` columns outright
+ * rather than building on the never-applied 0015/0028 assumption). Every
+ * bookmarked type - article, GitHub repository, course, certification,
+ * Developer Release - reads and writes these same `item_*` columns.
+ */
 export type BookmarkRow = {
   id: string;
   user_id: string;
-  article_slug: string;
-  article_title: string;
-  article_description: string;
-  article_image: string;
-  article_category: string;
-  article_source: string;
-  article_published_date: string;
-  /** Defaults to `"article"` - every row created before migration 0015 is implicitly an article. */
+  /** Defaults to `"article"` - every row that predates migration 0029 was implicitly an article (the table only ever supported articles before then). */
   item_type: BookmarkItemType;
+  /** Generic per-type slug/id - an article slug, a release's technology slug, a repository's owner/repo, or a catalog item's row id. */
+  item_slug: string;
+  item_title: string;
+  item_description: string;
+  item_image: string;
+  item_category: string;
+  item_source: string;
+  item_published_date: string;
   /** Free-form extras for non-article types (a release's version, a repository's stars/language/url). Empty object for articles. */
   item_meta: Record<string, string>;
   created_at: string;
@@ -83,7 +98,8 @@ export type BookmarkRow = {
 
 export type BookmarkInsert = Partial<Omit<BookmarkRow, "id" | "created_at">> & {
   user_id: string;
-  article_slug: string;
+  item_type: BookmarkItemType;
+  item_slug: string;
 };
 
 export type BookmarkUpdate = Partial<Omit<BookmarkRow, "id" | "user_id" | "created_at">>;
@@ -342,7 +358,9 @@ export type RepositoryCategory =
   | "devops"
   | "cyber-security"
   | "mobile-development"
-  | "learning-resources";
+  | "learning-resources"
+  | "cloud"
+  | "databases";
 
 export type RepositoryDifficulty = "beginner" | "intermediate" | "advanced";
 
@@ -388,6 +406,21 @@ export type RepositoryRow = {
   cover_image_url: string | null;
   /** Editor-authored guidance for the detail page's "Who should use it?" section. */
   audience: string;
+  // --- Fields added by 0026 (curation content pass: Official Links,
+  // Community Score, Learning Roadmap, real Contributors/Open Issues) -
+  // see that migration's doc comments.
+  /** Real GitHub `open_issues_count` (includes PRs) - populated by `repository-sync-service.ts`. 0 until a sync has run. */
+  open_issues_count: number;
+  /** Real GitHub contributor count, from a separate sync call - `null` until a sync has run (never fabricated as 0). */
+  contributors_count: number | null;
+  /** Official docs site, when distinct from the GitHub repo - admin-authored. */
+  documentation_url: string | null;
+  /** Official project/product website, when one exists - admin-authored. */
+  website_url: string | null;
+  /** Editor-set 0-100 "how strong is this project's real-world community" signal - distinct from `health_score`/`recommendation_score`. */
+  community_score: number;
+  /** Ordered "how to learn this" steps for the detail page's Learning Roadmap section - admin-authored, optional. */
+  learning_roadmap: string[];
   created_at: string;
   updated_at: string;
 };
@@ -529,6 +562,8 @@ export type CatalogItemRow = {
   steps: string[];
   estimated_time: string | null;
   file_type: string | null;
+  tags: string[];
+  editor_notes: string;
   visible: boolean;
   display_order: number;
   created_at: string;

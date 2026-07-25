@@ -47,6 +47,7 @@ const BOOLEAN_TOGGLES: { param: string; label: string }[] = [
   { param: "maintained", label: "Actively Maintained" },
   { param: "verified", label: "Verified" },
   { param: "editorPick", label: "Editor's Pick" },
+  { param: "featured", label: "Featured" },
   { param: "hiddenGem", label: "Hidden Gems" },
   { param: "beginnerFriendly", label: "Beginner Friendly" },
   { param: "onlyTrending", label: "Only Trending" },

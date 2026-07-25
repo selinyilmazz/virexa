@@ -55,7 +55,7 @@ export function GithubDetailSidebar({ widgets }: GithubDetailSidebarProps) {
       <Widget icon="🔥" title="Editor's Picks" repos={widgets.editorsPicks} metricOf={(r) => `Score ${r.recommendationScore}/100`} />
       <Widget icon="🚀" title="Recently Added" repos={widgets.recentlyAdded} metricOf={(r) => `Added ${r.updatedRelative}`} />
       <Widget icon="⭐" title="Most Bookmarked" repos={widgets.mostBookmarked} metricOf={(r) => `${formatStat(r.bookmarkCount ?? 0)} saves`} />
-      <Widget icon="💎" title="Hidden Gems" repos={widgets.hiddenGems} metricOf={(r) => `${formatStat(r.stars)} stars`} />
+      <Widget icon="💎" title="Hidden Gems" repos={widgets.hiddenGems} metricOf={(r) => (r.stars > 0 ? `${formatStat(r.stars)} stars` : "Editor's curated pick")} />
     </div>
   );
 }

@@ -2,13 +2,33 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AuthToast, type AuthToastVariant } from "@/components/auth/AuthToast";
-import { useReleaseBookmark } from "@/lib/release-bookmarks";
+import { useBookmarkAction } from "@/hooks/useBookmarkAction";
+import type { BookmarkItem } from "@/lib/bookmarks";
+import type { TechnologyRelease } from "@/data/releases";
 import { recordReleaseView } from "@/lib/release-views";
 
 type ReleaseActionsProps = {
-  techSlug: string;
-  technologyName: string;
+  release: TechnologyRelease;
 };
+
+function toBookmarkItem(release: TechnologyRelease): BookmarkItem {
+  return {
+    slug: release.slug,
+    image: "",
+    category: release.type,
+    title: release.name,
+    description: release.description,
+    source: release.maintainer,
+    publishedDate: release.releaseDate,
+    type: "release",
+    meta: {
+      version: release.version,
+      status: release.status,
+      bg: release.logo.bg,
+      fg: release.logo.fg,
+    },
+  };
+}
 
 const bookmarkIcon = (filled: boolean) => (
   <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8">
@@ -46,17 +66,23 @@ const linkedinIcon = (
 );
 
 /**
- * Hero Card's Bookmark + Share row (requirement 2). Intentionally its own
- * small, self-contained component rather than reusing `BookmarkButton`/
- * `ShareButtons` from the article system - see `lib/release-bookmarks.ts`'s
- * doc comment for why the bookmark half needs a separate store, and
- * mirroring that, sharing here never calls `reportArticleMetric` (that
- * API increments a real article's `article_metrics` row by slug - a
- * Technology Detail page isn't an article and has no such row to
- * increment).
+ * Hero Card's Bookmark + Share row. Unified Bookmark Center build-out:
+ * the bookmark half used to be its own localStorage-only store
+ * (`lib/release-bookmarks.ts`, never synced to Supabase, never showed up
+ * on the real Bookmarks page) - it now goes through the exact same
+ * `useBookmarkAction`/`lib/bookmarks.ts` infrastructure articles and
+ * repositories already use (`item_type: "release"`, slug = the
+ * technology's stable `release.slug`), so a saved release persists to
+ * Supabase, survives logout/login, and shows up in the Bookmarks page's
+ * Releases tab like every other bookmark. Sharing still never calls
+ * `reportArticleMetric` (that API increments a real article's
+ * `article_metrics` row by slug - a Technology Detail page isn't an
+ * article and has no such row to increment).
  */
-export function ReleaseActions({ techSlug, technologyName }: ReleaseActionsProps) {
-  const [isSaved, toggleSaved] = useReleaseBookmark(techSlug);
+export function ReleaseActions({ release }: ReleaseActionsProps) {
+  const techSlug = release.slug;
+  const technologyName = release.name;
+  const { bookmarked: isSaved, trigger: toggleSaved, error: bookmarkError } = useBookmarkAction(toBookmarkItem(release));
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; variant: AuthToastVariant } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -116,6 +142,7 @@ export function ReleaseActions({ techSlug, technologyName }: ReleaseActionsProps
   return (
     <div ref={containerRef} className="relative flex shrink-0 items-center gap-3">
       {toast && <AuthToast message={toast.message} variant={toast.variant} />}
+      {bookmarkError && <AuthToast message={bookmarkError} variant="error" />}
 
       <button
         type="button"

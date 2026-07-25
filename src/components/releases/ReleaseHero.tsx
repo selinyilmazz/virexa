@@ -32,7 +32,7 @@ export function ReleaseHero({ release }: { release: TechnologyRelease }) {
           </div>
         </div>
 
-        <ReleaseActions techSlug={release.slug} technologyName={release.name} />
+        <ReleaseActions release={release} />
       </div>
 
       <dl className="mt-7 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-slate-100 pt-6 sm:grid-cols-4">

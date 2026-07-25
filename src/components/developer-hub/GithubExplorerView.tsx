@@ -32,12 +32,18 @@ const RESULTS_ANCHOR_ID = "github-library-results";
  * elsewhere in Developer Hub's generic catalog and intentionally left
  * alone - this file is the one dedicated surface being redesigned).
  *
- * Section order matches the spec: Hero (auto-sliding curated showcase) ->
- * Featured Collections (9-category grid + admin collections) -> Quick
- * Stats (4 real counts) -> Filters/Sort/Results/Pagination. Every filter
- * round-trips through the URL (`GithubLibrarySearchParams`) so a reload
- * or shared link reproduces the exact same result set - no client-only
- * filter state.
+ * Section order (simplification pass): Hero (intro + auto-sliding curated
+ * showcase, no CTAs) -> Featured Collections (the ONE category
+ * quick-filter grid on the page) -> Quick Stats (a couple of real,
+ * non-zero counts) -> Filters/Sort/Results/Pagination. Admin-curated
+ * named collections live only inside the sidebar's "Collection" filter
+ * now, not as a second grid on the page - see
+ * `GithubFeaturedCollections.tsx`'s doc comment. Every filter round-trips
+ * through the URL (`GithubLibrarySearchParams`) so a reload or shared
+ * link reproduces the exact same result set - no client-only filter
+ * state, and it's what keeps Featured Collections and the sidebar's
+ * Category filter in permanent sync (both read/write the same
+ * `?category=` param).
  */
 export async function GithubExplorerView({ searchParams }: { searchParams: GithubLibrarySearchParams }) {
   const filters = parseGithubLibrarySearchParams(searchParams);
@@ -68,14 +74,9 @@ export async function GithubExplorerView({ searchParams }: { searchParams: Githu
         <div className="mx-auto max-w-[1820px] space-y-10">
           <GithubHero repos={heroRepos} totalCurated={quickStats.curatedRepositoriesCount} />
 
-          <GithubFeaturedCollections categories={featuredCategories} namedCollections={namedCollections} activeCategory={searchParams.category} />
+          <GithubFeaturedCollections categories={featuredCategories} activeCategory={searchParams.category} />
 
-          <section>
-            <h2 className="text-xl font-bold tracking-tight text-slate-950">Quick Stats</h2>
-            <div className="mt-4">
-              <GithubQuickStats stats={quickStats} />
-            </div>
-          </section>
+          <GithubQuickStats stats={quickStats} />
 
           <div className="grid gap-8 xl:grid-cols-[280px_minmax(0,1fr)]">
             <aside className="min-w-0 xl:sticky xl:top-28 xl:h-fit xl:self-start">

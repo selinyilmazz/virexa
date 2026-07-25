@@ -31,6 +31,8 @@ export type GithubRepo = {
   createdAt: string;
   /** Real GitHub `subscribers_count` (the modern "Watch" count) - Admin Panel: Repositories "Watchers" column. */
   watchers: number;
+  /** Real GitHub `open_issues_count` (includes PRs, same as GitHub's own UI) - part of the standard repo response, no extra call needed. */
+  openIssuesCount: number;
 };
 
 export type GithubRelease = {
@@ -61,6 +63,7 @@ type GithubApiRepo = {
   stargazers_count: number;
   forks_count: number;
   subscribers_count?: number;
+  open_issues_count?: number;
   updated_at: string;
   created_at: string;
   html_url: string;
@@ -112,10 +115,49 @@ export async function fetchRepo(fullName: string): Promise<GithubRepo | null> {
       topics: data.topics ?? [],
       createdAt: data.created_at,
       watchers: data.subscribers_count ?? 0,
+      openIssuesCount: data.open_issues_count ?? 0,
     };
   } catch {
     // A single repo failing to fetch (rate limit, network hiccup) should
     // never take the whole section down - it's just omitted this time.
+    return null;
+  }
+}
+
+/**
+ * Real contributor count (Admin Panel: Repositories "Contributors"
+ * column, Repository Detail's GitHub Stats section) - a separate API
+ * call from `fetchRepo()` since GitHub's `/repos/{owner}/{repo}` response
+ * doesn't include it. Uses the documented `per_page=1` + `Link` header
+ * trick (the `rel="last"` link's `page=` query param is the true total
+ * count) rather than paginating through every contributor. `anon=true`
+ * counts anonymous/non-GitHub-account commits too, matching what GitHub's
+ * own "Contributors" insights page shows. Returns `null` (never a
+ * fabricated 0) on any failure - rate limit, a repo with a single
+ * contributor and no `Link` header, or a network error - so the UI can
+ * tell "not yet synced" apart from a real, small count.
+ */
+export async function fetchContributorsCount(fullName: string): Promise<number | null> {
+  try {
+    const response = await fetchWithTimeout(
+      `https://api.github.com/repos/${fullName}/contributors?per_page=1&anon=true`,
+      { headers: { Accept: "application/vnd.github+json" } },
+      FETCH_TIMEOUT_MS
+    );
+    if (!response.ok) return null;
+
+    const link = response.headers.get("link");
+    if (link) {
+      const lastPageMatch = link.match(/[?&]page=(\d+)>;\s*rel="last"/);
+      if (lastPageMatch?.[1]) return Number(lastPageMatch[1]);
+    }
+
+    // No `Link` header means the whole (small) contributor list fit on
+    // page 1 - count the page itself rather than assuming "last page not
+    // found" means "unknown".
+    const data = (await response.json()) as unknown[];
+    return Array.isArray(data) ? data.length : null;
+  } catch {
     return null;
   }
 }

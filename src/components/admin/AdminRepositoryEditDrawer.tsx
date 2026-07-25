@@ -47,6 +47,12 @@ export function AdminRepositoryEditDrawer({ repository, closeHref }: AdminReposi
     editorNotes: repository.editor_notes,
     tags: repository.tags.join(", "),
     displayOrder: String(repository.display_order),
+    documentationUrl: repository.documentation_url ?? "",
+    websiteUrl: repository.website_url ?? "",
+    communityScore: String(repository.community_score),
+    coverImageUrl: repository.cover_image_url ?? "",
+    audience: repository.audience,
+    learningRoadmap: repository.learning_roadmap.join("\n"),
   });
 
   function close() {
@@ -81,6 +87,15 @@ export function AdminRepositoryEditDrawer({ repository, closeHref }: AdminReposi
             .map((tag) => tag.trim())
             .filter(Boolean),
           displayOrder: Number(form.displayOrder) || 0,
+          documentationUrl: form.documentationUrl || null,
+          websiteUrl: form.websiteUrl || null,
+          communityScore: Number(form.communityScore) || 0,
+          coverImageUrl: form.coverImageUrl || null,
+          audience: form.audience,
+          learningRoadmap: form.learningRoadmap
+            .split("\n")
+            .map((step) => step.trim())
+            .filter(Boolean),
         }),
       });
       const json = await response.json().catch(() => ({}));
@@ -243,14 +258,26 @@ export function AdminRepositoryEditDrawer({ repository, closeHref }: AdminReposi
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Order</label>
+              <label className="text-sm font-medium text-slate-700">Community Score</label>
               <input
                 type="number"
-                value={form.displayOrder}
-                onChange={(event) => setForm((prev) => ({ ...prev, displayOrder: event.target.value }))}
+                min={0}
+                max={100}
+                value={form.communityScore}
+                onChange={(event) => setForm((prev) => ({ ...prev, communityScore: event.target.value }))}
                 className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-[#2f67e8] focus:bg-white"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-slate-700">Order</label>
+            <input
+              type="number"
+              value={form.displayOrder}
+              onChange={(event) => setForm((prev) => ({ ...prev, displayOrder: event.target.value }))}
+              className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-[#2f67e8] focus:bg-white"
+            />
           </div>
 
           <div>
@@ -264,7 +291,7 @@ export function AdminRepositoryEditDrawer({ repository, closeHref }: AdminReposi
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700">Editor Notes ("Why We Recommend This")</label>
+            <label className="text-sm font-medium text-slate-700">Editor Notes ("Why Learn This Repository")</label>
             <textarea
               value={form.editorNotes}
               onChange={(event) => setForm((prev) => ({ ...prev, editorNotes: event.target.value }))}
@@ -275,11 +302,71 @@ export function AdminRepositoryEditDrawer({ repository, closeHref }: AdminReposi
           </div>
 
           <div>
+            <label className="text-sm font-medium text-slate-700">Audience ("Who should use it?")</label>
+            <textarea
+              value={form.audience}
+              onChange={(event) => setForm((prev) => ({ ...prev, audience: event.target.value }))}
+              rows={2}
+              placeholder="Who is this repository for?"
+              className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#2f67e8] focus:bg-white"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-slate-700">Learning Roadmap (one step per line)</label>
+            <textarea
+              value={form.learningRoadmap}
+              onChange={(event) => setForm((prev) => ({ ...prev, learningRoadmap: event.target.value }))}
+              rows={4}
+              placeholder={"Learn the fundamentals\nBuild a small project\nRead the official docs"}
+              className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#2f67e8] focus:bg-white"
+            />
+          </div>
+
+          <div className="border-t border-slate-100 pt-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Links & Media</p>
+          </div>
+
+          <div>
             <label className="text-sm font-medium text-slate-700">GitHub URL</label>
             <input
               type="url"
               value={form.githubUrl}
               onChange={(event) => setForm((prev) => ({ ...prev, githubUrl: event.target.value }))}
+              className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-[#2f67e8] focus:bg-white"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-slate-700">Documentation URL</label>
+              <input
+                type="url"
+                value={form.documentationUrl}
+                onChange={(event) => setForm((prev) => ({ ...prev, documentationUrl: event.target.value }))}
+                placeholder="https://..."
+                className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-[#2f67e8] focus:bg-white"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Website URL</label>
+              <input
+                type="url"
+                value={form.websiteUrl}
+                onChange={(event) => setForm((prev) => ({ ...prev, websiteUrl: event.target.value }))}
+                placeholder="https://..."
+                className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-[#2f67e8] focus:bg-white"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-slate-700">Cover Image URL</label>
+            <input
+              type="url"
+              value={form.coverImageUrl}
+              onChange={(event) => setForm((prev) => ({ ...prev, coverImageUrl: event.target.value }))}
+              placeholder="https://..."
               className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-[#2f67e8] focus:bg-white"
             />
           </div>

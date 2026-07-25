@@ -1,4 +1,5 @@
 import { TrackedResourceLink } from "@/components/developer-hub/TrackedResourceLink";
+import { CatalogBookmarkButton } from "@/components/developer-hub/CatalogBookmarkButton";
 import { resolveBrandVisual } from "@/components/developer-hub/brand-icons";
 // `RESOURCE_TYPE_LABELS` comes from the plain, dependency-free
 // `shared.ts` (not `developer-hub-service.ts`, which transitively
@@ -105,6 +106,21 @@ export function CatalogCard({ item }: CatalogCardProps) {
 
   return (
     <article className="group relative flex gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-md sm:p-5">
+      {(item.resourceType === "course" || item.resourceType === "certification") && (
+        <CatalogBookmarkButton
+          item={{
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            provider: item.provider,
+            url: item.url,
+            resourceType: item.resourceType,
+            difficulty: item.difficulty,
+            price: item.price,
+          }}
+        />
+      )}
+
       <span
         aria-hidden="true"
         className={`flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 sm:size-16 ${visual.bg} ${visual.fg}`}
@@ -157,6 +173,12 @@ export function CatalogCard({ item }: CatalogCardProps) {
         </h3>
         <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-500">{item.description}</p>
 
+        {!isGithubRepo && item.editorNotes && (
+          <p className="mt-2 line-clamp-2 rounded-xl bg-slate-50 px-3 py-2 text-xs italic leading-relaxed text-slate-600">
+            &ldquo;{item.editorNotes}&rdquo;
+          </p>
+        )}
+
         {isGithubRepo ? (
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
             {item.tag && (
@@ -193,6 +215,16 @@ export function CatalogCard({ item }: CatalogCardProps) {
                 <span>{item.metaLine}</span>
               </>
             )}
+          </div>
+        )}
+
+        {!isGithubRepo && item.tags && item.tags.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {item.tags.map((tag) => (
+              <span key={tag} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                {tag}
+              </span>
+            ))}
           </div>
         )}
 

@@ -15,7 +15,6 @@ import {
 } from "@/components/developer-hub/CategoryIcons";
 import { LANGUAGE_DOT_COLORS, formatStat } from "@/components/developer-hub/CatalogCard";
 import { ContinueLearningSection } from "@/components/developer-hub/ContinueLearningSection";
-import { FeaturedResourcesCarousel } from "@/components/developer-hub/FeaturedResourcesCarousel";
 import {
   AwsIcon,
   DockerIcon,
@@ -25,7 +24,7 @@ import {
   VSCodeIcon,
   resolveBrandVisual,
 } from "@/components/developer-hub/brand-icons";
-import { getCatalogItems, getDeveloperHubStats, getFeaturedCatalogItems } from "@/services/developer-hub/developer-hub-service";
+import { getCatalogItems, getDeveloperHubStats } from "@/services/developer-hub/developer-hub-service";
 
 function CheckIcon({ className = "size-3" }: { className?: string }) {
   return (
@@ -93,14 +92,16 @@ const RESOURCE_NAV_ITEMS = [
  * with real counts and "View all"-style links; each resource type also
  * has its own dedicated page rendering the shared `CatalogExplorerView`
  * template (`/developer-hub/certifications`, `/courses`, etc.) - see
- * that component's doc comment. Releases route to the unified News
- * Explorer instead (`ExplorerView`, `defaultContentType: "release"`),
- * since those are real DB articles already served well by that page.
+ * that component's doc comment. Releases route to the dedicated Release
+ * Library instead (`ReleaseLibraryView`, real software/tool releases
+ * like React and Docker, each with its own detail page) - not the News
+ * Explorer, since a release overview is documentation, not a news
+ * article. See `release-detail-service.ts`'s `getReleaseLibrary` doc
+ * comment.
  */
 export default async function DeveloperHubPage() {
-  const [stats, featured, githubPreview] = await Promise.all([
+  const [stats, githubPreview] = await Promise.all([
     getDeveloperHubStats(),
-    getFeaturedCatalogItems(10),
     getCatalogItems({ resourceTypes: ["github-repo"], sort: "featured", pageSize: 5 }),
   ]);
 
@@ -206,24 +207,7 @@ export default async function DeveloperHubPage() {
                 Learn, build and grow with curated developer resources, certifications, GitHub repositories, learning paths and tools.
               </p>
 
-              <div className="mt-7 flex flex-wrap items-center gap-3">
-                <a
-                  href="#popular-categories"
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#2f67e8] px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-blue-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#2556c9] hover:shadow-lg hover:shadow-blue-500/25"
-                >
-                  Explore Resources
-                  <span aria-hidden="true">→</span>
-                </a>
-                <Link
-                  href="/developer-hub/learning-paths"
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm"
-                >
-                  <RouteIcon className="size-4" />
-                  Start Learning
-                </Link>
-              </div>
-
-              <div className="mt-5 flex flex-wrap items-center gap-2">
+              <div className="mt-7 flex flex-wrap items-center gap-2">
                 {HERO_TRUST_PILLS.map((label) => (
                   <span
                     key={label}
@@ -405,15 +389,6 @@ export default async function DeveloperHubPage() {
                     </a>
                   );
                 })}
-              </div>
-            </section>
-          )}
-
-          {featured.length > 0 && (
-            <section id="editors-picks" className="mt-10 scroll-mt-24">
-              <h2 className="text-xl font-bold tracking-tight text-slate-950">Editor&apos;s Picks</h2>
-              <div className="mt-4">
-                <FeaturedResourcesCarousel items={featured} />
               </div>
             </section>
           )}

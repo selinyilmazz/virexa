@@ -1,4 +1,4 @@
-import { fetchRepo, fetchLatestRelease } from "@/lib/developer-hub/github";
+import { fetchRepo, fetchLatestRelease, fetchContributorsCount } from "@/lib/developer-hub/github";
 import { createServiceClient } from "@/lib/supabase/service-client";
 import { createRepositoryRepository } from "@/repositories/repository-repository";
 import type { RepositoryUpdate } from "@/types/database";
@@ -27,7 +27,11 @@ export async function syncRepositoryFromGithub(id: string, options?: { force?: b
     return { ok: false, message: "Auto-sync is off for this repository (it has manual edits) - use Sync from GitHub to override." };
   }
 
-  const [live, latestRelease] = await Promise.all([fetchRepo(id), fetchLatestRelease(id)]);
+  const [live, latestRelease, contributorsCount] = await Promise.all([
+    fetchRepo(id),
+    fetchLatestRelease(id),
+    fetchContributorsCount(id),
+  ]);
   if (!live) return { ok: false, message: "Couldn't reach GitHub for this repository (rate-limited or not found)." };
 
   const patch: RepositoryUpdate = {
@@ -42,8 +46,13 @@ export async function syncRepositoryFromGithub(id: string, options?: { force?: b
     github_url: live.url,
     latest_release_tag: latestRelease?.tag ?? null,
     latest_release_published_at: latestRelease?.publishedAt ?? null,
+    open_issues_count: live.openIssuesCount,
     last_synced_at: new Date().toISOString(),
   };
+  // Contributors needs its own API call and can fail independently
+  // (rate limit, huge repo) without invalidating the rest of a
+  // successful sync - only patch it in when the fetch actually succeeded.
+  if (contributorsCount !== null) patch.contributors_count = contributorsCount;
 
   await repository.update(id, patch);
   return { ok: true, message: `Synced ${id} from GitHub.` };

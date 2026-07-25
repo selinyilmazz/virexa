@@ -1,13 +1,18 @@
+import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service-client";
 import { createReleaseRepository } from "@/repositories/release-repository";
-import { getTechnologyRelease, type TechnologyRelease } from "@/data/releases";
+import { getAllTechnologySlugs, getTechnologyRelease, type TechnologyRelease } from "@/data/releases";
 import type { DeveloperReleaseChannel, DeveloperReleaseRow } from "@/types/database";
 
 /**
  * Admin Panel: Developer Releases - overlays the admin-managed
  * `developer_releases` table onto the curated static reference content
  * in `src/data/releases.tsx` for the public `/developer-hub/releases/
- * [slug]` detail page. This is the disclosed scope boundary from
+ * [slug]` detail page (`getReleaseDetail`) and the `/developer-hub/
+ * releases` Release Library index (`getReleaseLibrary`, below) - the one
+ * canonical release-browsing experience in the app; nothing routes to
+ * the News Explorer for "Releases" anymore. This is the disclosed scope
+ * boundary from
  * `supabase/migrations/0019_developer_releases.sql`: version, release
  * date, channel/status, release notes, maintainer, license, platform,
  * and the website/docs/GitHub/download links are now genuinely
@@ -111,4 +116,51 @@ export async function getReleaseDetail(slug: string): Promise<TechnologyRelease 
   if (staticRelease && !row) return staticRelease;
   if (!staticRelease && row) return buildMinimalRelease(row);
   return overlay(staticRelease!, row!);
+}
+
+/**
+ * Release Library (`/developer-hub/releases`, the index) - the single,
+ * canonical list of real software/framework/tool releases (React,
+ * Next.js, Docker, ...), each card linking to its own `getReleaseDetail`
+ * page. Same curated-static-plus-admin-overlay merge `getReleaseDetail`
+ * does per slug, just over every known release at once, so the library
+ * and the detail page never disagree about a technology's current
+ * version/status.
+ *
+ * Deliberately reads via the public request-scoped client (RLS: `visible
+ * = true` only - supabase/migrations/0019_developer_releases.sql), not
+ * the service-role client `getReleaseDetail` uses: a hidden admin row
+ * should simply be absent from the library grid (no special "hidden"
+ * state to represent in a list, unlike the single-page 404 case). A
+ * static technology with no matching admin row still always appears
+ * (same "static content is always real, always safe to show" behavior
+ * as `getReleaseDetail`), and any admin-created release for a product
+ * with no static entry appears too, via `buildMinimalRelease`.
+ */
+export async function getReleaseLibrary(): Promise<TechnologyRelease[]> {
+  let rows: DeveloperReleaseRow[] = [];
+  try {
+    const supabase = await createClient();
+    rows = await createReleaseRepository(supabase).list({ visibleOnly: true });
+  } catch (error) {
+    console.error("[release-detail-service] getReleaseLibrary failed to load developer_releases, falling back to static-only library", error);
+  }
+
+  const rowBySlug = new Map(rows.map((row) => [row.slug, row]));
+  const seenSlugs = new Set<string>();
+  const library: TechnologyRelease[] = [];
+
+  for (const slug of getAllTechnologySlugs()) {
+    const staticRelease = getTechnologyRelease(slug)!;
+    const row = rowBySlug.get(slug);
+    library.push(row ? overlay(staticRelease, row) : staticRelease);
+    seenSlugs.add(slug);
+  }
+
+  for (const row of rows) {
+    if (seenSlugs.has(row.slug)) continue;
+    library.push(buildMinimalRelease(row));
+  }
+
+  return library.sort((a, b) => a.name.localeCompare(b.name));
 }

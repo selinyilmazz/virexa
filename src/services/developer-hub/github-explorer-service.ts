@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { createRepositoryRepository } from "@/repositories/repository-repository";
 import { createCollectionRepository } from "@/repositories/collection-repository";
 import { createBookmarkRepository } from "@/repositories/bookmark-repository";
+import { createArticleRepository } from "@/repositories/article-repository";
+import { createReleaseRepository } from "@/repositories/release-repository";
+import { aiService } from "@/services/ai/ai-service-instance";
 import {
   REPOSITORY_CATEGORY_ORDER,
   repoIdToSlug,
@@ -9,7 +12,7 @@ import {
   type RepositoryCategorySlug,
   type RepositoryDifficultySlug,
 } from "@/lib/developer-hub/shared";
-import type { CollectionRow, RepositoryRow } from "@/types/database";
+import type { ArticleRow, CollectionRow, DeveloperReleaseRow, RepositoryRow } from "@/types/database";
 
 /**
  * The real, `repositories`-table-backed data layer for the GitHub
@@ -68,6 +71,17 @@ export type GithubRepoCardData = {
   tags: string[];
   /** Real save count across every user - `undefined` until batch-loaded (see `attachBookmarkCounts`), never fabricated. */
   bookmarkCount?: number;
+  // --- Fields added by 0026 (curation content pass) - see that
+  // migration's doc comments. Every one of these is `null`/0/empty when
+  // not yet known - the UI hides the corresponding field rather than
+  // rendering a placeholder (spec's "never display 0 Stars/Forks/
+  // Contributors/No description" requirement).
+  openIssuesCount: number;
+  contributorsCount: number | null;
+  documentationUrl: string | null;
+  websiteUrl: string | null;
+  communityScore: number;
+  learningRoadmap: string[];
 };
 
 function formatRelative(iso: string): string {
@@ -98,7 +112,11 @@ function toCardData(repo: RepositoryRow): GithubRepoCardData {
     fullName: repo.id,
     avatarUrl: `https://github.com/${repo.owner}.png`,
     coverImageUrl: repo.cover_image_url ?? null,
-    description: repo.description || "No description provided.",
+    // No fallback placeholder text - an empty description means the UI
+    // simply omits the description paragraph (see GithubLibraryCard.tsx/
+    // GithubRepoDetailView.tsx), never a fabricated "No description
+    // provided." string.
+    description: repo.description ?? "",
     language: repo.language,
     license: repo.license,
     stars: repo.stars,
@@ -127,6 +145,12 @@ function toCardData(repo: RepositoryRow): GithubRepoCardData {
     editorNotes: repo.editor_notes,
     audience: repo.audience ?? "",
     tags: repo.tags ?? [],
+    openIssuesCount: repo.open_issues_count ?? 0,
+    contributorsCount: repo.contributors_count ?? null,
+    documentationUrl: repo.documentation_url ?? null,
+    websiteUrl: repo.website_url ?? null,
+    communityScore: repo.community_score ?? 0,
+    learningRoadmap: repo.learning_roadmap ?? [],
   };
 }
 
@@ -203,6 +227,7 @@ export type GithubLibraryParams = {
   verified?: boolean;
   editorPick?: boolean;
   hiddenGem?: boolean;
+  featured?: boolean;
   beginnerFriendly?: boolean;
   /** Editorial tag filters (`repositories.tags`) - "AI Related"/"Dev Tool"/"CLI"/"Library"/"Framework"/"Template"/"Tutorial" checkboxes each map to one canonical tag string. */
   tags?: string[];
@@ -319,6 +344,7 @@ export async function getGithubLibraryRepos(params: GithubLibraryParams = {}): P
   if (params.verified !== undefined) filtered = filtered.filter((repo) => repo.verified === params.verified);
   if (params.editorPick !== undefined) filtered = filtered.filter((repo) => repo.editor_pick === params.editorPick);
   if (params.hiddenGem !== undefined) filtered = filtered.filter((repo) => repo.hidden_gem === params.hiddenGem);
+  if (params.featured !== undefined) filtered = filtered.filter((repo) => repo.featured === params.featured);
   if (params.beginnerFriendly) filtered = filtered.filter((repo) => repo.difficulty === "beginner");
   if (params.onlyTrending) filtered = filtered.filter((repo) => repo.trending);
   if (params.tags && params.tags.length > 0) {
@@ -334,6 +360,9 @@ export async function getGithubLibraryRepos(params: GithubLibraryParams = {}): P
 
   const sorted = [...filtered].sort((a, b) => {
     switch (params.sort) {
+      case "trending":
+        if (a.trending !== b.trending) return a.trending ? -1 : 1;
+        return b.stars - a.stars;
       case "forks":
         return b.forks - a.forks;
       case "watchers":
@@ -599,6 +628,78 @@ export async function getGithubSidebarWidgets(excludeId?: string, limit = 5): Pr
   return { editorsPicks, recentlyAdded, mostBookmarked, hiddenGems, beginnerFriendly, trendingThisMonth };
 }
 
+/**
+ * Real articles that mention this repository - Repository Detail's
+ * "Related Articles" section. Uses the real Postgres full-text search
+ * function (`search_articles_fts`, same one `/search` uses) against the
+ * repo's own name, so a match is always a genuine, verifiable mention -
+ * never a fabricated "related" link. Fails open to `[]` (the section is
+ * simply omitted) on any search error, same convention as every other
+ * loader in this module.
+ */
+export async function getRelatedArticlesForRepository(repo: GithubRepoCardData, limit = 3): Promise<ArticleRow[]> {
+  try {
+    const supabase = await createClient();
+    const result = await createArticleRepository(supabase).fullTextSearch({
+      query: repo.repoName,
+      page: 1,
+      pageSize: limit,
+      sortBy: "relevance",
+    });
+    return result.items;
+  } catch (error) {
+    console.error("[github-explorer-service] Failed to load related articles, rendering none", error);
+    return [];
+  }
+}
+
+/**
+ * Real Developer Releases entries whose product name or platform overlaps
+ * this repository's name/topics/tags - Repository Detail's "Related
+ * Releases" section. Matched in application code (small table, same
+ * "no GROUP BY in the shimmed query builder" tradeoff used throughout
+ * this codebase) against `developer_releases.product`/`platform`, never
+ * fabricated - a repo with no matching release simply omits the section.
+ */
+export async function getRelatedReleasesForRepository(repo: GithubRepoCardData, limit = 3): Promise<DeveloperReleaseRow[]> {
+  try {
+    const supabase = await createClient();
+    const releases = await createReleaseRepository(supabase).list({ visibleOnly: true });
+    const needles = [repo.repoName, repo.owner, ...repo.topics, ...repo.tags].map((v) => v.toLowerCase());
+    const matches = releases.filter((release) => {
+      const haystack = `${release.product} ${release.platform}`.toLowerCase();
+      return needles.some((needle) => needle.length > 2 && haystack.includes(needle));
+    });
+    return matches.slice(0, limit);
+  } catch (error) {
+    console.error("[github-explorer-service] Failed to load related releases, rendering none", error);
+    return [];
+  }
+}
+
+/**
+ * Real, AI-generated "what is this repository" summary for the detail
+ * page's "AI Summary" section - reuses `aiService.getSummary()` (the
+ * exact same provider-agnostic, cached, never-throwing entry point
+ * `article-read-service.ts` uses for articles) rather than adding any new
+ * AI plumbing. Treats the repo's README excerpt as the "content" to
+ * summarize (falling back to its description/topics/editor notes when no
+ * README is available) - resolves to `null` (section omitted) whenever no
+ * AI provider is configured, exactly like every other AI feature in this
+ * app, never a fabricated summary.
+ */
+export async function getRepositoryAISummary(repo: GithubRepoCardData, readmeExcerpt: string | null): Promise<string | null> {
+  const content =
+    readmeExcerpt ??
+    [repo.description, repo.editorNotes, repo.topics.length > 0 ? `Topics: ${repo.topics.join(", ")}` : ""]
+      .filter(Boolean)
+      .join("\n\n");
+  if (!content.trim()) return null;
+
+  const result = await aiService.getSummary({ id: repo.id, title: repo.fullName, content });
+  return result?.summary ?? null;
+}
+
 /** Parses `GithubLibrarySearchParams` (raw URL query strings) into typed `GithubLibraryParams` - the one place string-to-filter parsing happens, so the page component and any future caller (e.g. a sitemap or admin preview) stay in sync. */
 export function parseGithubLibrarySearchParams(sp: {
   q?: string;
@@ -613,6 +714,7 @@ export function parseGithubLibrarySearchParams(sp: {
   verified?: string;
   editorPick?: string;
   hiddenGem?: string;
+  featured?: string;
   beginnerFriendly?: string;
   aiRelated?: string;
   devTool?: string;
@@ -645,7 +747,18 @@ export function parseGithubLibrarySearchParams(sp: {
     ? (sp.category as RepositoryCategorySlug)
     : undefined;
 
-  const sortValues: GithubLibrarySort[] = ["editor-pick", "stars", "forks", "watchers", "newest", "updated", "health", "bookmarked"];
+  const sortValues: GithubLibrarySort[] = [
+    "editor-pick",
+    "trending",
+    "stars",
+    "forks",
+    "watchers",
+    "newest",
+    "updated",
+    "health",
+    "bookmarked",
+    "useful",
+  ];
   const sort = sortValues.includes(sp.sort as GithubLibrarySort) ? (sp.sort as GithubLibrarySort) : undefined;
 
   return {
@@ -661,6 +774,7 @@ export function parseGithubLibrarySearchParams(sp: {
     verified: sp.verified === "1" ? true : undefined,
     editorPick: sp.editorPick === "1" ? true : undefined,
     hiddenGem: sp.hiddenGem === "1" ? true : undefined,
+    featured: sp.featured === "1" ? true : undefined,
     beginnerFriendly: sp.beginnerFriendly === "1",
     tags: tags.length > 0 ? tags : undefined,
     collectionSlug: sp.collection,

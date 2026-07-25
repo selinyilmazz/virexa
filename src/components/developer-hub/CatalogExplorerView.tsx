@@ -3,7 +3,6 @@ import { Header } from "@/components/layout/Header";
 import { CatalogFiltersPanel } from "@/components/developer-hub/CatalogFiltersPanel";
 import { CatalogResults } from "@/components/developer-hub/CatalogResults";
 import { CatalogSortControl } from "@/components/developer-hub/CatalogSortControl";
-import { DeveloperHubStatsStrip } from "@/components/developer-hub/DeveloperHubStatsStrip";
 import { NewsExplorerPagination } from "@/components/news-explorer/NewsExplorerPagination";
 import { ScrollToResultsOnPageChange } from "@/components/news-explorer/ScrollToResultsOnPageChange";
 import type { CatalogDifficulty as Difficulty, CatalogPrice as Price } from "@/types/database";
@@ -27,19 +26,24 @@ type CatalogExplorerViewProps = {
  * The shared template most Developer Hub catalog pages render through -
  * `/developer-hub/certifications`, `/courses`, `/learning-paths`,
  * `/tools`, `/roadmaps`, `/cheat-sheets`. Deliberately mirrors
- * `ExplorerView`'s structure (same `Header`, same stats-strip-then-title-
- * then-filters-sidebar-then-results-then-pagination layout, same
- * instant-filter/no-Apply-button convention, same
- * `NewsExplorerPagination`/`ScrollToResultsOnPageChange` reused as-is) so
- * Developer Hub feels like part of the same product, even though its
- * data comes from `getCatalogItems` (curated + live GitHub) instead of
- * the articles database.
+ * `ExplorerView`'s structure (same `Header`, same title-then-filters-
+ * sidebar-then-results-then-pagination layout, same instant-filter/no-
+ * Apply-button convention, same `NewsExplorerPagination`/
+ * `ScrollToResultsOnPageChange` reused as-is) so Developer Hub feels like
+ * part of the same product, even though its data comes from
+ * `getCatalogItems` (curated + live GitHub) instead of the articles
+ * database. The top stats strip (`DeveloperHubStatsStrip`) was removed
+ * from every catalog sub-page - it rendered the exact same figures
+ * verbatim on every one of these pages plus the Release Library, adding
+ * no new information specific to the category the visitor navigated to.
  *
  * Two pages deliberately DON'T use this template:
- * `/developer-hub/releases` reuses `ExplorerView` directly
- * (`defaultContentType: "release"`), since Releases are real DB-backed
- * articles already served perfectly by the unified News Explorer - see
- * that page's own doc comment. `/developer-hub/github` uses the
+ * `/developer-hub/releases` uses the dedicated `ReleaseLibraryView`
+ * instead - real software/tool releases (React, Docker, ...) aren't
+ * `catalog_items` rows and don't have a `difficulty`/`price` that means
+ * anything, so they get their own simple grid rather than being forced
+ * into this template's filter model (see `release-detail-service.ts`'s
+ * `getReleaseLibrary` doc comment). `/developer-hub/github` uses the
  * dedicated `GithubExplorerView` instead (premium redesign pass) - a
  * repo has real facets (language/license/organization/topics/stars/last-
  * updated) that don't map onto this template's generic Type/Difficulty/
@@ -85,9 +89,7 @@ export async function CatalogExplorerView({ title, subtitle, basePath, searchPar
       <Header initialSearchQuery={query || undefined} />
       <main className="bg-[#f8fafc] px-5 py-8 sm:px-8">
         <div className="mx-auto max-w-[1820px]">
-          <DeveloperHubStatsStrip />
-
-          <div className="mt-8">
+          <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Developer Hub</p>
             <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{title}</h1>
             <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-500">{subtitle}</p>

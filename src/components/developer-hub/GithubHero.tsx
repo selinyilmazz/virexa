@@ -41,12 +41,15 @@ function ArrowIcon({ direction, className = "size-5" }: { direction: "left" | "r
 }
 
 /**
- * GitHub Explorer's Hero - two-column layout (headline + CTA on the left,
- * an auto-sliding showcase of real editor-curated repos on the right).
- * The whole point of this redesign is "a curated library, not a copy of
- * GitHub Trending" - so the carousel pool (`repos`, from
- * `getHeroCarouselRepos`) is real `repositories` table data ordered by
- * editor pick + recommendation score, never a fixed hardcoded list.
+ * GitHub Explorer's Hero - two-column layout (headline on the left, an
+ * auto-sliding showcase of real editor-curated repos on the right). Pure
+ * introduction, no CTAs - the page below it (Featured Collections,
+ * Filters + Grid) is the only navigation, so the Hero doesn't need to
+ * duplicate a "jump to it" button. The whole point of this redesign is "a
+ * curated library, not a copy of GitHub Trending" - so the carousel pool
+ * (`repos`, from `getHeroCarouselRepos`) is real `repositories` table
+ * data ordered by editor pick + recommendation score, never a fixed
+ * hardcoded list.
  *
  * Client Component: needs interval/touch/hover state for the auto-slide,
  * pause-on-hover, infinite loop, and swipe behavior the spec calls for.
@@ -113,20 +116,6 @@ export function GithubHero({ repos, totalCurated }: GithubHeroProps) {
             productivity, system design, security, mobile, and more — picked by editors for lasting value, not a
             24-hour trending snapshot.
           </p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <a
-              href="#github-library-results"
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition-transform duration-200 hover:-translate-y-0.5"
-            >
-              Explore the Library
-            </a>
-            <a
-              href="#featured-collections"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-5 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-white/10"
-            >
-              Browse Collections
-            </a>
-          </div>
         </div>
 
         {/* Right column - auto-sliding repo showcase. */}
@@ -166,7 +155,9 @@ export function GithubHero({ repos, totalCurated }: GithubHeroProps) {
                         </span>
                       )}
                     </div>
-                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-300">{active.description}</p>
+                    {active.description && (
+                      <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-300">{active.description}</p>
+                    )}
                   </div>
                 </div>
 
@@ -183,14 +174,18 @@ export function GithubHero({ repos, totalCurated }: GithubHeroProps) {
                       {active.language}
                     </span>
                   )}
-                  <span className="inline-flex items-center gap-1">
-                    <StarIcon />
-                    {formatStat(active.stars)}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <ForkIcon />
-                    {formatStat(active.forks)}
-                  </span>
+                  {active.stars > 0 && (
+                    <span className="inline-flex items-center gap-1">
+                      <StarIcon />
+                      {formatStat(active.stars)}
+                    </span>
+                  )}
+                  {active.forks > 0 && (
+                    <span className="inline-flex items-center gap-1">
+                      <ForkIcon />
+                      {formatStat(active.forks)}
+                    </span>
+                  )}
                   {active.category && (
                     <span className="rounded-full bg-white/10 px-2 py-0.5 font-medium">
                       {REPOSITORY_CATEGORY_LABELS[active.category as RepositoryCategorySlug]?.emoji}{" "}

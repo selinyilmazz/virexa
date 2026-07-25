@@ -7,7 +7,7 @@ import { RepoShareButton } from "@/components/developer-hub/RepoShareButton";
 import type { GithubRelease } from "@/lib/developer-hub/github";
 import { REPOSITORY_CATEGORY_LABELS, REPOSITORY_DIFFICULTY_LABELS, type RepositoryCategorySlug, type RepositoryDifficultySlug } from "@/lib/developer-hub/shared";
 import type { GithubRepoCardData, GithubSidebarWidgets } from "@/services/developer-hub/github-explorer-service";
-import type { CollectionRow } from "@/types/database";
+import type { ArticleRow, CollectionRow, DeveloperReleaseRow } from "@/types/database";
 
 function StarIcon({ className = "size-4" }: { className?: string }) {
   return (
@@ -56,6 +56,9 @@ type GithubRepoDetailViewProps = {
   collections: CollectionRow[];
   sidebarWidgets: GithubSidebarWidgets;
   youMayAlsoLike: GithubRepoCardData[];
+  aiSummary: string | null;
+  relatedArticles: ArticleRow[];
+  relatedReleases: DeveloperReleaseRow[];
 };
 
 /**
@@ -77,6 +80,9 @@ export function GithubRepoDetailView({
   collections,
   sidebarWidgets,
   youMayAlsoLike,
+  aiSummary,
+  relatedArticles,
+  relatedReleases,
 }: GithubRepoDetailViewProps) {
   const category = repo.category ? REPOSITORY_CATEGORY_LABELS[repo.category as RepositoryCategorySlug] : null;
   const canonicalUrl = `/developer-hub/github/${repo.slug}`;
@@ -110,7 +116,7 @@ export function GithubRepoDetailView({
               {repo.editorPick && <span className="rounded-full bg-amber-400/15 px-2.5 py-1 text-xs font-semibold text-amber-300">Editor&apos;s Pick</span>}
               {repo.hiddenGem && <span className="rounded-full bg-violet-400/15 px-2.5 py-1 text-xs font-semibold text-violet-300">Hidden Gem</span>}
             </div>
-            <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-300">{repo.description}</p>
+            {repo.description && <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-300">{repo.description}</p>}
 
             <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-300">
               {repo.language && (
@@ -119,24 +125,30 @@ export function GithubRepoDetailView({
                   {repo.language}
                 </span>
               )}
-              <span className="inline-flex items-center gap-1.5">
-                <StarIcon />
-                {formatStat(repo.stars)} stars
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <ForkIcon />
-                {formatStat(repo.forks)} forks
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <EyeIcon />
-                {formatStat(repo.watchers)} watchers
-              </span>
+              {repo.stars > 0 && (
+                <span className="inline-flex items-center gap-1.5">
+                  <StarIcon />
+                  {formatStat(repo.stars)} stars
+                </span>
+              )}
+              {repo.forks > 0 && (
+                <span className="inline-flex items-center gap-1.5">
+                  <ForkIcon />
+                  {formatStat(repo.forks)} forks
+                </span>
+              )}
+              {repo.watchers > 0 && (
+                <span className="inline-flex items-center gap-1.5">
+                  <EyeIcon />
+                  {formatStat(repo.watchers)} watchers
+                </span>
+              )}
               {repo.license && <span>{repo.license} License</span>}
               <span>Updated {repo.updatedRelative}</span>
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
             <RepoShareButton title={`${repo.owner}/${repo.repoName}`} url={canonicalUrl} />
             <RepoBookmarkButton
               repo={{
@@ -151,6 +163,26 @@ export function GithubRepoDetailView({
                 brandKey: repo.fullName,
               }}
             />
+            {repo.documentationUrl && (
+              <a
+                href={repo.documentationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-white/10"
+              >
+                Docs
+              </a>
+            )}
+            {repo.websiteUrl && (
+              <a
+                href={repo.websiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-white/10"
+              >
+                Website
+              </a>
+            )}
             <a
               href={repo.githubUrl}
               target="_blank"
@@ -170,9 +202,37 @@ export function GithubRepoDetailView({
             <section className="rounded-3xl border border-amber-200 bg-amber-50/60 p-6 sm:p-8">
               <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight text-slate-950">
                 <span aria-hidden="true">✨</span>
-                Why We Recommend This
+                Why Learn This Repository
               </h2>
               <p className="mt-3 text-base leading-relaxed text-slate-700">{repo.editorNotes}</p>
+            </section>
+          )}
+
+          {/* AI Summary - real, provider-generated (never fabricated when no AI provider is configured, see getRepositoryAISummary). */}
+          {aiSummary && (
+            <section className="rounded-3xl border border-blue-200 bg-blue-50/50 p-6 sm:p-8">
+              <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight text-slate-950">
+                <span aria-hidden="true">🧠</span>
+                AI Summary
+              </h2>
+              <p className="mt-3 text-base leading-relaxed text-slate-700">{aiSummary}</p>
+            </section>
+          )}
+
+          {/* Learning Roadmap */}
+          {repo.learningRoadmap.length > 0 && (
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+              <h2 className="text-lg font-bold tracking-tight text-slate-950">Learning Roadmap</h2>
+              <ol className="mt-4 space-y-3">
+                {repo.learningRoadmap.map((step, index) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#2f67e8]/10 text-xs font-bold text-[#2f67e8]">
+                      {index + 1}
+                    </span>
+                    <span className="text-sm leading-relaxed text-slate-700">{step}</span>
+                  </li>
+                ))}
+              </ol>
             </section>
           )}
 
@@ -223,23 +283,40 @@ export function GithubRepoDetailView({
             <h2 className="text-lg font-bold tracking-tight text-slate-950">GitHub Stats</h2>
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
-                { label: "Stars", value: formatStat(repo.stars) },
-                { label: "Forks", value: formatStat(repo.forks) },
-                { label: "Watchers", value: formatStat(repo.watchers) },
-                { label: "Open Topics", value: String(repo.topics.length) },
-              ].map((stat) => (
-                <div key={stat.label} className="rounded-2xl bg-slate-50 p-4 text-center">
-                  <p className="text-xl font-bold text-slate-950">{stat.value}</p>
-                  <p className="mt-1 text-xs font-medium text-slate-500">{stat.label}</p>
-                </div>
-              ))}
+                repo.stars > 0 ? { label: "Stars", value: formatStat(repo.stars) } : null,
+                repo.forks > 0 ? { label: "Forks", value: formatStat(repo.forks) } : null,
+                repo.watchers > 0 ? { label: "Watchers", value: formatStat(repo.watchers) } : null,
+                repo.openIssuesCount > 0 ? { label: "Open Issues", value: formatStat(repo.openIssuesCount) } : null,
+                typeof repo.contributorsCount === "number" && repo.contributorsCount > 0
+                  ? { label: "Contributors", value: formatStat(repo.contributorsCount) }
+                  : null,
+                repo.topics.length > 0 ? { label: "Topics", value: String(repo.topics.length) } : null,
+              ]
+                .filter((stat): stat is { label: string; value: string } => stat !== null)
+                .map((stat) => (
+                  <div key={stat.label} className="rounded-2xl bg-slate-50 p-4 text-center">
+                    <p className="text-xl font-bold text-slate-950">{stat.value}</p>
+                    <p className="mt-1 text-xs font-medium text-slate-500">{stat.label}</p>
+                  </div>
+                ))}
             </div>
-            <div className="mt-4 flex items-center gap-3">
-              <span className="text-sm font-medium text-slate-500">Health Score</span>
-              <span className="h-2 w-40 overflow-hidden rounded-full bg-slate-100">
-                <span className={`block h-full rounded-full ${healthColor(repo.healthScore)}`} style={{ width: `${repo.healthScore}%` }} />
-              </span>
-              <span className="text-sm font-bold text-slate-700">{repo.healthScore}/100</span>
+            <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-slate-500">Health Score</span>
+                <span className="h-2 w-32 overflow-hidden rounded-full bg-slate-100">
+                  <span className={`block h-full rounded-full ${healthColor(repo.healthScore)}`} style={{ width: `${repo.healthScore}%` }} />
+                </span>
+                <span className="text-sm font-bold text-slate-700">{repo.healthScore}/100</span>
+              </div>
+              {repo.communityScore > 0 && (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-slate-500">Community Score</span>
+                  <span className="h-2 w-32 overflow-hidden rounded-full bg-slate-100">
+                    <span className={`block h-full rounded-full ${healthColor(repo.communityScore)}`} style={{ width: `${repo.communityScore}%` }} />
+                  </span>
+                  <span className="text-sm font-bold text-slate-700">{repo.communityScore}/100</span>
+                </div>
+              )}
             </div>
             {category && (
               <p className="mt-3 text-sm text-slate-500">
@@ -275,6 +352,48 @@ export function GithubRepoDetailView({
                   <li key={release.tag} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3">
                     <span className="font-mono text-sm font-semibold text-slate-900">{release.tag}</span>
                     <span className="text-xs text-slate-500">{formatDate(release.publishedAt)}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Related Articles - real Virexa news coverage mentioning this repository. */}
+          {relatedArticles.length > 0 && (
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+              <h2 className="text-lg font-bold tracking-tight text-slate-950">Related Articles</h2>
+              <ul className="mt-4 space-y-3">
+                {relatedArticles.map((article) => (
+                  <li key={article.id}>
+                    <Link
+                      href={`/article/${article.slug}`}
+                      className="block rounded-xl px-3 py-2.5 transition-colors duration-200 hover:bg-slate-50"
+                    >
+                      <p className="text-sm font-semibold text-slate-900">{article.title}</p>
+                      <p className="mt-0.5 text-xs text-slate-500">{formatDate(article.published_at)}</p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Related Releases - real Developer Releases entries for this product/platform. */}
+          {relatedReleases.length > 0 && (
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+              <h2 className="text-lg font-bold tracking-tight text-slate-950">Related Releases</h2>
+              <ul className="mt-4 space-y-3">
+                {relatedReleases.map((release) => (
+                  <li key={release.id}>
+                    <Link
+                      href={`/developer-hub/releases/${release.slug}`}
+                      className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3 transition-colors duration-200 hover:bg-slate-100"
+                    >
+                      <span className="text-sm font-semibold text-slate-900">
+                        {release.product} <span className="font-mono text-xs text-slate-500">{release.version}</span>
+                      </span>
+                      <span className="text-xs text-slate-500">{formatDate(release.release_date)}</span>
+                    </Link>
                   </li>
                 ))}
               </ul>

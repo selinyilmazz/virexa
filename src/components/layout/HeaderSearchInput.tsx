@@ -36,7 +36,7 @@ const IN_PLACE_SEARCH_PATHS = [
   "/cloud",
   "/open-source",
   "/resources",
-  // Developer Hub's 8 dedicated catalog pages (see `CatalogExplorerView`/
+  // Developer Hub's 7 dedicated catalog pages (see `CatalogExplorerView`/
   // `ExplorerView`'s `defaultResourceType`/`defaultContentType`) - each
   // owns a `q` param the same way every other Explorer route does. The
   // `/developer-hub` landing page itself is deliberately NOT listed here:
@@ -48,10 +48,15 @@ const IN_PLACE_SEARCH_PATHS = [
   "/developer-hub/github",
   "/developer-hub/tools",
   "/developer-hub/roadmaps",
-  "/developer-hub/releases",
   "/developer-hub/cheat-sheets",
-  // "/developer-releases" deliberately NOT listed (stabilization pass) -
-  // it's now a redirect to "/developer-hub/releases", not a real Explorer
+  // "/developer-hub/releases" deliberately NOT listed (Release Library
+  // unification): it's now the dedicated Release Library grid
+  // (`ReleaseLibraryView`) with no `q`-param-driven filtering of its own
+  // - same reasoning as the `/developer-hub` landing page above, so
+  // typing there correctly navigates to `/search` instead of pushing a
+  // `q` param the page would silently ignore.
+  // "/developer-releases" deliberately NOT listed either (stabilization
+  // pass) - it's a redirect to "/developer-hub/releases", not a real
   // destination of its own, so it shouldn't be searched in place.
 ];
 

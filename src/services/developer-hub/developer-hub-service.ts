@@ -15,13 +15,15 @@ import type { CatalogDifficulty as Difficulty, CatalogItemRow, CatalogPrice as P
  * shape so a single Filters sidebar / Sort control / pagination UI can
  * work across all of them (`CatalogExplorerView`).
  *
- * Deliberately excluded from this pool: article-backed "Releases" -
- * those are real, paginated DB rows already served perfectly well by the
- * existing unified Explorer (`ExplorerView` with `defaultContentType`
- * `"release"` - see `/developer-hub/releases/page.tsx`), so there's no
- * reason to re-implement that here. `getDeveloperHubStats` still reports
- * a real release count (via `getNewsExplorerArticles`) for the stats
- * strip, for the same reason the homepage's own stats strip does.
+ * Deliberately excluded from this pool: real software/tool releases
+ * (React, Docker, ...) - those live in their own dedicated Release
+ * Library (`getReleaseLibrary` in `release-detail-service.ts`, rendered
+ * by `/developer-hub/releases/page.tsx`), not here, since they're not
+ * `catalog_items` rows and don't share this pool's Type/Difficulty/Price
+ * filter model. `getDeveloperHubStats` still reports a real
+ * release-tagged-article count (via `getNewsExplorerArticles`) for the
+ * stats strip, purely as a freshness signal - same reason the homepage's
+ * own stats strip does - not as a stand-in for the Release Library.
  *
  * SERVER-ONLY MODULE: this file imports `getNewsExplorerArticles` from
  * `article-read-service.ts`, which imports the Supabase *server* client
@@ -59,6 +61,10 @@ export type CatalogItem = {
   official?: boolean;
   /** 4-5 real topic areas, in order - powers the roadmap card's mini step-preview instead of a plain icon (roadmaps only). */
   steps?: string[];
+  /** Editorial topic tags (migration 0031) - e.g. ["AWS", "Cloud", "Architecture"]. Empty array when a static item predates the editorial pass; `undefined` for GitHub repos in this pool, which have their own separate `topics` field sourced live from GitHub instead. */
+  tags?: string[];
+  /** Original "why it's recommended" editorial blurb (migration 0031), written in Virexa's own voice - not copied from the source's own marketing copy. Empty string when a static item predates the editorial pass; `undefined` for GitHub repos in this pool (the GitHub Explorer's own dedicated `RepoItem` type in `github-explorer-service.ts` carries that repo-level `editorNotes` instead). */
+  editorNotes?: string;
   // GitHub-repo-specific real, live fields (only set when `resourceType === "github-repo"`) - kept discrete rather than pre-formatted into `metaLine` so `CatalogCard` can render a proper repo meta row (language dot, star/fork icons) instead of a plain string.
   owner?: string;
   repoName?: string;
@@ -134,6 +140,8 @@ async function buildCatalogPool(): Promise<CatalogItem[]> {
       price: row.price ?? undefined,
       featured: row.featured,
       brandKey: row.resource_type === "cheat-sheet" ? row.slug : row.provider,
+      tags: row.tags,
+      editorNotes: row.editor_notes || undefined,
     };
 
     if (row.resource_type === "certification") {

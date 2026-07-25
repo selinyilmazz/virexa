@@ -1,21 +1,20 @@
 import Link from "next/link";
-import type { BookmarksFilter } from "@/components/bookmarks/BookmarksToolbar";
+import type { BookmarksTabId } from "@/components/bookmarks/BookmarksTabs";
 
 export type RecentBookmarkItem = {
   id: string;
-  type: BookmarksFilter;
+  type: BookmarksTabId;
   title: string;
   href: string;
   external?: boolean;
 };
 
-const TYPE_ICON: Record<BookmarksFilter, string> = {
-  all: "🔖",
+const TYPE_ICON: Record<BookmarksTabId, string> = {
   article: "📰",
   release: "🚀",
-  tutorial: "🎓",
   repository: "⭐",
-  resource: "🧭",
+  course: "🎓",
+  certification: "🏅",
 };
 
 type BookmarksSidebarProps = {

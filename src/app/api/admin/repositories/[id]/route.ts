@@ -32,6 +32,8 @@ const CATEGORY_VALUES = [
   "cyber-security",
   "mobile-development",
   "learning-resources",
+  "cloud",
+  "databases",
 ] as const;
 
 const bodySchema = z.object({
@@ -60,6 +62,14 @@ const bodySchema = z.object({
   editorNotes: z.string().trim().optional(),
   tags: z.array(z.string().trim().min(1)).optional(),
   displayOrder: z.number().int().optional(),
+  // --- Fields added by 0026 (curation content pass: Official Links,
+  // Community Score, Learning Roadmap, Cover Image, Audience).
+  documentationUrl: z.string().trim().url().nullable().optional(),
+  websiteUrl: z.string().trim().url().nullable().optional(),
+  communityScore: z.number().int().min(0).max(100).optional(),
+  coverImageUrl: z.string().trim().url().nullable().optional(),
+  audience: z.string().trim().optional(),
+  learningRoadmap: z.array(z.string().trim().min(1)).optional(),
 });
 
 function decodeId(raw: string): string {
@@ -119,6 +129,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (body.editorNotes !== undefined) patch.editor_notes = body.editorNotes;
     if (body.tags !== undefined) patch.tags = body.tags;
     if (body.displayOrder !== undefined) patch.display_order = body.displayOrder;
+    if (body.documentationUrl !== undefined) patch.documentation_url = body.documentationUrl;
+    if (body.websiteUrl !== undefined) patch.website_url = body.websiteUrl;
+    if (body.communityScore !== undefined) patch.community_score = body.communityScore;
+    if (body.coverImageUrl !== undefined) patch.cover_image_url = body.coverImageUrl;
+    if (body.audience !== undefined) patch.audience = body.audience;
+    if (body.learningRoadmap !== undefined) patch.learning_roadmap = body.learningRoadmap;
 
     const touchedAutoSyncField = AUTO_SYNC_FIELDS.some((field) => field in body);
     if (touchedAutoSyncField) patch.auto_sync = false;

@@ -26,8 +26,8 @@ export default function Home() {
     <>
       <Header />
       <main className="bg-[#f8fafc] px-5 pb-8 pt-10 sm:px-8">
-        <div className="mx-auto max-w-[1820px] space-y-8">
-          <div className="grid grid-cols-1 gap-8 xl:grid-cols-12">
+        <div className="mx-auto max-w-[1820px] space-y-4">
+          <div className="grid grid-cols-1 gap-8 xl:grid-cols-12 xl:items-start">
             <div className="min-w-0 xl:col-span-8">
               <HeroSection />
             </div>

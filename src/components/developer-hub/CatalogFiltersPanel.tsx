@@ -38,9 +38,9 @@ function toggleValue(list: string[], value: string): string[] {
  * "Apply" button, every section always expanded (same instant-apply, no-
  * accordion convention as `NewsExplorerFiltersPanel`, applied to the
  * catalog domain instead of articles). `type` deliberately has no
- * "Releases" option - Releases are real DB articles served by the
- * unified Explorer instead (`/developer-hub/releases`, `defaultContentType`
- * `"release"`), not part of this static/live catalog pool - see
+ * "Releases" option - Releases are real software/tool releases served by
+ * the dedicated Release Library instead (`/developer-hub/releases`,
+ * `ReleaseLibraryView`), not part of this static/live catalog pool - see
  * `developer-hub-service.ts`'s doc comment.
  */
 export function CatalogFiltersPanel({ types, difficulties, prices }: CatalogFiltersPanelProps) {
