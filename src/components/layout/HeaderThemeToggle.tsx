@@ -18,10 +18,12 @@ const CYCLE: Record<"system" | "light" | "dark", "system" | "light" | "dark"> = 
  * category theme picker - both write to the same `settings.theme` via
  * `saveSettings()`, so they always agree.
  *
- * The visual effect is scoped to `AuthedThemeScope` (Profile/Bookmarks/
- * Settings pages only, see that file's doc comment) - clicking this
- * anywhere else still saves the real preference, it just won't repaint
- * the current page, since no other page has dark styling implemented yet.
+ * The visual effect comes from the single global `ThemeScope` (root
+ * layout, wraps the whole app) - clicking this repaints every page that
+ * has real `dark:` styling (currently Header/Profile/Bookmarks/Settings);
+ * pages without any dark styling yet (Home, article, Developer Hub,
+ * admin, ...) simply won't visually change, since there's nothing for
+ * the `dark` class to affect there.
  *
  * Only interactive when signed in (settings are per-user and every
  * dark-mode-scoped page already requires sign-in via middleware) - for a

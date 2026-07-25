@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ProfileAvatarUpload } from "@/components/profile/ProfileAvatarUpload";
+import { useTranslations } from "@/i18n/i18n-provider";
 import { useProfile } from "@/lib/profile";
 
 /**
@@ -13,6 +14,7 @@ import { useProfile } from "@/lib/profile";
  * two pages can never drift out of sync.
  */
 export function ProfileHeader() {
+  const t = useTranslations();
   const profile = useProfile();
 
   return (
@@ -24,9 +26,9 @@ export function ProfileHeader() {
           <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">{profile.fullName}</h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{profile.email}</p>
           <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs font-medium text-slate-400 dark:text-slate-500 sm:justify-start">
-            <span>Member since {profile.joinDate}</span>
+            <span>{t("profile.memberSince", { date: profile.joinDate })}</span>
             <span aria-hidden="true">·</span>
-            <span>{profile.country || "Location not set"}</span>
+            <span>{profile.country || t("profile.locationNotSet")}</span>
           </div>
         </div>
 
@@ -34,7 +36,7 @@ export function ProfileHeader() {
           href="/settings?category=account"
           className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-[#2f67e8] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2556c9]"
         >
-          Edit Profile
+          {t("profile.editProfile")}
         </Link>
       </div>
     </div>

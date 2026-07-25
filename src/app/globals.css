@@ -1,17 +1,19 @@
 @import "tailwindcss";
 
-/* Real, working dark mode (Navigation/Profile/Settings UX update),
-   scoped to exactly the Navbar/Profile/Bookmarks/Settings surfaces per
-   the agreed scope - NOT applied to `<html>` globally. `AuthedThemeScope`
-   (`src/components/providers/AuthedThemeScope.tsx`) puts the `.dark`
-   class on a wrapper `<div>` that only exists on those pages, wrapping
-   both `<Header />` and that page's `<main>` - `&:where(.dark, .dark *)`
-   means every `dark:` utility below fires for that wrapper's own class
-   AND any descendant, so the Header/CategoryNav go dark together with
-   the page content while every other page (homepage, article, Developer
-   Hub, admin, etc.) - which never renders that wrapper - stays
-   untouched. This replaces Tailwind v4's default `prefers-color-scheme`-
-   based dark: variant with the class-strategy one production apps use. */
+/* Real, working dark mode, driven by a single global provider
+   (`src/components/providers/ThemeScope.tsx`, mounted once in the root
+   layout around the entire app - Home included). It puts the `.dark`
+   class on one wrapper `<div>` around everything under `<body>` -
+   `&:where(.dark, .dark *)` means every `dark:` utility below fires for
+   that wrapper's own class AND any descendant, so the whole app goes
+   dark together. Most pages (homepage, article, Developer Hub, admin,
+   etc.) simply have no `dark:` utility classes on their own elements
+   yet, so they don't visually change - but they're all driven by this
+   ONE mechanism, not a per-page opt-in (a previous version scoped this
+   to only 3 pages via a separate wrapper, which is what caused Profile/
+   Settings to render dark independently of the rest of the app - fixed).
+   This replaces Tailwind v4's default `prefers-color-scheme`-based dark:
+   variant with the class-strategy one production apps use. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {

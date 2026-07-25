@@ -1,4 +1,151 @@
 {
+  "home": {
+    "hero": {
+      "srHeading": "Öne Çıkan Haber"
+    },
+    "news": {
+      "eyebrow": "Haber Merkezi",
+      "heading": "Öne Çıkan Haberler",
+      "emptyTitle": "Henüz haber yok",
+      "emptyDescription": "En son haberleri hâlâ topluyoruz. Kısa süre sonra tekrar kontrol edin.",
+      "viewAll": "Tüm Haberleri Gör"
+    },
+    "mostRead": {
+      "heading": "Bugün En Çok Okunanlar",
+      "viewAll": "Tümünü gör",
+      "viewsCount": "{count} görüntülenme"
+    },
+    "releases": {
+      "heading": "Geliştirici Sürümleri",
+      "viewAll": "Tümünü Gör"
+    }
+  },
+  "explorer": {
+    "breadcrumbAria": "Gezinme yolu",
+    "eyebrow": "Keşfet",
+    "resultsSingular": "sonuç",
+    "resultsPlural": "sonuç",
+    "pageOf": "Sayfa {page} / {totalPages}",
+    "filters": {
+      "title": "Filtreler",
+      "clearAll": "Tümünü temizle",
+      "clear": "Temizle",
+      "time": "Zaman",
+      "categories": "Kategoriler",
+      "sources": "Kaynaklar",
+      "contentType": "İçerik Türü",
+      "timeOptions": {
+        "today": "Bugün",
+        "7d": "Son 7 Gün",
+        "30d": "Son 30 Gün",
+        "3m": "Son 3 Ay",
+        "1y": "Son 1 Yıl"
+      },
+      "contentTypeOptions": {
+        "news": "Haber",
+        "release": "Sürüm",
+        "tutorial": "Eğitim",
+        "research": "Araştırma",
+        "security-advisory": "Güvenlik Bildirimi",
+        "certification": "Sertifika",
+        "open-source": "Açık Kaynak"
+      }
+    }
+  },
+  "profile": {
+    "breadcrumbAria": "Gezinme yolu",
+    "title": "Profil",
+    "heading": "Profilim",
+    "subtitle": "Hesabını, kaydedilenlerini ve okuma etkinliğini yönet.",
+    "memberSince": "Katılma tarihi: {date}",
+    "locationNotSet": "Konum belirtilmedi",
+    "editProfile": "Profili Düzenle",
+    "stats": {
+      "bookmarks": "Kaydedilenler",
+      "articlesRead": "Okunan Makale",
+      "releasesViewed": "Görüntülenen Geliştirici Sürümü",
+      "favoriteCategory": "Favori Kategori"
+    },
+    "overview": {
+      "readingActivity": "Okuma Etkinliği",
+      "releasesViewed": "Görüntülenen Sürüm",
+      "articlesReadThisWeek": "Bu Hafta Okunan Makale",
+      "favoriteCategories": "Favori Kategoriler",
+      "favoriteCategoriesEmpty": "Favori kategorilerini burada görmek için birkaç makale oku.",
+      "recentTimeline": "Son Okuma Zaman Çizelgesi",
+      "timelineEmpty": "Açtığın makaleler burada görünecek."
+    }
+  },
+  "bookmarks": {
+    "breadcrumbAria": "Gezinme yolu",
+    "title": "Kaydedilenler",
+    "subtitle": "Makaleleri, sürümleri ve geliştirici kaynaklarını daha sonra okumak için kaydet.",
+    "clearAll": "Tümünü Temizle",
+    "clearAllErrorToast": "Kaydedilenlerin temizlenemedi. Lütfen tekrar dene.",
+    "loading": "Kaydedilenlerin yükleniyor...",
+    "loadError": "Kaydedilenlerin yüklenemedi.",
+    "stats": {
+      "savedItems": "Kaydedilen Öğe",
+      "articles": "Makale",
+      "repositories": "Depo",
+      "courses": "Kurs",
+      "certificates": "Sertifika",
+      "releases": "Sürüm"
+    },
+    "tabs": {
+      "aria": "Kaydedilen türü",
+      "article": "Makaleler",
+      "repository": "Depolar",
+      "course": "Kurslar",
+      "certification": "Sertifikalar",
+      "release": "Sürümler"
+    },
+    "toolbar": {
+      "sortAria": "Sırala",
+      "newest": "En Yeni",
+      "oldest": "En Eski"
+    },
+    "pagination": {
+      "aria": "Sayfalama",
+      "previous": "← Önceki",
+      "next": "Sonraki →"
+    },
+    "emptyState": {
+      "title": "Henüz kaydedilen yok",
+      "generic": {
+        "message": "Kütüphaneni oluşturmak için makale, depo, kurs, sertifika ve sürüm kaydet.",
+        "cta": "Makalelere Göz At"
+      },
+      "article": {
+        "message": "Daha sonra okumak için makaleleri kaydet.",
+        "cta": "Makalelere Göz At"
+      },
+      "repository": {
+        "message": "Kendi okuma kütüphaneni oluşturmak için GitHub depolarını kaydet.",
+        "cta": "Depolara Göz At"
+      },
+      "course": {
+        "message": "Kaldığın yerden devam etmek için kursları kaydet.",
+        "cta": "Kurslara Göz At"
+      },
+      "certification": {
+        "message": "Üzerinde çalıştığın sertifikaları kaydet.",
+        "cta": "Sertifikalara Göz At"
+      },
+      "release": {
+        "message": "Kullandığın araçları takip etmek için Geliştirici Sürümlerini kaydet.",
+        "cta": "Sürümlere Göz At"
+      }
+    },
+    "sidebar": {
+      "recentTitle": "Son Kaydedilenler",
+      "recentEmpty": "Henüz bir şey kaydedilmedi.",
+      "statsTitle": "Okuma İstatistikleri",
+      "saved": "Kaydedilen",
+      "read": "Okunan",
+      "unread": "Okunmayan"
+    }
+  },
   "nav": {
     "logoAria": "Virexa ana sayfa",
     "searchAria": "Haber, konu veya kaynak ara",

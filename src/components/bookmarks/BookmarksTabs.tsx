@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslations } from "@/i18n/i18n-provider";
+
 export type BookmarksTabId = "article" | "repository" | "course" | "certification" | "release";
 
 export type BookmarksTabDefinition = {
@@ -23,8 +27,9 @@ type BookmarksTabsProps = {
  * the UI beyond adding the tabs" brief.
  */
 export function BookmarksTabs({ tabs, active, onChange }: BookmarksTabsProps) {
+  const t = useTranslations();
   return (
-    <div role="tablist" aria-label="Bookmark type" className="flex flex-wrap gap-2">
+    <div role="tablist" aria-label={t("bookmarks.tabs.aria")} className="flex flex-wrap gap-2">
       {tabs.map((tab) => {
         const isActive = tab.id === active;
         return (

@@ -1,3 +1,5 @@
+import { useTranslations } from "@/i18n/i18n-provider";
+
 type ProfileStatsProps = {
   bookmarks: number;
   articlesRead: string;
@@ -14,11 +16,12 @@ type ProfileStatsProps = {
  * reading history yet rather than guessing.
  */
 export function ProfileStats({ bookmarks, articlesRead, releasesViewed, favoriteCategory }: ProfileStatsProps) {
+  const t = useTranslations();
   const stats = [
-    { label: "Bookmarks", value: String(bookmarks) },
-    { label: "Articles Read", value: articlesRead },
-    { label: "Developer Releases Viewed", value: String(releasesViewed) },
-    { label: "Favorite Category", value: favoriteCategory },
+    { label: t("profile.stats.bookmarks"), value: String(bookmarks) },
+    { label: t("profile.stats.articlesRead"), value: articlesRead },
+    { label: t("profile.stats.releasesViewed"), value: String(releasesViewed) },
+    { label: t("profile.stats.favoriteCategory"), value: favoriteCategory },
   ];
 
   return (

@@ -15,16 +15,9 @@ import { BookmarksTabs, type BookmarksTabId, type BookmarksTabDefinition } from 
 import { BookmarksPagination } from "@/components/bookmarks/BookmarksPagination";
 import { BookmarksEmptyState } from "@/components/bookmarks/BookmarksEmptyState";
 import { BookmarksSidebar, type RecentBookmarkItem } from "@/components/bookmarks/BookmarksSidebar";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 const PAGE_SIZE = 8;
-
-const TAB_LABELS: Record<BookmarksTabId, string> = {
-  article: "Articles",
-  repository: "Repositories",
-  course: "Courses",
-  certification: "Certificates",
-  release: "Releases",
-};
 
 const TAB_ORDER: BookmarksTabId[] = ["article", "repository", "course", "certification", "release"];
 
@@ -43,6 +36,7 @@ const TAB_ORDER: BookmarksTabId[] = ["article", "repository", "course", "certifi
  * already-fetched per-type array rather than re-querying Supabase.
  */
 export function BookmarksContent() {
+  const t = useTranslations();
   const allBookmarks = useBookmarks();
   const status = useBookmarksStatus();
   const loadError = useBookmarksError();
@@ -93,12 +87,12 @@ export function BookmarksContent() {
 
   function handleClearAll() {
     clearBookmarks().catch(() => {
-      setToastMessage("Couldn't clear your bookmarks. Please try again.");
+      setToastMessage(t("bookmarks.clearAllErrorToast"));
       setTimeout(() => setToastMessage(null), 2500);
     });
   }
 
-  const tabs: BookmarksTabDefinition[] = TAB_ORDER.map((id) => ({ id, label: TAB_LABELS[id], count: byType[id].length }));
+  const tabs: BookmarksTabDefinition[] = TAB_ORDER.map((id) => ({ id, label: t(`bookmarks.tabs.${id}`), count: byType[id].length }));
   const activeItems = byType[activeTab];
   const orderedItems = sort === "newest" ? activeItems : [...activeItems].reverse();
   const totalPages = Math.max(1, Math.ceil(orderedItems.length / PAGE_SIZE));
@@ -143,7 +137,7 @@ export function BookmarksContent() {
             onClick={handleClearAll}
             className="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-red-100 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100"
           >
-            Clear All
+            {t("bookmarks.clearAll")}
           </button>
         )}
       </div>
@@ -163,17 +157,17 @@ export function BookmarksContent() {
         <div className="min-w-0">
           {status === "loading" ? (
             <div className="flex items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-16 text-base text-slate-500 dark:text-slate-400 shadow-sm">
-              Loading your bookmarks...
+              {t("bookmarks.loading")}
             </div>
           ) : status === "error" ? (
             <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-red-200 dark:border-red-900 bg-red-50/40 dark:bg-red-950/20 px-6 py-16 text-center shadow-sm">
-              <p className="text-base font-medium text-red-600">{loadError ?? "Couldn't load your bookmarks."}</p>
+              <p className="text-base font-medium text-red-600">{loadError ?? t("bookmarks.loadError")}</p>
               <button
                 type="button"
                 onClick={() => void retryBookmarks()}
                 className="rounded-xl border border-red-200 dark:border-red-900 bg-white dark:bg-slate-900 px-5 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
               >
-                Retry
+                {t("common.retry")}
               </button>
             </div>
           ) : total === 0 ? (

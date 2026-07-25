@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslations } from "@/i18n/i18n-provider";
+
 type BookmarksStatsProps = {
   total: number;
   articles: number;
@@ -9,13 +13,14 @@ type BookmarksStatsProps = {
 
 /** Stat cards (unified Bookmark Center) - same design language as the Profile page's statistic cards, extended from 4 to 6 to cover every bookmark type. */
 export function BookmarksStats({ total, articles, repositories, courses, certifications, releases }: BookmarksStatsProps) {
+  const t = useTranslations();
   const stats = [
-    { label: "Saved Items", value: total },
-    { label: "Articles", value: articles },
-    { label: "Repositories", value: repositories },
-    { label: "Courses", value: courses },
-    { label: "Certificates", value: certifications },
-    { label: "Releases", value: releases },
+    { label: t("bookmarks.stats.savedItems"), value: total },
+    { label: t("bookmarks.stats.articles"), value: articles },
+    { label: t("bookmarks.stats.repositories"), value: repositories },
+    { label: t("bookmarks.stats.courses"), value: courses },
+    { label: t("bookmarks.stats.certificates"), value: certifications },
+    { label: t("bookmarks.stats.releases"), value: releases },
   ];
 
   return (

@@ -3,6 +3,7 @@ import { Geist_Mono, Inter } from "next/font/google";
 import { ConditionalFooter } from "@/components/layout/ConditionalFooter";
 import { Footer } from "@/components/layout/Footer";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { ThemeScope } from "@/components/providers/ThemeScope";
 import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 import { I18nProvider } from "@/i18n/i18n-provider";
@@ -98,10 +99,12 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <I18nProvider locale={locale}>
           <AuthProvider initialSession={session}>
-            {children}
-            <ConditionalFooter>
-              <Footer />
-            </ConditionalFooter>
+            <ThemeScope>
+              {children}
+              <ConditionalFooter>
+                <Footer />
+              </ConditionalFooter>
+            </ThemeScope>
           </AuthProvider>
         </I18nProvider>
       </body>

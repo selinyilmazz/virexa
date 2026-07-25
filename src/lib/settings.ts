@@ -20,7 +20,12 @@ export const defaultSettings: UserSettings = {
   timezone: "UTC",
   summaryLength: "medium",
   preferredCategories: ["Technology", "AI"],
-  theme: "system",
+  // "light", not "system" - a visitor who has never opened Settings >
+  // Appearance must never be silently switched to a dark page just
+  // because their OS/browser happens to prefer dark ("I never selected
+  // Dark mode" bug report). "System" is still a real, fully-working
+  // choice for anyone who deliberately picks it (see `ThemeScope.tsx`).
+  theme: "light",
   readingWidth: "comfortable",
   readingProgressBar: true,
   rememberScrollPosition: false,

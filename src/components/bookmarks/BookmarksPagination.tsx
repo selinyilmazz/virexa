@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslations } from "@/i18n/i18n-provider";
+
 type BookmarksPaginationProps = {
   page: number;
   totalPages: number;
@@ -15,6 +19,7 @@ type BookmarksPaginationProps = {
  * plain controlled control instead of URL-driven.
  */
 export function BookmarksPagination({ page, totalPages, onPageChange }: BookmarksPaginationProps) {
+  const t = useTranslations();
   if (totalPages <= 1) return null;
 
   const isFirst = page <= 1;
@@ -30,9 +35,9 @@ export function BookmarksPagination({ page, totalPages, onPageChange }: Bookmark
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
 
   return (
-    <nav aria-label="Pagination" className="mt-6 flex flex-wrap items-center justify-center gap-2">
+    <nav aria-label={t("bookmarks.pagination.aria")} className="mt-6 flex flex-wrap items-center justify-center gap-2">
       <button type="button" disabled={isFirst} onClick={() => onPageChange(page - 1)} className={isFirst ? navButtonDisabledClass : navButtonClass}>
-        ← Previous
+        {t("bookmarks.pagination.previous")}
       </button>
 
       {pages.map((item) => (
@@ -48,7 +53,7 @@ export function BookmarksPagination({ page, totalPages, onPageChange }: Bookmark
       ))}
 
       <button type="button" disabled={isLast} onClick={() => onPageChange(page + 1)} className={isLast ? navButtonDisabledClass : navButtonClass}>
-        Next →
+        {t("bookmarks.pagination.next")}
       </button>
     </nav>
   );

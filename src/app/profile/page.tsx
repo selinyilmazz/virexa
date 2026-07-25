@@ -4,7 +4,6 @@ import { ProfilePageHeader } from "@/components/profile/ProfilePageHeader";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileStatsSection } from "@/components/profile/ProfileStatsSection";
 import { ProfileOverviewTab } from "@/components/profile/ProfileOverviewTab";
-import { AuthedThemeScope } from "@/components/providers/AuthedThemeScope";
 
 export const metadata: Metadata = {
   title: "Profile | Virexa",
@@ -20,11 +19,13 @@ export const metadata: Metadata = {
  * a four-card statistics row (`ProfileStatsSection`), and the former
  * "Overview" tab's content (`ProfileOverviewTab`) rendered directly. Same
  * 16px-radius/soft-shadow/32px-section-spacing language as the rest of
- * the authenticated shell.
+ * the authenticated shell. Dark mode comes from the single global
+ * `ThemeScope` in the root layout (same mechanism the Home page uses) -
+ * this page no longer mounts its own theme wrapper.
  */
 export default function ProfilePage() {
   return (
-    <AuthedThemeScope>
+    <>
       <Header />
       <main className="bg-[#f8fafc] px-5 py-10 sm:px-8 dark:bg-slate-950">
         <div className="mx-auto max-w-[1100px]">
@@ -37,6 +38,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
-    </AuthedThemeScope>
+    </>
   );
 }

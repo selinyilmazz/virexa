@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import type { BookmarksTabId } from "@/components/bookmarks/BookmarksTabs";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 export type RecentBookmarkItem = {
   id: string;
@@ -32,12 +35,13 @@ type BookmarksSidebarProps = {
  * not a fabricated split.
  */
 export function BookmarksSidebar({ recentItems, saved, read, unread }: BookmarksSidebarProps) {
+  const t = useTranslations();
   return (
     <div className="flex flex-col gap-6">
       <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Recently Bookmarked</h2>
+        <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t("bookmarks.sidebar.recentTitle")}</h2>
         {recentItems.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">Nothing saved yet.</p>
+          <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">{t("bookmarks.sidebar.recentEmpty")}</p>
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
             {recentItems.map((item) => (
@@ -62,12 +66,12 @@ export function BookmarksSidebar({ recentItems, saved, read, unread }: Bookmarks
       </div>
 
       <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Reading Statistics</h2>
+        <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t("bookmarks.sidebar.statsTitle")}</h2>
         <div className="mt-4 flex flex-col gap-3">
           {[
-            { label: "Saved", value: saved },
-            { label: "Read", value: read },
-            { label: "Unread", value: unread },
+            { label: t("bookmarks.sidebar.saved"), value: saved },
+            { label: t("bookmarks.sidebar.read"), value: read },
+            { label: t("bookmarks.sidebar.unread"), value: unread },
           ].map((row) => (
             <div key={row.label} className="flex items-center justify-between text-sm">
               <span className="text-slate-500 dark:text-slate-400">{row.label}</span>

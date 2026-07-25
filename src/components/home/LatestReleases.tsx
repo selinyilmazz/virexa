@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 import { getLatestReleases, type ReleaseStatus } from "@/services/articles/article-read-service";
 
 /** Colored status-badge classes per release channel - Stable=green, Beta=amber, RC=purple, LTS=blue, all real-article-derived (see `classifyReleaseStatus`). */
@@ -37,6 +38,7 @@ const STATUS_BADGE_CLASSES: Record<ReleaseStatus, string> = {
  * homepage.
  */
 export async function LatestReleases() {
+  const { t } = await getServerTranslations();
   const releases = await getLatestReleases(7);
   if (releases.length === 0) return null;
 
@@ -44,10 +46,10 @@ export async function LatestReleases() {
     <section aria-labelledby="latest-releases-title" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-2 px-1">
         <h2 id="latest-releases-title" className="text-lg font-bold tracking-tight text-slate-950">
-          Developer Releases
+          {t("home.releases.heading")}
         </h2>
         <Link href="/developer-hub/releases" className="text-sm font-semibold text-[#2f67e8] hover:text-[#2556c9]">
-          View All
+          {t("home.releases.viewAll")}
         </Link>
       </div>
 

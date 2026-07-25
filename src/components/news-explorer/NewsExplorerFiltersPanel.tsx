@@ -1,24 +1,10 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "@/i18n/i18n-provider";
 
-const TIME_OPTIONS = [
-  { id: "today", label: "Today" },
-  { id: "7d", label: "Last 7 Days" },
-  { id: "30d", label: "Last 30 Days" },
-  { id: "3m", label: "Last 3 Months" },
-  { id: "1y", label: "Last Year" },
-];
-
-const CONTENT_TYPE_OPTIONS = [
-  { id: "news", label: "News" },
-  { id: "release", label: "Release" },
-  { id: "tutorial", label: "Tutorial" },
-  { id: "research", label: "Research" },
-  { id: "security-advisory", label: "Security Advisory" },
-  { id: "certification", label: "Certification" },
-  { id: "open-source", label: "Open Source" },
-];
+const TIME_OPTION_IDS = ["today", "7d", "30d", "3m", "1y"] as const;
+const CONTENT_TYPE_OPTION_IDS = ["news", "release", "tutorial", "research", "security-advisory", "certification", "open-source"] as const;
 
 type CategoryOption = { slug: string; name: string };
 type SourceOption = { id: string; name: string; count: number };
@@ -53,6 +39,7 @@ export function NewsExplorerFiltersPanel({
   categoryOptions,
   sourceOptions,
 }: NewsExplorerFiltersPanelProps) {
+  const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -106,31 +93,31 @@ export function NewsExplorerFiltersPanel({
   return (
     <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold tracking-tight text-slate-950">Filters</h2>
+        <h2 className="text-base font-bold tracking-tight text-slate-950">{t("explorer.filters.title")}</h2>
         <button type="button" onClick={clearAll} className="text-xs font-medium text-slate-500 transition-colors hover:text-slate-700">
-          Clear all
+          {t("explorer.filters.clearAll")}
         </button>
       </div>
 
       <fieldset>
-        <legend className={legendClass}>Time</legend>
+        <legend className={legendClass}>{t("explorer.filters.time")}</legend>
         <div className="mt-2 space-y-1">
-          {TIME_OPTIONS.map((option) => (
-            <label key={option.id} className={labelClass}>
-              <input type="radio" name="time" checked={time === option.id} onChange={() => setTime(option.id)} className={radioClass} />
-              {option.label}
+          {TIME_OPTION_IDS.map((id) => (
+            <label key={id} className={labelClass}>
+              <input type="radio" name="time" checked={time === id} onChange={() => setTime(id)} className={radioClass} />
+              {t(`explorer.filters.timeOptions.${id}`)}
             </label>
           ))}
           {time && (
             <button type="button" onClick={() => setTime(undefined)} className="px-2 text-xs font-medium text-[#2f67e8] hover:underline">
-              Clear
+              {t("explorer.filters.clear")}
             </button>
           )}
         </div>
       </fieldset>
 
       <fieldset>
-        <legend className={legendClass}>Categories</legend>
+        <legend className={legendClass}>{t("explorer.filters.categories")}</legend>
         <div className="mt-2 max-h-48 space-y-1 overflow-y-auto">
           {categoryOptions.map((option) => (
             <label key={option.slug} className={labelClass}>
@@ -147,7 +134,7 @@ export function NewsExplorerFiltersPanel({
       </fieldset>
 
       <fieldset>
-        <legend className={legendClass}>Sources</legend>
+        <legend className={legendClass}>{t("explorer.filters.sources")}</legend>
         <div className="mt-2 max-h-48 space-y-1 overflow-y-auto">
           {sourceOptions.map((option) => (
             <label key={option.id} className={`${labelClass} justify-between`}>
@@ -167,17 +154,17 @@ export function NewsExplorerFiltersPanel({
       </fieldset>
 
       <fieldset>
-        <legend className={legendClass}>Content Type</legend>
+        <legend className={legendClass}>{t("explorer.filters.contentType")}</legend>
         <div className="mt-2 space-y-1">
-          {CONTENT_TYPE_OPTIONS.map((option) => (
-            <label key={option.id} className={labelClass}>
-              <input type="radio" name="type" checked={type === option.id} onChange={() => setType(option.id)} className={radioClass} />
-              {option.label}
+          {CONTENT_TYPE_OPTION_IDS.map((id) => (
+            <label key={id} className={labelClass}>
+              <input type="radio" name="type" checked={type === id} onChange={() => setType(id)} className={radioClass} />
+              {t(`explorer.filters.contentTypeOptions.${id}`)}
             </label>
           ))}
           {type && (
             <button type="button" onClick={() => setType(undefined)} className="px-2 text-xs font-medium text-[#2f67e8] hover:underline">
-              Clear
+              {t("explorer.filters.clear")}
             </button>
           )}
         </div>

@@ -1,6 +1,7 @@
 import { FeaturedStoryCarousel } from "@/components/home/FeaturedStoryCarousel";
 import type { FeaturedSlide } from "@/components/home/FeaturedStoryCarousel";
 import { findCategoryHref } from "@/data/article";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 import { resolveFallbackImageForCategory } from "@/lib/news";
 import { getFeaturedArticles } from "@/services/articles/article-read-service";
 
@@ -29,6 +30,7 @@ const FALLBACK_SLIDE: FeaturedSlide = {
  * "render something reasonable instead of a blank section" convention).
  */
 export async function HeroSection() {
+  const { t } = await getServerTranslations();
   const featured = await getFeaturedArticles(4);
 
   const slides: FeaturedSlide[] =
@@ -51,7 +53,7 @@ export async function HeroSection() {
   return (
     <section aria-labelledby="hero-title">
       <h2 id="hero-title" className="sr-only">
-        Featured Story
+        {t("home.hero.srHeading")}
       </h2>
       <FeaturedStoryCarousel slides={slides} />
     </section>

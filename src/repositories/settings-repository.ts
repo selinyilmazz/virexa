@@ -60,7 +60,7 @@ function toUserSettings(row: UserSettingsRow): UserSettings {
     timezone: row.timezone ?? "UTC",
     summaryLength: row.summary_length ?? "medium",
     preferredCategories: row.preferred_categories ?? ["Technology", "AI"],
-    theme: row.theme ?? "system",
+    theme: row.theme ?? "light",
     readingWidth: row.reading_width ?? "comfortable",
     readingProgressBar: row.reading_progress_bar ?? true,
     rememberScrollPosition: row.remember_scroll_position ?? false,

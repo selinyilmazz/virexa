@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NewsCard } from "@/components/news/NewsCard";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 import { getFeaturedArticles, getLatestArticles } from "@/services/articles/article-read-service";
 
 /**
@@ -23,6 +24,7 @@ import { getFeaturedArticles, getLatestArticles } from "@/services/articles/arti
  * away, not expand/load-more in place on the homepage).
  */
 export async function LatestNews() {
+  const { t } = await getServerTranslations();
   const featured = await getFeaturedArticles(4);
   const excludeSlug = featured[0]?.slug;
   const latestNewsItems = await getLatestArticles(4, excludeSlug);
@@ -30,9 +32,9 @@ export async function LatestNews() {
   return (
     <section aria-labelledby="latest-news-title" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Newsroom</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{t("home.news.eyebrow")}</p>
         <h2 id="latest-news-title" className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
-          Top Stories
+          {t("home.news.heading")}
         </h2>
       </div>
 
@@ -41,10 +43,8 @@ export async function LatestNews() {
           <span aria-hidden="true" className="flex size-16 items-center justify-center rounded-full bg-slate-100 text-3xl">
             📰
           </span>
-          <h3 className="mt-6 text-xl font-bold tracking-tight text-slate-950">No articles yet</h3>
-          <p className="mt-2 max-w-md text-base leading-relaxed text-slate-500">
-            We&apos;re still gathering the latest stories. Check back shortly.
-          </p>
+          <h3 className="mt-6 text-xl font-bold tracking-tight text-slate-950">{t("home.news.emptyTitle")}</h3>
+          <p className="mt-2 max-w-md text-base leading-relaxed text-slate-500">{t("home.news.emptyDescription")}</p>
         </div>
       ) : (
         <>
@@ -59,7 +59,7 @@ export async function LatestNews() {
               href="/news"
               className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 px-6 py-3 text-base font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50"
             >
-              View All News
+              {t("home.news.viewAll")}
               <span aria-hidden="true">→</span>
             </Link>
           </div>

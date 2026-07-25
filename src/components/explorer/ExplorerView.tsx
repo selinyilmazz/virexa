@@ -8,6 +8,7 @@ import { NewsExplorerPagination } from "@/components/news-explorer/NewsExplorerP
 import { NewsExplorerResults } from "@/components/news-explorer/NewsExplorerResults";
 import { NewsExplorerSortControl } from "@/components/news-explorer/NewsExplorerSortControl";
 import { ScrollToResultsOnPageChange } from "@/components/news-explorer/ScrollToResultsOnPageChange";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 import type { PulseTopicKey } from "@/lib/explorer/developer-pulse-data";
 import { SEARCH_CATEGORY_SLUGS } from "@/lib/news";
 import {
@@ -98,6 +99,7 @@ export async function ExplorerView({
   explainMatches,
   pulseTopic = "general",
 }: ExplorerViewProps) {
+  const { t } = await getServerTranslations();
   const query = (searchParams.q?.trim() || defaultQuery) ?? "";
   const highlightQuery = explainMatches && query ? query : undefined;
 
@@ -145,16 +147,16 @@ export async function ExplorerView({
       <Header initialSearchQuery={query || undefined} />
       <main className="bg-[#f8fafc] px-5 py-8 sm:px-8">
         <div className="mx-auto max-w-[1820px]">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-slate-500">
+          <nav aria-label={t("explorer.breadcrumbAria")} className="flex items-center gap-2 text-sm text-slate-500">
             <Link href="/" className="transition-colors duration-200 hover:text-slate-700">
-              Home
+              {t("common.home")}
             </Link>
             <span aria-hidden="true">›</span>
             <span className="font-medium text-slate-950">{title}</span>
           </nav>
 
           <div className="mt-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Explore</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{t("explorer.eyebrow")}</p>
             <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{title}</h1>
             <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-500">{subtitle}</p>
           </div>
@@ -174,9 +176,9 @@ export async function ExplorerView({
             <div id={RESULTS_ANCHOR_ID} className="min-w-0 scroll-mt-28">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm font-medium text-slate-600">
-                  {results.total.toLocaleString("en-US")} result{results.total === 1 ? "" : "s"}
+                  {results.total.toLocaleString("en-US")} {results.total === 1 ? t("explorer.resultsSingular") : t("explorer.resultsPlural")}
                   <span className="text-slate-400"> • </span>
-                  Page {results.page} of {results.totalPages}
+                  {t("explorer.pageOf", { page: results.page, totalPages: results.totalPages })}
                 </p>
                 <NewsExplorerSortControl />
               </div>

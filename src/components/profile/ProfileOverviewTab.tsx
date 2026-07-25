@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
+import { useTranslations } from "@/i18n/i18n-provider";
 import { useBookmarks } from "@/lib/bookmarks";
 import { useReleaseViewCount } from "@/lib/release-views";
 import { HISTORY_LIMIT, useReadingHistory } from "@/lib/reading-history";
@@ -24,6 +25,7 @@ function computeCategoryCounts(categories: string[]): { category: string; count:
  * this app (e.g. `HeaderThemeToggle`'s visual-only dark mode note).
  */
 export function ProfileOverviewTab() {
+  const t = useTranslations();
   const bookmarks = useBookmarks();
   const history = useReadingHistory();
   const releasesViewed = useReleaseViewCount();
@@ -39,16 +41,16 @@ export function ProfileOverviewTab() {
   const timelineItems = history.slice(0, 8);
 
   const activityCards = [
-    { label: "Articles Read", value: readCountLabel },
-    { label: "Bookmarks", value: String(bookmarks.length) },
-    { label: "Releases Viewed", value: String(releasesViewed) },
-    { label: "Articles Read This Week", value: String(readThisWeek) },
+    { label: t("profile.stats.articlesRead"), value: readCountLabel },
+    { label: t("profile.stats.bookmarks"), value: String(bookmarks.length) },
+    { label: t("profile.overview.releasesViewed"), value: String(releasesViewed) },
+    { label: t("profile.overview.articlesReadThisWeek"), value: String(readThisWeek) },
   ];
 
   return (
     <div className="flex flex-col gap-8">
       <section>
-        <h2 className="text-lg font-bold tracking-tight text-slate-950">Reading Activity</h2>
+        <h2 className="text-lg font-bold tracking-tight text-slate-950">{t("profile.overview.readingActivity")}</h2>
         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
           {activityCards.map((card) => (
             <div key={card.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -60,9 +62,9 @@ export function ProfileOverviewTab() {
       </section>
 
       <section>
-        <h2 className="text-lg font-bold tracking-tight text-slate-950">Favorite Categories</h2>
+        <h2 className="text-lg font-bold tracking-tight text-slate-950">{t("profile.overview.favoriteCategories")}</h2>
         {categoryCounts.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-400">Read a few articles to see your favorite categories here.</p>
+          <p className="mt-3 text-sm text-slate-400">{t("profile.overview.favoriteCategoriesEmpty")}</p>
         ) : (
           <div className="mt-4 flex flex-wrap gap-2">
             {categoryCounts.slice(0, 6).map(({ category, count }) => (
@@ -79,9 +81,9 @@ export function ProfileOverviewTab() {
       </section>
 
       <section>
-        <h2 className="text-lg font-bold tracking-tight text-slate-950">Recent Reading Timeline</h2>
+        <h2 className="text-lg font-bold tracking-tight text-slate-950">{t("profile.overview.recentTimeline")}</h2>
         {timelineItems.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-400">Articles you open will appear here.</p>
+          <p className="mt-3 text-sm text-slate-400">{t("profile.overview.timelineEmpty")}</p>
         ) : (
           <ol className="mt-4 flex flex-col gap-5 border-l-2 border-slate-100 pl-5">
             {timelineItems.map((item) => (

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NewsImage } from "@/components/news/NewsImage";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 import { resolveFallbackImageForCategory } from "@/lib/news";
 import { getMostRead } from "@/services/articles/article-read-service";
 
@@ -27,6 +28,7 @@ function formatViewCount(count: number): string {
  * "0 views") when there isn't one yet.
  */
 export async function MostRead() {
+  const { t } = await getServerTranslations();
   const items = await getMostRead(7);
   if (items.length === 0) return null;
 
@@ -37,10 +39,10 @@ export async function MostRead() {
     >
       <div className="flex items-center justify-between gap-2 px-1">
         <h2 id="most-read-title" className="text-lg font-bold tracking-tight text-slate-950">
-          Most Read Today
+          {t("home.mostRead.heading")}
         </h2>
         <Link href="/most-read" className="shrink-0 text-sm font-medium text-[#2f67e8] transition-colors hover:text-[#2556c9]">
-          View all
+          {t("home.mostRead.viewAll")}
         </Link>
       </div>
 
@@ -79,7 +81,7 @@ export async function MostRead() {
                   {item.viewCount !== null && item.viewCount > 0 && (
                     <>
                       <span aria-hidden="true">·</span>
-                      <span>{formatViewCount(item.viewCount)} views</span>
+                      <span>{t("home.mostRead.viewsCount", { count: formatViewCount(item.viewCount) })}</span>
                     </>
                   )}
                 </span>

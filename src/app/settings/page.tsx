@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Header } from "@/components/layout/Header";
 import { SettingsPageHeader } from "@/components/settings/SettingsPageHeader";
 import { SettingsForm } from "@/components/settings/SettingsForm";
-import { AuthedThemeScope } from "@/components/providers/AuthedThemeScope";
 
 export const metadata: Metadata = {
   title: "Settings | Virexa",
@@ -13,13 +12,15 @@ export const metadata: Metadata = {
  * header (breadcrumb/eyebrow/title/subtitle - `SettingsPageHeader`) above
  * the categorized settings form (General/Reading/Notifications/Privacy/
  * Appearance/Account - `SettingsForm`). Same 16px-radius/soft-shadow
- * language as the redesigned Bookmarks/Profile pages. Wrapped in
- * `AuthedThemeScope` (Navigation/Profile/Settings UX update) - real,
- * instant dark mode for this page and its Header.
+ * language as the redesigned Bookmarks/Profile pages. Dark mode is
+ * handled by the single global `ThemeScope` in the root layout (same
+ * mechanism the Home page uses) - this page no longer mounts its own
+ * theme wrapper, so it can never render dark independently of the rest
+ * of the app.
  */
 export default function SettingsPage() {
   return (
-    <AuthedThemeScope>
+    <>
       <Header />
       <main className="bg-[#f8fafc] px-5 py-10 sm:px-8 dark:bg-slate-950">
         <div className="mx-auto max-w-[1100px]">
@@ -30,6 +31,6 @@ export default function SettingsPage() {
           </div>
         </div>
       </main>
-    </AuthedThemeScope>
+    </>
   );
 }

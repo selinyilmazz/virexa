@@ -1,4 +1,151 @@
 {
+  "home": {
+    "hero": {
+      "srHeading": "Uitgelicht verhaal"
+    },
+    "news": {
+      "eyebrow": "Nieuwsredactie",
+      "heading": "Topverhalen",
+      "emptyTitle": "Nog geen artikelen",
+      "emptyDescription": "We verzamelen nog de laatste verhalen. Kom binnenkort terug.",
+      "viewAll": "Bekijk al het nieuws"
+    },
+    "mostRead": {
+      "heading": "Vandaag meestgelezen",
+      "viewAll": "Alles bekijken",
+      "viewsCount": "{count} weergaven"
+    },
+    "releases": {
+      "heading": "Ontwikkelaarsreleases",
+      "viewAll": "Alles bekijken"
+    }
+  },
+  "explorer": {
+    "breadcrumbAria": "Broodkruimel",
+    "eyebrow": "Verkennen",
+    "resultsSingular": "resultaat",
+    "resultsPlural": "resultaten",
+    "pageOf": "Pagina {page} van {totalPages}",
+    "filters": {
+      "title": "Filters",
+      "clearAll": "Alles wissen",
+      "clear": "Wissen",
+      "time": "Tijd",
+      "categories": "Categorieën",
+      "sources": "Bronnen",
+      "contentType": "Inhoudstype",
+      "timeOptions": {
+        "today": "Vandaag",
+        "7d": "Laatste 7 dagen",
+        "30d": "Laatste 30 dagen",
+        "3m": "Laatste 3 maanden",
+        "1y": "Laatste jaar"
+      },
+      "contentTypeOptions": {
+        "news": "Nieuws",
+        "release": "Release",
+        "tutorial": "Tutorial",
+        "research": "Onderzoek",
+        "security-advisory": "Beveiligingsadvies",
+        "certification": "Certificaat",
+        "open-source": "Open source"
+      }
+    }
+  },
+  "profile": {
+    "breadcrumbAria": "Broodkruimel",
+    "title": "Profiel",
+    "heading": "Mijn profiel",
+    "subtitle": "Beheer je account, bladwijzers en leesactiviteit.",
+    "memberSince": "Lid sinds {date}",
+    "locationNotSet": "Locatie niet ingesteld",
+    "editProfile": "Profiel bewerken",
+    "stats": {
+      "bookmarks": "Bladwijzers",
+      "articlesRead": "Gelezen artikelen",
+      "releasesViewed": "Bekeken ontwikkelaarsreleases",
+      "favoriteCategory": "Favoriete categorie"
+    },
+    "overview": {
+      "readingActivity": "Leesactiviteit",
+      "releasesViewed": "Bekeken releases",
+      "articlesReadThisWeek": "Deze week gelezen artikelen",
+      "favoriteCategories": "Favoriete categorieën",
+      "favoriteCategoriesEmpty": "Lees een paar artikelen om hier je favoriete categorieën te zien.",
+      "recentTimeline": "Recente leestijdlijn",
+      "timelineEmpty": "Artikelen die je opent, verschijnen hier."
+    }
+  },
+  "bookmarks": {
+    "breadcrumbAria": "Broodkruimel",
+    "title": "Bladwijzers",
+    "subtitle": "Bewaar artikelen, releases en ontwikkelaarsbronnen voor later.",
+    "clearAll": "Alles wissen",
+    "clearAllErrorToast": "Je bladwijzers konden niet worden gewist. Probeer het opnieuw.",
+    "loading": "Je bladwijzers worden geladen...",
+    "loadError": "Je bladwijzers konden niet worden geladen.",
+    "stats": {
+      "savedItems": "Opgeslagen items",
+      "articles": "Artikelen",
+      "repositories": "Repository's",
+      "courses": "Cursussen",
+      "certificates": "Certificaten",
+      "releases": "Releases"
+    },
+    "tabs": {
+      "aria": "Bladwijzertype",
+      "article": "Artikelen",
+      "repository": "Repository's",
+      "course": "Cursussen",
+      "certification": "Certificaten",
+      "release": "Releases"
+    },
+    "toolbar": {
+      "sortAria": "Sorteren",
+      "newest": "Nieuwste",
+      "oldest": "Oudste"
+    },
+    "pagination": {
+      "aria": "Paginering",
+      "previous": "← Vorige",
+      "next": "Volgende →"
+    },
+    "emptyState": {
+      "title": "Nog geen bladwijzers",
+      "generic": {
+        "message": "Bewaar artikelen, repository's, cursussen, certificaten en releases om je bibliotheek op te bouwen.",
+        "cta": "Bekijk artikelen"
+      },
+      "article": {
+        "message": "Bewaar artikelen om later te lezen.",
+        "cta": "Bekijk artikelen"
+      },
+      "repository": {
+        "message": "Bewaar GitHub-repository's om je eigen leesbibliotheek op te bouwen.",
+        "cta": "Bekijk repository's"
+      },
+      "course": {
+        "message": "Bewaar cursussen om verder te gaan waar je gebleven was.",
+        "cta": "Bekijk cursussen"
+      },
+      "certification": {
+        "message": "Bewaar certificaten waar je aan werkt.",
+        "cta": "Bekijk certificaten"
+      },
+      "release": {
+        "message": "Bewaar ontwikkelaarsreleases om de tools die je gebruikt bij te houden.",
+        "cta": "Bekijk releases"
+      }
+    },
+    "sidebar": {
+      "recentTitle": "Recent bewaard",
+      "recentEmpty": "Nog niets opgeslagen.",
+      "statsTitle": "Leesstatistieken",
+      "saved": "Opgeslagen",
+      "read": "Gelezen",
+      "unread": "Ongelezen"
+    }
+  },
   "nav": {
     "logoAria": "Virexa startpagina",
     "searchAria": "Zoek nieuws, onderwerpen of bronnen",

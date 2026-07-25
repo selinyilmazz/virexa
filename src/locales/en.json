@@ -1,4 +1,151 @@
 {
+  "home": {
+    "hero": {
+      "srHeading": "Featured Story"
+    },
+    "news": {
+      "eyebrow": "Newsroom",
+      "heading": "Top Stories",
+      "emptyTitle": "No articles yet",
+      "emptyDescription": "We're still gathering the latest stories. Check back shortly.",
+      "viewAll": "View All News"
+    },
+    "mostRead": {
+      "heading": "Most Read Today",
+      "viewAll": "View all",
+      "viewsCount": "{count} views"
+    },
+    "releases": {
+      "heading": "Developer Releases",
+      "viewAll": "View All"
+    }
+  },
+  "explorer": {
+    "breadcrumbAria": "Breadcrumb",
+    "eyebrow": "Explore",
+    "resultsSingular": "result",
+    "resultsPlural": "results",
+    "pageOf": "Page {page} of {totalPages}",
+    "filters": {
+      "title": "Filters",
+      "clearAll": "Clear all",
+      "clear": "Clear",
+      "time": "Time",
+      "categories": "Categories",
+      "sources": "Sources",
+      "contentType": "Content Type",
+      "timeOptions": {
+        "today": "Today",
+        "7d": "Last 7 Days",
+        "30d": "Last 30 Days",
+        "3m": "Last 3 Months",
+        "1y": "Last Year"
+      },
+      "contentTypeOptions": {
+        "news": "News",
+        "release": "Release",
+        "tutorial": "Tutorial",
+        "research": "Research",
+        "security-advisory": "Security Advisory",
+        "certification": "Certification",
+        "open-source": "Open Source"
+      }
+    }
+  },
+  "profile": {
+    "breadcrumbAria": "Breadcrumb",
+    "title": "Profile",
+    "heading": "My Profile",
+    "subtitle": "Manage your account, bookmarks and reading activity.",
+    "memberSince": "Member since {date}",
+    "locationNotSet": "Location not set",
+    "editProfile": "Edit Profile",
+    "stats": {
+      "bookmarks": "Bookmarks",
+      "articlesRead": "Articles Read",
+      "releasesViewed": "Developer Releases Viewed",
+      "favoriteCategory": "Favorite Category"
+    },
+    "overview": {
+      "readingActivity": "Reading Activity",
+      "releasesViewed": "Releases Viewed",
+      "articlesReadThisWeek": "Articles Read This Week",
+      "favoriteCategories": "Favorite Categories",
+      "favoriteCategoriesEmpty": "Read a few articles to see your favorite categories here.",
+      "recentTimeline": "Recent Reading Timeline",
+      "timelineEmpty": "Articles you open will appear here."
+    }
+  },
+  "bookmarks": {
+    "breadcrumbAria": "Breadcrumb",
+    "title": "Bookmarks",
+    "subtitle": "Save articles, releases and developer resources for later.",
+    "clearAll": "Clear All",
+    "clearAllErrorToast": "Couldn't clear your bookmarks. Please try again.",
+    "loading": "Loading your bookmarks...",
+    "loadError": "Couldn't load your bookmarks.",
+    "stats": {
+      "savedItems": "Saved Items",
+      "articles": "Articles",
+      "repositories": "Repositories",
+      "courses": "Courses",
+      "certificates": "Certificates",
+      "releases": "Releases"
+    },
+    "tabs": {
+      "aria": "Bookmark type",
+      "article": "Articles",
+      "repository": "Repositories",
+      "course": "Courses",
+      "certification": "Certificates",
+      "release": "Releases"
+    },
+    "toolbar": {
+      "sortAria": "Sort",
+      "newest": "Newest",
+      "oldest": "Oldest"
+    },
+    "pagination": {
+      "aria": "Pagination",
+      "previous": "← Previous",
+      "next": "Next →"
+    },
+    "emptyState": {
+      "title": "No bookmarks yet",
+      "generic": {
+        "message": "Save articles, repositories, courses, certifications and releases to build your library.",
+        "cta": "Browse Articles"
+      },
+      "article": {
+        "message": "Save articles to read later.",
+        "cta": "Browse Articles"
+      },
+      "repository": {
+        "message": "Save GitHub repositories to build your own reading library.",
+        "cta": "Browse Repositories"
+      },
+      "course": {
+        "message": "Save courses to pick up right where you left off.",
+        "cta": "Browse Courses"
+      },
+      "certification": {
+        "message": "Save certifications you're working toward.",
+        "cta": "Browse Certifications"
+      },
+      "release": {
+        "message": "Save Developer Releases to keep track of the tools you use.",
+        "cta": "Browse Releases"
+      }
+    },
+    "sidebar": {
+      "recentTitle": "Recently Bookmarked",
+      "recentEmpty": "Nothing saved yet.",
+      "statsTitle": "Reading Statistics",
+      "saved": "Saved",
+      "read": "Read",
+      "unread": "Unread"
+    }
+  },
   "nav": {
     "logoAria": "Virexa home",
     "searchAria": "Search news, topics or sources",
