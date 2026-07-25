@@ -22,18 +22,24 @@ import { categories } from "@/data/categories";
 import { countryOptions } from "@/data/countries";
 import { setLocaleCookie } from "@/i18n/actions";
 import { locales, localeLabels, isLocale } from "@/i18n/config";
+import { useTranslations } from "@/i18n/i18n-provider";
 
+// Each locale's own name (e.g. "Türkçe", "Nederlands") is intentionally
+// NOT translated - a language's name is conventionally shown in that
+// language itself in every language picker, regardless of the UI's
+// current locale (`localeLabels` in `i18n/config.ts` already holds the
+// native-language strings).
 const languageOptions = locales.map((value) => ({ value, label: localeLabels[value] }));
 
-const THEME_OPTIONS: { value: UserSettings["theme"]; label: string }[] = [
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-  { value: "system", label: "System" },
+const THEME_OPTIONS: { value: UserSettings["theme"]; labelKey: string }[] = [
+  { value: "light", labelKey: "settings.appearance.themeLight" },
+  { value: "dark", labelKey: "settings.appearance.themeDark" },
+  { value: "system", labelKey: "settings.appearance.themeSystem" },
 ];
 
-const READING_WIDTH_OPTIONS: { value: UserSettings["readingWidth"]; label: string; description: string }[] = [
-  { value: "comfortable", label: "Comfortable", description: "Wider article column, more breathing room." },
-  { value: "compact", label: "Compact", description: "Narrower column for a denser reading view." },
+const READING_WIDTH_OPTIONS: { value: UserSettings["readingWidth"]; labelKey: string; descriptionKey: string }[] = [
+  { value: "comfortable", labelKey: "settings.appearance.readingWidthComfortable", descriptionKey: "settings.appearance.readingWidthComfortableDescription" },
+  { value: "compact", labelKey: "settings.appearance.readingWidthCompact", descriptionKey: "settings.appearance.readingWidthCompactDescription" },
 ];
 
 /** Real, current-browser timezone list when available (`Intl.supportedValuesOf`), falling back to a small curated set on older browsers rather than pretending a hardcoded list is exhaustive. */
@@ -68,6 +74,7 @@ function isSettingsCategoryId(value: string | null): value is SettingsCategoryId
 }
 
 export function SettingsForm() {
+  const t = useTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
   // Supports deep links like `/settings?category=account` (used by the
@@ -114,7 +121,7 @@ export function SettingsForm() {
   }
 
   function handleCountryChange(country: string) {
-    saveProfile({ country }).catch(() => showToast("Couldn't save your country. Please try again.", "error", 4000));
+    saveProfile({ country }).catch(() => showToast(t("settings.general.countryErrorToast"), "error", 4000));
   }
 
   async function handleSave() {
@@ -132,12 +139,12 @@ export function SettingsForm() {
       if (languageChanged && isLocale(result.data.language)) {
         await setLocaleCookie(result.data.language);
       }
-      showToast("Settings saved!", "success");
+      showToast(t("settings.savedToast"), "success");
       if (languageChanged) {
         router.refresh();
       }
     } catch {
-      showToast("Couldn't save your settings. Please try again.", "error", 4000);
+      showToast(t("settings.saveErrorToast"), "error", 4000);
     } finally {
       setIsSaving(false);
     }
@@ -146,7 +153,7 @@ export function SettingsForm() {
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-10 text-base text-slate-500 dark:text-slate-400 shadow-sm">
-        Loading your settings...
+        {t("settings.loading")}
       </div>
     );
   }
@@ -154,13 +161,13 @@ export function SettingsForm() {
   if (status === "error") {
     return (
       <div className="flex flex-col items-center gap-4 rounded-2xl border border-red-200 dark:border-red-900 bg-red-50/40 dark:bg-red-950/20 p-10 text-center shadow-sm">
-        <p className="text-base font-medium text-red-600">{loadError ?? "Couldn't load your settings."}</p>
+        <p className="text-base font-medium text-red-600">{loadError ?? t("settings.loadError")}</p>
         <button
           type="button"
           onClick={() => void retrySettings()}
           className="rounded-xl border border-red-200 dark:border-red-900 bg-white dark:bg-slate-900 px-5 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
         >
-          Retry
+          {t("common.retry")}
         </button>
       </div>
     );
@@ -178,11 +185,11 @@ export function SettingsForm() {
         {activeCategory === "general" && (
           <>
             <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm sm:p-8">
-              <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">Language &amp; Region</h2>
+              <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">{t("settings.general.languageRegionTitle")}</h2>
               <div className="mt-4 grid gap-5 sm:grid-cols-2">
                 <div>
                   <label htmlFor="settings-language" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    Language
+                    {t("settings.general.languageLabel")}
                   </label>
                   <select
                     id="settings-language"
@@ -200,7 +207,7 @@ export function SettingsForm() {
 
                 <div>
                   <label htmlFor="settings-country" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    Country
+                    {t("settings.general.countryLabel")}
                   </label>
                   <select
                     id="settings-country"
@@ -208,7 +215,7 @@ export function SettingsForm() {
                     onChange={(event) => handleCountryChange(event.target.value)}
                     className="mt-1.5 h-12 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 text-base text-slate-900 outline-none focus:border-[#2f67e8] focus:bg-white"
                   >
-                    <option value="">Not set</option>
+                    <option value="">{t("settings.general.countryNotSet")}</option>
                     {countryOptions.map((country) => (
                       <option key={country} value={country}>
                         {country}
@@ -219,7 +226,7 @@ export function SettingsForm() {
 
                 <div>
                   <label htmlFor="settings-timezone" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    Timezone
+                    {t("settings.general.timezoneLabel")}
                   </label>
                   <select
                     id="settings-timezone"
@@ -238,8 +245,8 @@ export function SettingsForm() {
             </section>
 
             <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm sm:p-8">
-              <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">Content</h2>
-              <p className="mt-1 text-base text-slate-500 dark:text-slate-400">Pick the topics you want to see more of across Virexa.</p>
+              <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">{t("settings.general.contentTitle")}</h2>
+              <p className="mt-1 text-base text-slate-500 dark:text-slate-400">{t("settings.general.contentDescription")}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {categories.map((category) => {
                   const isSelected = settings.preferredCategories.includes(category.name);
@@ -266,23 +273,23 @@ export function SettingsForm() {
 
         {activeCategory === "reading" && (
           <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm sm:p-8">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">Reading</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">{t("settings.nav.reading")}</h2>
             <div className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">
               <ToggleSwitch
-                label="Open source links in new tab"
-                description="Links to a release's website, docs, or GitHub repo open in a new tab."
+                label={t("settings.reading.openLinksLabel")}
+                description={t("settings.reading.openLinksDescription")}
                 checked={settings.openLinksInNewTab}
                 onChange={(checked) => setSettings((prev) => ({ ...prev, openLinksInNewTab: checked }))}
               />
               <ToggleSwitch
-                label="Reading Progress Bar"
-                description="Saved preference only - a progress indicator isn't shown on articles yet."
+                label={t("settings.reading.progressBarLabel")}
+                description={t("settings.reading.progressBarDescription")}
                 checked={settings.readingProgressBar}
                 onChange={(checked) => setSettings((prev) => ({ ...prev, readingProgressBar: checked }))}
               />
               <ToggleSwitch
-                label="Remember Scroll Position"
-                description="Saved preference only - articles don't yet resume from where you left off."
+                label={t("settings.reading.rememberScrollLabel")}
+                description={t("settings.reading.rememberScrollDescription")}
                 checked={settings.rememberScrollPosition}
                 onChange={(checked) => setSettings((prev) => ({ ...prev, rememberScrollPosition: checked }))}
               />
@@ -292,13 +299,11 @@ export function SettingsForm() {
 
         {activeCategory === "appearance" && (
           <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm sm:p-8">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">Appearance</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">{t("settings.appearance.title")}</h2>
 
             <div className="mt-4">
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Theme</p>
-              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-                Applies instantly on the Navbar, Profile, Bookmarks and Settings pages.
-              </p>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t("settings.appearance.themeLabel")}</p>
+              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{t("settings.appearance.themeDescription")}</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
                 {THEME_OPTIONS.map((option) => (
                   <label
@@ -322,18 +327,18 @@ export function SettingsForm() {
                         // an explicit save.
                         const next = { ...settings, theme: option.value };
                         setSettings(next);
-                        saveSettings(next).catch(() => showToast("Couldn't save your theme. Please try again.", "error", 4000));
+                        saveSettings(next).catch(() => showToast(t("settings.appearance.themeErrorToast"), "error", 4000));
                       }}
                     />
-                    <span className="font-semibold text-slate-950 dark:text-white">{option.label}</span>
+                    <span className="font-semibold text-slate-950 dark:text-white">{t(option.labelKey)}</span>
                   </label>
                 ))}
               </div>
             </div>
 
             <div className="mt-8">
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Reading Width</p>
-              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Saved preference only - article layout doesn&apos;t change with this yet.</p>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t("settings.appearance.readingWidthLabel")}</p>
+              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{t("settings.appearance.readingWidthDescription")}</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {READING_WIDTH_OPTIONS.map((option) => (
                   <label
@@ -352,9 +357,9 @@ export function SettingsForm() {
                         onChange={() => setSettings((prev) => ({ ...prev, readingWidth: option.value }))}
                         className="accent-[#2f67e8]"
                       />
-                      <span className="font-semibold text-slate-950 dark:text-white">{option.label}</span>
+                      <span className="font-semibold text-slate-950 dark:text-white">{t(option.labelKey)}</span>
                     </span>
-                    <span className="mt-1 block text-sm text-slate-500 dark:text-slate-400">{option.description}</span>
+                    <span className="mt-1 block text-sm text-slate-500 dark:text-slate-400">{t(option.descriptionKey)}</span>
                   </label>
                 ))}
               </div>
@@ -364,59 +369,59 @@ export function SettingsForm() {
 
         {activeCategory === "notifications" && (
           <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm sm:p-8">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">Notifications</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">{t("settings.notifications.title")}</h2>
             <div className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">
               <ToggleSwitch
-                label="Breaking News"
-                description="Urgent, high-impact stories as they happen."
+                label={t("settings.notifications.breakingNewsLabel")}
+                description={t("settings.notifications.breakingNewsDescription")}
                 checked={settings.notifications.breakingNews}
                 onChange={(checked) => setSettings((prev) => ({ ...prev, notifications: { ...prev.notifications, breakingNews: checked } }))}
               />
               <ToggleSwitch
-                label="Release Notifications"
-                description="New framework and tool releases you follow."
+                label={t("settings.notifications.releaseLabel")}
+                description={t("settings.notifications.releaseDescription")}
                 checked={settings.notifications.developerReleases}
                 onChange={(checked) => setSettings((prev) => ({ ...prev, notifications: { ...prev.notifications, developerReleases: checked } }))}
               />
               <ToggleSwitch
-                label="Developer Hub Updates"
-                description="New guides, tools and resources added to the Developer Hub."
+                label={t("settings.notifications.hubUpdatesLabel")}
+                description={t("settings.notifications.hubUpdatesDescription")}
                 checked={settings.notifications.developerHubUpdates}
                 onChange={(checked) => setSettings((prev) => ({ ...prev, notifications: { ...prev.notifications, developerHubUpdates: checked } }))}
               />
               <ToggleSwitch
-                label="Bookmark Reminders"
-                description="Occasional nudges about bookmarked articles you haven't read yet."
+                label={t("settings.notifications.bookmarkRemindersLabel")}
+                description={t("settings.notifications.bookmarkRemindersDescription")}
                 checked={settings.notifications.bookmarkReminders}
                 onChange={(checked) => setSettings((prev) => ({ ...prev, notifications: { ...prev.notifications, bookmarkReminders: checked } }))}
               />
               <ToggleSwitch
-                label="Security Alerts"
-                description="Critical vulnerabilities and security advisories."
+                label={t("settings.notifications.securityAlertsLabel")}
+                description={t("settings.notifications.securityAlertsDescription")}
                 checked={settings.notifications.securityAlerts}
                 onChange={(checked) => setSettings((prev) => ({ ...prev, notifications: { ...prev.notifications, securityAlerts: checked } }))}
               />
               <ToggleSwitch
-                label="Daily Digest"
-                description="One roundup of the day's top stories."
+                label={t("settings.notifications.dailyDigestLabel")}
+                description={t("settings.notifications.dailyDigestDescription")}
                 checked={settings.notifications.dailyDigest}
                 onChange={(checked) => setSettings((prev) => ({ ...prev, notifications: { ...prev.notifications, dailyDigest: checked } }))}
               />
               <ToggleSwitch
-                label="Weekly Summary"
-                description="A recap of the week's most-read stories."
+                label={t("settings.notifications.weeklyDigestLabel")}
+                description={t("settings.notifications.weeklyDigestDescription")}
                 checked={settings.notifications.weeklyDigest}
                 onChange={(checked) => setSettings((prev) => ({ ...prev, notifications: { ...prev.notifications, weeklyDigest: checked } }))}
               />
               <ToggleSwitch
-                label="Email Notifications"
-                description="Allow Virexa to email you at all."
+                label={t("settings.notifications.emailLabel")}
+                description={t("settings.notifications.emailDescription")}
                 checked={settings.notifications.email}
                 onChange={(checked) => setSettings((prev) => ({ ...prev, notifications: { ...prev.notifications, email: checked } }))}
               />
               <ToggleSwitch
-                label="Push Notifications"
-                description="Allow browser push notifications."
+                label={t("settings.notifications.pushLabel")}
+                description={t("settings.notifications.pushDescription")}
                 checked={settings.notifications.push}
                 onChange={(checked) => setSettings((prev) => ({ ...prev, notifications: { ...prev.notifications, push: checked } }))}
               />
@@ -434,7 +439,7 @@ export function SettingsForm() {
             disabled={isSaving}
             className="flex h-12 w-full items-center justify-center rounded-xl bg-[#2f67e8] text-base font-semibold text-white transition-colors hover:bg-[#2556c9] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-8"
           >
-            {isSaving ? "Saving..." : "Save Changes"}
+            {isSaving ? t("common.saving") : t("settings.saveButton")}
           </button>
         )}
       </div>

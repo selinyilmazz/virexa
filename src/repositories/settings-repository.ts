@@ -28,27 +28,53 @@ const DEFAULT_PRIVACY: UserSettings["privacy"] = {
   trackReadingHistory: true,
 };
 
+const DEFAULT_EMAIL_PREFERENCES: UserSettings["emailPreferences"] = {
+  productUpdates: true,
+  accountActivity: true,
+};
+
+/**
+ * Bug fix: "dil değiştirdiğimde hata alıyorum" - selecting a language and
+ * saving threw a raw `"Invalid input: expected string, received
+ * undefined"` Zod error instead of actually saving. Root cause: several
+ * `user_settings` columns (`timezone`, `theme`, `reading_width`,
+ * `reading_progress_bar`, `remember_scroll_position`) were added by later
+ * migrations (0015/0017) than the original table (0001) - any row/DB
+ * whose migrations haven't fully caught up simply omits those keys from
+ * `select("*")`'s result, so `row.timezone` etc. come back `undefined`.
+ * That `undefined` flowed straight into the Settings form's local state
+ * and failed `settingsSchema.safeParse()` on save, regardless of which
+ * field the visitor actually touched - `language` sits right next to
+ * `timezone` in the same "Language & Region" card, so changing the
+ * language was the easiest way to trigger a save and hit it.
+ *
+ * Fixed the same way `notifications`/`privacy` already handled their own
+ * schema-drift/missing-key case (jsonb columns that gained new keys over
+ * time): every field now falls back to the same static default
+ * `src/lib/settings.ts`'s `defaultSettings` uses, so a row from a
+ * partially-migrated table can never produce an `undefined` field again.
+ */
 function toUserSettings(row: UserSettingsRow): UserSettings {
   return {
-    language: row.language,
-    timezone: row.timezone,
-    summaryLength: row.summary_length,
-    preferredCategories: row.preferred_categories,
-    theme: row.theme,
-    readingWidth: row.reading_width,
-    readingProgressBar: row.reading_progress_bar,
-    rememberScrollPosition: row.remember_scroll_position,
+    language: row.language ?? "en",
+    timezone: row.timezone ?? "UTC",
+    summaryLength: row.summary_length ?? "medium",
+    preferredCategories: row.preferred_categories ?? ["Technology", "AI"],
+    theme: row.theme ?? "system",
+    readingWidth: row.reading_width ?? "comfortable",
+    readingProgressBar: row.reading_progress_bar ?? true,
+    rememberScrollPosition: row.remember_scroll_position ?? false,
     // Merged over the app-level defaults (not just the row's raw jsonb) -
-    // `notifications`/`privacy` are schemaless jsonb columns, so a row
-    // saved before a new key existed (e.g. `bookmarkReminders`,
-    // Navigation/Profile/Settings UX update) simply won't have it yet.
-    // Without this merge that key would come back `undefined`, breaking
-    // the Settings form's controlled-toggle rendering and failing Zod
-    // validation on next save.
+    // `notifications`/`privacy`/`emailPreferences` are schemaless jsonb
+    // columns, so a row saved before a new key existed (e.g.
+    // `bookmarkReminders`, Navigation/Profile/Settings UX update) simply
+    // won't have it yet. Without this merge that key would come back
+    // `undefined`, breaking the Settings form's controlled-toggle
+    // rendering and failing Zod validation on next save.
     notifications: { ...DEFAULT_NOTIFICATIONS, ...row.notifications },
-    emailPreferences: row.email_preferences,
+    emailPreferences: { ...DEFAULT_EMAIL_PREFERENCES, ...row.email_preferences },
     privacy: { ...DEFAULT_PRIVACY, ...row.privacy },
-    openLinksInNewTab: row.open_links_in_new_tab,
+    openLinksInNewTab: row.open_links_in_new_tab ?? true,
   };
 }
 

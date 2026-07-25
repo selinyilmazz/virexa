@@ -1,10 +1,14 @@
+"use client";
+
+import { useTranslations } from "@/i18n/i18n-provider";
+
 export const SETTINGS_CATEGORIES = [
-  { id: "general", label: "General" },
-  { id: "reading", label: "Reading" },
-  { id: "notifications", label: "Notifications" },
-  { id: "privacy", label: "Privacy" },
-  { id: "appearance", label: "Appearance" },
-  { id: "account", label: "Account" },
+  { id: "general", labelKey: "settings.nav.general" },
+  { id: "reading", labelKey: "settings.nav.reading" },
+  { id: "notifications", labelKey: "settings.nav.notifications" },
+  { id: "privacy", labelKey: "settings.nav.privacy" },
+  { id: "appearance", labelKey: "settings.nav.appearance" },
+  { id: "account", labelKey: "settings.nav.account" },
 ] as const;
 
 export type SettingsCategoryId = (typeof SETTINGS_CATEGORIES)[number]["id"];
@@ -24,9 +28,11 @@ type SettingsNavProps = {
  * component only controls which category is currently visible.
  */
 export function SettingsNav({ active, onSelect }: SettingsNavProps) {
+  const t = useTranslations();
+
   return (
     <nav
-      aria-label="Settings categories"
+      aria-label={t("settings.nav.ariaLabel")}
       className="flex gap-1 overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-1.5 shadow-sm lg:sticky lg:top-28 lg:flex-col lg:overflow-visible"
     >
       {SETTINGS_CATEGORIES.map((category) => {
@@ -43,7 +49,7 @@ export function SettingsNav({ active, onSelect }: SettingsNavProps) {
                 : "text-slate-600 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
             }`}
           >
-            {category.label}
+            {t(category.labelKey)}
           </button>
         );
       })}

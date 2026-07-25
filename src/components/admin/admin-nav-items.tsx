@@ -7,13 +7,20 @@ import type { ReactNode } from "react";
  * link, or a desktop item missing from the mobile menu, would be exactly
  * the sync bug this file exists to avoid).
  *
- * Admin Panel Redesign: Health, AI, and Audit Log are intentionally NOT
- * separate destinations anymore - their information now lives on the
- * Dashboard (`/admin`) itself (System Health card, Recent Activity feed),
- * per the explicit instruction to consolidate rather than keep three
- * mostly-empty/read-only pages around. Repositories and Developer
- * Releases are new first-class sections (DB-backed Open Source repo and
- * release management).
+ * Admin Panel Redesign: Health and AI are intentionally NOT separate
+ * destinations - their information lives on the Dashboard (`/admin`)
+ * itself (System Health card, Recent Activity feed), per the explicit
+ * instruction to consolidate rather than keep mostly-empty/read-only
+ * pages around. Repositories and Developer Releases are first-class
+ * sections (DB-backed Open Source repo and release management).
+ *
+ * Audit Log WAS folded into the Dashboard the same way, but was restored
+ * as its own destination (`/admin/audit`) - traceability of admin actions
+ * (who did what, when) is a real, distinct need from a live activity
+ * feed, and a feed capped at 10 recent items across three merged sources
+ * can't serve as a real, searchable, fully paginated history. Both now
+ * coexist: the Dashboard feed for "what just happened", this page for
+ * "show me everything".
  */
 
 export type AdminNavItem = {
@@ -138,6 +145,18 @@ const ANALYTICS_ITEM: AdminNavItem = {
   ),
 };
 
+const AUDIT_ITEM: AdminNavItem = {
+  href: "/admin/audit",
+  label: "Audit Log",
+  icon: (
+    <svg {...ICON_PROPS}>
+      <path d="M6 3.5h9L19 8v12.5H6z" strokeLinejoin="round" />
+      <path d="M9 12.5h6M9 16h4" strokeLinecap="round" />
+      <path d="M12 5.5v4.5l3 1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+};
+
 const RUNTIME_ITEM: AdminNavItem = {
   href: "/admin/runtime",
   label: "Runtime",
@@ -171,16 +190,16 @@ const SETTINGS_ITEM: AdminNavItem = {
  * is bucketed the way the spec's example groups them (Content/Developer
  * Hub/Users/Operations/System), scaled down to the pages that actually
  * exist in this app: there's no standalone Categories or Roles page (role
- * is edited inline on `/admin/users`), and Activity Log was deliberately
- * folded into the Dashboard's Recent Activity feed (see the comment
- * above), not resurrected here as a dead link.
+ * is edited inline on `/admin/users`). Audit Log lives in Operations,
+ * alongside Analytics and Runtime - see the comment above for why it's a
+ * real destination again rather than staying folded into the Dashboard.
  */
 export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   { label: null, items: [DASHBOARD_ITEM] },
   { label: "Content", items: [ARTICLES_ITEM, SOURCES_ITEM] },
   { label: "Developer Hub", items: [REPOSITORIES_ITEM, COLLECTIONS_ITEM, RELEASES_ITEM, CATALOG_ITEM] },
   { label: "Users", items: [USERS_ITEM] },
-  { label: "Operations", items: [ANALYTICS_ITEM, RUNTIME_ITEM] },
+  { label: "Operations", items: [ANALYTICS_ITEM, RUNTIME_ITEM, AUDIT_ITEM] },
   { label: "System", items: [SETTINGS_ITEM] },
 ];
 

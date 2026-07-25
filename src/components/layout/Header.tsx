@@ -3,8 +3,10 @@ import { Suspense } from "react";
 import { CategoryNav } from "@/components/layout/CategoryNav";
 import { HeaderAuthArea } from "@/components/layout/HeaderAuthArea";
 import { HeaderBookmarkLink } from "@/components/layout/HeaderBookmarkLink";
+import { HeaderMobileSearch } from "@/components/layout/HeaderMobileSearch";
 import { HeaderNotifications } from "@/components/layout/HeaderNotifications";
 import { HeaderSearchInput } from "@/components/layout/HeaderSearchInput";
+import { MobileNav } from "@/components/layout/MobileNav";
 import { getServerTranslations } from "@/i18n/get-server-translations";
 
 /** Authenticated navbar redesign - premium Linear/GitHub-style search placeholder. Ctrl/Cmd+K still focuses this field (see `HeaderSearchInput`'s doc comment) - only the visible "Ctrl K" badge was removed (Search Bar UX update), replaced by a trailing search icon. */
@@ -22,12 +24,23 @@ const SEARCH_PLACEHOLDER = "Search articles, releases, repositories, technologie
  * `justify-self-start`/`justify-self-end` then pin the logo/actions to
  * their own track's edge even if that track ends up wider than its
  * content (same trick Linear/Vercel/Stripe headers use). The 3-column
- * grid switches on at `md:` (768px) specifically because that's the
- * exact breakpoint where the right-side actions (`HeaderBookmarkLink`/
- * `HeaderAuthArea`, each `hidden md:flex`) start rendering anything at
- * all - below that, true 1fr/1fr centering would needlessly reserve
- * space in an empty right column instead of letting the search bar use
- * it.
+ * grid switches on at `lg:` (1024px) - the exact breakpoint where the
+ * full search bar itself starts rendering (see `HeaderMobileSearch`
+ * below it in the DOM order).
+ *
+ * Responsive Navbar redesign: below `lg`, `HeaderBookmarkLink`,
+ * `HeaderNotifications` and `HeaderAuthArea` in the right-side actions
+ * cluster no longer disappear the way they used to (`hidden md:flex` on
+ * all three, which meant nobody below 768px could sign in, bookmark, see
+ * notifications, or reach their profile/logout - not "squeezed off
+ * screen", literally never rendered). `HeaderNotifications`/
+ * `HeaderAuthArea` now always render something (each adapts internally
+ * via its own `lg:` classes - avatar-only below `lg`, full avatar+name
+ * at `lg:` and up); only `HeaderBookmarkLink` stays desktop-only
+ * (`lg:flex`), reachable below `lg` via the `MobileNav` drawer instead.
+ * The hamburger (`MobileNav`) and icon-only mobile search
+ * (`HeaderMobileSearch`) fill the gap left by the hidden full search bar
+ * and hidden `CategoryNav` row below `lg`.
  *
  * UI cleanup pass: the moon/sun theme toggle (`HeaderThemeToggle`) was
  * removed from this actions cluster entirely - theme selection is a
@@ -61,32 +74,31 @@ export async function Header({ initialSearchQuery }: HeaderProps = {}) {
   return (
     <div className="sticky top-0 z-30">
       <header className="border-b border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="mx-auto grid max-w-[1820px] grid-cols-[auto_1fr_auto] items-center gap-4 px-5 py-4 sm:px-8 sm:gap-6 md:grid-cols-[1fr_auto_1fr] md:gap-8">
-          <Link
-            href="/"
-            className="flex shrink-0 items-center gap-2 justify-self-start text-[#2f67e8]"
-            aria-label={t("nav.logoAria")}
-          >
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 64 56"
-              className="h-10 w-12 sm:h-11 sm:w-13"
-              fill="none"
-            >
-              <path d="M3 4h16l14 26L47 4h14L38 52H24L3 4Z" fill="currentColor" />
-              <path d="m35 18 7-13h13l-8 13H35Z" fill="currentColor" />
-              <path d="M48 17h10v10H48zM55 3h7v7h-7z" fill="currentColor" />
-            </svg>
-            <span className="font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
-              Virexa
-            </span>
-          </Link>
+        <div className="mx-auto grid max-w-[1820px] grid-cols-[auto_1fr_auto] items-center gap-4 px-5 py-4 sm:px-8 sm:gap-6 lg:grid-cols-[1fr_auto_1fr] lg:gap-8">
+          <div className="flex shrink-0 items-center gap-3 justify-self-start sm:gap-4">
+            {/* Hamburger trigger only renders anything visible below `lg`
+                (internal `lg:hidden`) - Responsive Navbar redesign. */}
+            <MobileNav />
+            <Link href="/" className="flex shrink-0 items-center gap-2 text-[#2f67e8]" aria-label={t("nav.logoAria")}>
+              <svg aria-hidden="true" viewBox="0 0 64 56" className="h-10 w-12 sm:h-11 sm:w-13" fill="none">
+                <path d="M3 4h16l14 26L47 4h14L38 52H24L3 4Z" fill="currentColor" />
+                <path d="m35 18 7-13h13l-8 13H35Z" fill="currentColor" />
+                <path d="M48 17h10v10H48zM55 3h7v7h-7z" fill="currentColor" />
+              </svg>
+              <span className="font-serif text-3xl font-semibold tracking-tight sm:text-4xl">Virexa</span>
+            </Link>
+          </div>
 
+          {/* Full search bar: `lg:` and up only. Below `lg` it's replaced
+              by `HeaderMobileSearch`'s icon + fullscreen overlay in the
+              actions cluster - a full-width bar has no room to live in
+              the compact below-`lg` row alongside the hamburger and the
+              always-reachable notifications/profile icons. */}
           <form
             role="search"
             action="/search"
             method="GET"
-            className="min-w-0 w-full max-w-[420px] justify-self-stretch sm:max-w-[500px] md:w-[650px] md:max-w-none md:justify-self-center lg:w-[700px]"
+            className="hidden min-w-0 lg:block lg:w-[700px] lg:justify-self-center"
           >
             <label htmlFor="site-search" className="sr-only">
               {t("nav.searchAria")}
@@ -140,7 +152,16 @@ export async function Header({ initialSearchQuery }: HeaderProps = {}) {
             </div>
           </form>
 
-          <div className="flex shrink-0 items-center justify-self-end gap-5 sm:gap-6">
+          {/* Actions cluster: Responsive Navbar redesign - every one of
+              these now renders something at every breakpoint (each
+              component handles its own internal `lg:`-gated visibility),
+              instead of the old `hidden md:flex` gate on all three that
+              made bookmarks/notifications/profile/sign-in completely
+              unreachable below 768px. Bell + avatar sit right next to
+              each other at every tier ("🔔 SY ▼" - Bildirim ve profil
+              hizalaması). */}
+          <div className="flex shrink-0 items-center justify-self-end gap-4 sm:gap-5 lg:gap-6">
+            <HeaderMobileSearch initialSearchQuery={initialSearchQuery} />
             <HeaderBookmarkLink />
             <HeaderNotifications />
             <HeaderAuthArea />
@@ -148,7 +169,12 @@ export async function Header({ initialSearchQuery }: HeaderProps = {}) {
         </div>
       </header>
 
-      <CategoryNav />
+      {/* Category row stays a `lg:`-only, always-visible bar - below `lg`
+          the same items live in `MobileNav`'s drawer instead (imported
+          from the same `primaryNavItems` list, so the two can't drift). */}
+      <div className="hidden lg:block">
+        <CategoryNav />
+      </div>
     </div>
   );
 }

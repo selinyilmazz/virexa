@@ -3,18 +3,23 @@ import { getAdminUsersPage } from "@/services/admin/admin-user-service";
 import { getAuditLogPage } from "@/services/admin/admin-audit-service";
 
 /**
- * Dashboard "Recent Activity" feed (requirement 4) - the Admin Panel
- * Redesign explicitly folds the old standalone Audit Log page into the
- * Dashboard instead of keeping it as a separate destination. Rather than
- * just re-showing raw audit rows, this merges THREE real signals that
- * already exist elsewhere in the app into one chronological feed:
- * recently published articles, recently registered users, and admin
- * audit events (source/user/runtime changes, etc.) - covering the
+ * Dashboard "Recent Activity" feed (requirement 4) - merges THREE real
+ * signals that already exist elsewhere in the app into one chronological
+ * feed: recently published articles, recently registered users, and
+ * admin audit events (source/user/runtime changes, etc.) - covering the
  * "Article published / Source added / User registered" examples from
  * the spec using data that's all genuinely real, never fabricated.
- * "Repository updated" / "Release edited" entries are added once the
- * Repositories/Developer Releases admin services exist (they'll extend
- * this same merge, not replace it).
+ *
+ * The audit branch below reuses `getAuditLogPage()`'s enrichment
+ * (`actorDisplayName`, `description` - see `lib/admin/audit-log-format.ts`)
+ * so this feed's wording for an event matches the dedicated `/admin/audit`
+ * page's wording for the exact same row, rather than two independently
+ * formatted summaries of the same data. This feed stays capped at
+ * `FEED_LIMIT` merged items across all three sources - it's a live "what
+ * just happened" glance, not the full history; `/admin/audit` is the
+ * real, searchable, fully paginated destination for that (a standalone
+ * page again as of the Audit Log restoration - see `admin-nav-items.tsx`'s
+ * doc comment for why).
  */
 
 export type AdminActivityKind = "article" | "user" | "audit";
@@ -30,15 +35,6 @@ export type AdminActivityItem = {
 
 const FEED_LIMIT = 10;
 const PER_SOURCE_LIMIT = 8;
-
-function formatAuditAction(action: string): string {
-  return action
-    .replace(/[._]/g, " ")
-    .split(" ")
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
 
 export async function getAdminRecentActivity(): Promise<AdminActivityItem[]> {
   try {
@@ -68,10 +64,10 @@ export async function getAdminRecentActivity(): Promise<AdminActivityItem[]> {
       ...auditPage.items.map((entry) => ({
         id: `audit-${entry.id}`,
         kind: "audit" as const,
-        title: formatAuditAction(entry.action),
-        description: entry.actor_email ? `by ${entry.actor_email}` : "System action",
+        title: entry.description,
+        description: `by ${entry.actorDisplayName}`,
         timestamp: entry.created_at,
-        href: "/admin/users",
+        href: "/admin/audit",
       })),
     ];
 

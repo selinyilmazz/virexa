@@ -1,6 +1,7 @@
 import { ProfileAvatarUpload } from "@/components/profile/ProfileAvatarUpload";
 import { ProfileEditForm } from "@/components/profile/ProfileEditForm";
 import { SecurityCard } from "@/components/profile/SecurityCard";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 /**
  * Settings page "ACCOUNT" category (redesign): Profile Image, then
@@ -13,11 +14,13 @@ import { SecurityCard } from "@/components/profile/SecurityCard";
  * `SettingsForm.tsx`).
  */
 export function AccountSettingsPanel() {
+  const t = useTranslations();
+
   return (
     <div className="flex flex-col gap-6">
       <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm sm:p-8">
-        <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">Profile Image</h2>
-        <p className="mt-1 text-base text-slate-500 dark:text-slate-400">This photo appears on your profile and next to your comments.</p>
+        <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">{t("settings.account.profileImageTitle")}</h2>
+        <p className="mt-1 text-base text-slate-500 dark:text-slate-400">{t("settings.account.profileImageDescription")}</p>
         <div className="mt-5">
           <ProfileAvatarUpload />
         </div>

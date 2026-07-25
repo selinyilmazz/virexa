@@ -107,29 +107,36 @@ export default async function AdminDashboardPage() {
         <StatCard label="Articles Today" value={stats.articlesLast24h} icon={icons.fresh} />
       </div>
 
-      <SectionCard title="Recent Activity" description="Real-time feed of published articles, new users, and admin actions - the Audit Log lives here now instead of its own page.">
+      <SectionCard title="Recent Activity" description="Live feed of published articles, new users, and admin actions - the 10 most recent, across all three.">
         {activity.length === 0 ? (
           <EmptyState icon="🕒" title="No recent activity" description="Activity will show up here as articles are published, users sign up, or admins make changes." />
         ) : (
-          <ul className="space-y-1">
-            {activity.map((item) => (
-              <li key={item.id}>
-                <Link
-                  href={item.href}
-                  className="flex items-start gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-slate-50"
-                >
-                  <span aria-hidden="true" className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm">
-                    {ACTIVITY_ICON[item.kind]}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-slate-950">{item.title}</span>
-                    <span className="block truncate text-xs text-slate-500">{item.description}</span>
-                  </span>
-                  <span className="shrink-0 text-xs text-slate-400">{item.timestamp}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="space-y-1">
+              {activity.map((item) => (
+                <li key={item.id}>
+                  <Link
+                    href={item.href}
+                    className="flex items-start gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-slate-50"
+                  >
+                    <span aria-hidden="true" className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm">
+                      {ACTIVITY_ICON[item.kind]}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold text-slate-950">{item.title}</span>
+                      <span className="block truncate text-xs text-slate-500">{item.description}</span>
+                    </span>
+                    <span className="shrink-0 text-xs text-slate-400">{item.timestamp}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-3 flex justify-end">
+              <Link href="/admin/audit" className="text-sm font-semibold text-[#2f67e8] hover:text-[#2556c9]">
+                View full audit log →
+              </Link>
+            </div>
+          </>
         )}
       </SectionCard>
 

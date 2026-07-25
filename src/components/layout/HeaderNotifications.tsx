@@ -32,7 +32,7 @@ export function HeaderNotifications() {
   if (!user) return null;
 
   return (
-    <div ref={containerRef} className="relative hidden shrink-0 items-center md:flex">
+    <div ref={containerRef} className="relative flex shrink-0 items-center">
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}

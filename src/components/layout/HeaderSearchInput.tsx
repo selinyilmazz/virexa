@@ -63,6 +63,17 @@ const IN_PLACE_SEARCH_PATHS = [
 type HeaderSearchInputProps = {
   /** Effective query to show when the URL has no real `q` param yet - see `Header`'s `initialSearchQuery` doc comment. */
   initialQuery?: string;
+  /**
+   * DOM id for this input, defaulting to the original `"site-search"`.
+   * Responsive Navbar redesign: `HeaderMobileSearch`'s fullscreen overlay
+   * renders a SECOND instance of this component (`"site-search-mobile"`)
+   * so mobile visitors get a real, full-width input instead of the
+   * cramped desktop bar shrunk down - two elements can never legally
+   * share one id, hence this prop instead of the hardcoded constant every
+   * earlier instance used.
+   */
+  id?: string;
+  autoFocus?: boolean;
 };
 
 /**
@@ -80,7 +91,7 @@ type HeaderSearchInputProps = {
  * that external value actually changes (e.g. clearing filters, browser
  * back/forward). This avoids syncing state via a `useEffect`.
  */
-export function HeaderSearchInput({ initialQuery }: HeaderSearchInputProps) {
+export function HeaderSearchInput({ initialQuery, id = "site-search", autoFocus }: HeaderSearchInputProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -144,13 +155,14 @@ export function HeaderSearchInput({ initialQuery }: HeaderSearchInputProps) {
     <input
       key={currentQuery}
       ref={inputRef}
-      id="site-search"
+      id={id}
       name="q"
       type="search"
       defaultValue={currentQuery}
       onChange={(event) => handleChange(event.target.value)}
       placeholder={placeholder}
       autoComplete="off"
+      autoFocus={autoFocus}
       className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-900 outline-none placeholder:text-slate-500 dark:text-slate-100 dark:placeholder:text-slate-500"
     />
   );

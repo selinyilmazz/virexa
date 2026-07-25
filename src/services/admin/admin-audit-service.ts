@@ -1,5 +1,8 @@
 import { createServiceClient } from "@/lib/supabase/service-client";
 import { createAuditLogRepository } from "@/repositories/audit-log-repository";
+import { createProfileRepository } from "@/repositories/profile-repository";
+import { deriveNameFromEmail } from "@/lib/supabase/utils";
+import { describeAuditEvent, formatAuditActionLabel } from "@/lib/admin/audit-log-format";
 import type { AuditLogRow } from "@/types/database";
 
 /**
@@ -56,8 +59,23 @@ export async function recordAuditEvent(input: RecordAuditEventInput): Promise<vo
   }
 }
 
+/**
+ * One audit row, enriched for display: `actorDisplayName` (a real name,
+ * not a raw email, whenever the actor still has a `profiles` row -
+ * see `resolveActorDisplayName` below), `actionLabel` (Title Case of the
+ * raw action id, e.g. "User Role Changed" - used as a compact badge), and
+ * `description` (the full, human sentence - e.g. "Password reset email
+ * sent to user@example.com", built by `describeAuditEvent` from the
+ * row's own real `metadata`, never fabricated).
+ */
+export type AuditLogItem = AuditLogRow & {
+  actorDisplayName: string;
+  actionLabel: string;
+  description: string;
+};
+
 export type AuditLogPage = {
-  items: AuditLogRow[];
+  items: AuditLogItem[];
   total: number;
   totalPages: number;
   page: number;
@@ -66,6 +84,37 @@ export type AuditLogPage = {
 
 function emptyAuditLogPage(page: number, pageSize: number): AuditLogPage {
   return { items: [], total: 0, totalPages: 1, page, pageSize };
+}
+
+/**
+ * Resolves a real display name per unique `actor_id` in one batch lookup
+ * (never one query per row - same "bulk lookup, not N+1" convention as
+ * `admin-user-service.ts`'s `resolveDisplayName`). Prefers the actor's
+ * `profiles.full_name`/`username` (what they'd recognize themselves as),
+ * falls back to a name derived from their `actor_email` (the same
+ * `deriveNameFromEmail` helper `getDisplayName()` uses site-wide), and
+ * finally "System" for the rare row with neither (a service-role write
+ * with no human actor, if one is ever added).
+ */
+async function resolveActorDisplayNames(
+  supabase: NonNullable<ReturnType<typeof createServiceClient>>,
+  rows: AuditLogRow[]
+): Promise<Map<string, string>> {
+  const actorIds = Array.from(new Set(rows.map((row) => row.actor_id).filter((id): id is string => Boolean(id))));
+  const profiles = actorIds.length > 0 ? await createProfileRepository(supabase).getByIds(actorIds) : [];
+  const profileById = new Map(profiles.map((profile) => [profile.id, profile]));
+
+  const nameByRowId = new Map<string, string>();
+  for (const row of rows) {
+    const profile = row.actor_id ? profileById.get(row.actor_id) : undefined;
+    const name = profile?.full_name || profile?.username || (row.actor_email ? deriveNameFromEmail(row.actor_email) : undefined) || "System";
+    nameByRowId.set(row.id, name);
+  }
+  return nameByRowId;
+}
+
+function toAuditLogItem(row: AuditLogRow, actorDisplayName: string): AuditLogItem {
+  return { ...row, actorDisplayName, actionLabel: formatAuditActionLabel(row.action), description: describeAuditEvent(row) };
 }
 
 /** Paginated, newest-first audit log for the Admin Audit Log page. Requires the service-role client (no RLS policies on this table) - returns an empty page if it isn't configured, rather than throwing. */
@@ -77,8 +126,10 @@ export async function getAuditLogPage(page: number, pageSize: number, action?: s
     const auditLogRepository = createAuditLogRepository(supabase);
     const result = await auditLogRepository.list({ page, pageSize, action });
 
+    const nameByRowId = await resolveActorDisplayNames(supabase, result.items);
+
     return {
-      items: result.items,
+      items: result.items.map((row) => toAuditLogItem(row, nameByRowId.get(row.id) ?? "System")),
       total: result.total,
       totalPages: Math.max(1, Math.ceil(result.total / pageSize)),
       page: result.page,
