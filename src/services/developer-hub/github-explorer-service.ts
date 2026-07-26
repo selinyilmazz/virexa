@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { createRepositoryRepository } from "@/repositories/repository-repository";
 import { createCollectionRepository } from "@/repositories/collection-repository";
@@ -483,8 +484,18 @@ export async function getHeroCarouselRepos(limit = 10): Promise<GithubRepoCardDa
   return sorted.slice(0, limit).map(toCardData);
 }
 
-/** Single repo lookup by URL slug, for `/developer-hub/github/[slug]`. Returns `null` for a not-found, hidden, or archived repo (the page renders a real 404 in that case, never a raw id lookup that could leak a hidden repo's existence). */
-export async function getGithubRepoBySlug(slug: string): Promise<GithubRepoCardData | null> {
+/**
+ * Single repo lookup by URL slug, for `/developer-hub/github/[slug]`.
+ * Returns `null` for a not-found, hidden, or archived repo (the page
+ * renders a real 404 in that case, never a raw id lookup that could leak
+ * a hidden repo's existence).
+ *
+ * Wrapped in React's `cache()` (Vercel performance audit - same reason
+ * as `article-read-service.ts`'s `getArticleDetail`) so this page's
+ * `generateMetadata()` and its default page component share one Supabase
+ * round trip instead of two.
+ */
+export const getGithubRepoBySlug = cache(async (slug: string): Promise<GithubRepoCardData | null> => {
   const id = slug.includes("--") ? slug.replace("--", "/") : slug;
   try {
     const supabase = await createClient();
@@ -496,7 +507,7 @@ export async function getGithubRepoBySlug(slug: string): Promise<GithubRepoCardD
     console.error("[github-explorer-service] Failed to load repository by slug", error);
     return null;
   }
-}
+});
 
 /** Repos related to a given one: same `category` when set, otherwise repos sharing at least one topic/tag - excludes the repo itself, capped at `limit`. */
 export async function getRelatedRepositories(repo: GithubRepoCardData, limit = 6): Promise<GithubRepoCardData[]> {

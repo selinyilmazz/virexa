@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service-client";
 import { createReleaseRepository } from "@/repositories/release-repository";
@@ -92,7 +93,13 @@ function overlay(staticRelease: TechnologyRelease, row: DeveloperReleaseRow): Te
   };
 }
 
-export async function getReleaseDetail(slug: string): Promise<TechnologyRelease | null> {
+/**
+ * Wrapped in React's `cache()` (Vercel performance audit - same reason
+ * as `article-read-service.ts`'s `getArticleDetail`) so
+ * `/developer-hub/releases/[slug]`'s `generateMetadata()` and its
+ * default page component share one lookup instead of two.
+ */
+export const getReleaseDetail = cache(async (slug: string): Promise<TechnologyRelease | null> => {
   const staticRelease = getTechnologyRelease(slug);
 
   let row: DeveloperReleaseRow | null = null;
@@ -116,7 +123,7 @@ export async function getReleaseDetail(slug: string): Promise<TechnologyRelease 
   if (staticRelease && !row) return staticRelease;
   if (!staticRelease && row) return buildMinimalRelease(row);
   return overlay(staticRelease!, row!);
-}
+});
 
 /**
  * Release Library (`/developer-hub/releases`, the index) - the single,
