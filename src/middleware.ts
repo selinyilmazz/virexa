@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { isAdminUser } from "@/lib/admin/is-admin";
+import { isSeoCrawlerUserAgent } from "@/lib/bots/is-bot-request";
+import { checkRateLimit, getClientIdentifier } from "@/lib/rate-limit";
 
 /** Routes that require a signed-in user (see task: Protected Routes). `/reading-history` is a standalone route now (Navigation/Profile/Settings UX update - was `/profile?tab=history`, gated the same way `/profile` already was). `/developer-releases` is intentionally NOT here - it's a public release catalog (same content as `/developer-hub/releases`), not personal data. */
 const PROTECTED_PATHS = ["/bookmarks", "/profile", "/settings", "/reading-history"];
@@ -13,6 +15,42 @@ const MAINTENANCE_MODE_EXEMPT_PATHS = ["/admin", "/signin", "/maintenance", "/ap
 
 function matchesPath(pathname: string, paths: string[]): boolean {
   return paths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+}
+
+/** Exempt from the SEO-crawler throttle below - a crawler needs to be able to read these to find out it's disallowed at all (see `robots.ts`), and neither is expensive to serve. */
+const SEO_CRAWLER_THROTTLE_EXEMPT_PATHS = ["/robots.txt", "/sitemap.xml"];
+
+/**
+ * (Traffic-spike defensive measures, "safe middleware throttling for
+ * non-search-engine SEO crawlers" - see PERFORMANCE_AUDIT.md) Requests
+ * per IP allowed for the narrow `isSeoCrawlerUserAgent` set (Ahrefs/
+ * Semrush/Majestic/Moz - never real search engines or AI/LLM crawlers,
+ * see that function's doc comment) before they start getting `429`s.
+ * Deliberately generous - a well-behaved crawler doing a slow sweep is
+ * unaffected; this only caps rapid-fire/aggressive crawling from this
+ * specific bot category.
+ */
+const SEO_CRAWLER_RATE_LIMIT = 12;
+const SEO_CRAWLER_RATE_WINDOW_MS = 60_000;
+
+/**
+ * Rate-limits the narrow SEO-crawler UA set, cheaply, before any other
+ * work in this file runs. Returns a `429` response when the caller is
+ * over the limit, `null` otherwise (meaning: proceed as normal). Checked
+ * first and separately from `updateSession()`/the rest of `middleware()`
+ * below so a throttled request never pays for a Supabase session refresh
+ * or reaches the page-render Function - just this cheap, in-memory check
+ * and a `429`.
+ */
+function throttleSeoCrawler(request: NextRequest): NextResponse | null {
+  if (SEO_CRAWLER_THROTTLE_EXEMPT_PATHS.includes(request.nextUrl.pathname)) return null;
+  if (!isSeoCrawlerUserAgent(request.headers.get("user-agent"))) return null;
+
+  const rateLimit = checkRateLimit(`seo-crawler:${getClientIdentifier(request)}`, SEO_CRAWLER_RATE_LIMIT, SEO_CRAWLER_RATE_WINDOW_MS);
+  if (rateLimit.allowed) return null;
+
+  const retryAfterSeconds = Math.max(1, Math.ceil((rateLimit.resetAt - Date.now()) / 1000));
+  return NextResponse.json({ error: "Too many requests." }, { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } });
 }
 
 /**
@@ -36,6 +74,9 @@ async function isMaintenanceModeOn(supabase: Awaited<ReturnType<typeof updateSes
 }
 
 export async function middleware(request: NextRequest) {
+  const throttled = throttleSeoCrawler(request);
+  if (throttled) return throttled;
+
   const { response, user, supabase } = await updateSession(request);
   const { pathname, search } = request.nextUrl;
 

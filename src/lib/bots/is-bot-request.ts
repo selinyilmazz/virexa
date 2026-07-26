@@ -34,3 +34,30 @@ export function isBotUserAgent(userAgent: string | null | undefined): boolean {
   if (!userAgent) return false;
   return BOT_USER_AGENT_PATTERN.test(userAgent);
 }
+
+/**
+ * Narrower subset of `isBotUserAgent` above - only the third-party SEO/
+ * backlink-analysis crawlers (Ahrefs, Semrush, Majestic, Moz) that
+ * scrape broadly across a whole site purely for their own paid tooling,
+ * with zero referral traffic or indexing benefit to Virexa in return.
+ *
+ * Deliberately excludes everything else `isBotUserAgent` recognizes -
+ * real search engines (Googlebot, Bingbot, Slurp, DuckDuckBot, Baidu,
+ * Yandex, Naver, PetalBot) and AI/LLM crawlers (GPTBot, ClaudeBot,
+ * PerplexityBot, ...) both drive real traffic/visibility and must never
+ * be throttled or disallowed by anything built against this function -
+ * see `robots.ts`'s doc comment for the same scoping rule applied there.
+ *
+ * (Traffic-spike defensive measures - "safe middleware throttling for
+ * non-search-engine SEO crawlers") Used by `middleware.ts` to rate-limit
+ * this specific traffic before it reaches the page-render Vercel
+ * Function - the runtime backstop for the bots that don't honor
+ * `robots.txt`'s (advisory-only) disallow rule for the same UAs.
+ */
+const SEO_CRAWLER_USER_AGENT_PATTERN = /ahrefsbot|semrushbot|mj12bot|dotbot/i;
+
+/** `true` only for the narrow SEO-crawler set above - `false` for everything else, including every other bot category `isBotUserAgent` recognizes. */
+export function isSeoCrawlerUserAgent(userAgent: string | null | undefined): boolean {
+  if (!userAgent) return false;
+  return SEO_CRAWLER_USER_AGENT_PATTERN.test(userAgent);
+}
