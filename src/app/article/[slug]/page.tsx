@@ -22,6 +22,27 @@ type ArticlePageProps = {
   params: Promise<{ slug: string }>;
 };
 
+/**
+ * (Vercel performance audit, "Add `export const revalidate` to article/
+ * category pages") Declares this route's intended ISR window: once
+ * eligible for static/ISR rendering, a cached HTML response would be
+ * served for up to 60s before Next.js regenerates it in the background,
+ * rather than re-running this page's Supabase reads on every request.
+ *
+ * IMPORTANT - this line has NO effect yet. The root layout
+ * (`src/app/layout.tsx`) reads `cookies()` unconditionally (session +
+ * locale resolution) on every request, which - under this project's
+ * current caching model (no `cacheComponents` in `next.config.ts`) -
+ * forces every route in the app, including this one, into full dynamic
+ * (SSR-per-request) rendering regardless of any `revalidate` value set
+ * here. This export is left in place so ISR activates automatically,
+ * with no further code change needed on this file, the moment that
+ * root-layout constraint is resolved (see PERFORMANCE_AUDIT.md). Until
+ * then, every request still executes this page fresh, exactly as
+ * before - this line changes nothing about current behavior.
+ */
+export const revalidate = 60;
+
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
   const { slug } = await params;
   const article = await getArticleDetail(slug);

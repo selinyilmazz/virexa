@@ -66,6 +66,27 @@ export function generateStaticParams() {
   return categories.map((category) => ({ slug: category.slug }));
 }
 
+/**
+ * (Vercel performance audit, "Add `export const revalidate` to article/
+ * category pages") Same intent and same current no-op status as
+ * `/article/[slug]`'s `revalidate` export - see that file's doc comment
+ * for the full explanation of why the root layout's `cookies()` reads
+ * currently prevent this from taking effect.
+ *
+ * One additional wrinkle specific to this route: both branches of
+ * `CategoryPage` below also read `searchParams` directly (`page` for
+ * the classic grid, the full filter/sort query for `ExplorerView`).
+ * `searchParams` is itself a Request-time API, so even after the root
+ * layout issue is resolved, only a bare `/category/[slug]` request (no
+ * query string) would become ISR-eligible under this route config -
+ * any request with `?page=`, `?categories=`, etc. still renders fresh
+ * every time, by design (a filtered/paginated result can't be served
+ * from one shared cached response). This export still has real value
+ * once activated: category pages are overwhelmingly visited without
+ * query params (the paginated/filtered URLs are a minority of traffic).
+ */
+export const revalidate = 60;
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const explorerConfig = EXPLORER_CATEGORIES[slug];
