@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { ArticleHero } from "@/components/article/ArticleHero";
@@ -15,6 +16,7 @@ import { findCategoryHref } from "@/data/article";
 import { getArticleDetail } from "@/services/articles/article-read-service";
 import { incrementArticleView, recordArticleRead } from "@/services/articles/article-metrics-service";
 import { createClient } from "@/lib/supabase/server";
+import { isBotUserAgent } from "@/lib/bots/is-bot-request";
 
 type ArticlePageProps = {
   params: Promise<{ slug: string }>;
@@ -62,8 +64,18 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
   // "Makale açıldığında view_count otomatik artsın" - fire-and-forget
   // safe (never throws, no-ops if storage isn't configured), so it
-  // can't ever break rendering this page.
-  void incrementArticleView(article.id);
+  // can't ever break rendering this page. Skipped for recognized
+  // crawlers/automated clients (Vercel performance audit - "Prevent bots
+  // from incrementing article view counts") so `view_count` reflects
+  // real readers, not search-engine/AI/link-preview crawler traffic -
+  // the page itself renders identically either way, only the counter
+  // write is gated. `headers()` is already read elsewhere in this
+  // request's render tree (root layout's session/locale resolution), so
+  // this doesn't add any new dynamic-rendering cost.
+  const userAgent = (await headers()).get("user-agent");
+  if (!isBotUserAgent(userAgent)) {
+    void incrementArticleView(article.id);
+  }
 
   // Real per-user reading history - only written for a signed-in
   // visitor; an anonymous reader still bumps `view_count` above but has
