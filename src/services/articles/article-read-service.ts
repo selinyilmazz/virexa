@@ -714,6 +714,51 @@ export async function getTrendingCategories(limit = 6): Promise<TrendingCategory
   }
 }
 
+export type ActiveCategoryStat = {
+  name: string;
+  icon: string;
+  count: number;
+};
+
+/**
+ * Cheap counterpart to `getTrendingCategories` - the same real, count-
+ * descending ranking across all 12 canonical categories, but WITHOUT its
+ * 14-day sparkline/trend pass (a separate `listPublishedBetween` query
+ * capped at 3000 rows, bucketed per category in `buildCategoryTrendStats`)
+ * - real cost that's only worth paying for the homepage's Trending Topics
+ * widget, which actually renders the sparkline/trend badge.
+ *
+ * (Vercel performance audit, "Find unnecessary Supabase queries" /
+ * "Prevent duplicate database reads") The category page's sidebar
+ * "Related Categories" list only ever reads `name`/`icon`/`count` off
+ * `getTrendingCategories`'s result (see `/category/[slug]/page.tsx`), so
+ * it was paying for that whole extra query + bucketing pass on EVERY
+ * category page view for data it never displayed. Selection and order
+ * are identical either way - both rank by the same `perCategory` count-
+ * descending sort - so this is a pure cost cut, not a behavior change.
+ */
+export const getActiveCategoryCounts = cache(async (limit = 6): Promise<ActiveCategoryStat[]> => {
+  try {
+    const { articles } = await getRepositories();
+
+    const perCategory = await Promise.all(
+      SEARCH_CATEGORY_SLUGS.map(async ({ name }) => {
+        const result = await articles.search({ category: name, page: 1, pageSize: 1 });
+        return { name, count: result.total };
+      })
+    );
+
+    return perCategory
+      .filter((entry) => entry.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit)
+      .map((entry) => ({ name: entry.name, icon: CATEGORY_ICON_BY_NAME.get(entry.name) ?? "📰", count: entry.count }));
+  } catch (error) {
+    console.error("[article-read-service] getActiveCategoryCounts failed:", error);
+    return [];
+  }
+});
+
 export type TopSourceStat = {
   name: string;
   count: number;
@@ -1175,8 +1220,17 @@ function structuredSummaryToPlainText(summary: StructuredSummary): string {
  * `readingTime` is derived from whichever of these actually ends up as
  * the resolved primary content, so it always reflects what a reader
  * will actually see, not a value stamped once at ingestion time.
+ *
+ * Wrapped in React's `cache()` (Vercel performance audit - "Ensure
+ * generateMetadata() does not duplicate expensive work") so the article
+ * detail page's `generateMetadata()` and its default page component -
+ * two separate calls into the same render pass for `/article/[slug]` -
+ * share a single Supabase round trip (article row + AI enrichment +
+ * metrics) instead of issuing it twice per request. Same pattern
+ * `getFeaturedArticle`/`getFeaturedArticles`/`getRepositories` already
+ * use above for the same reason.
  */
-export async function getArticleDetail(slug: string): Promise<ArticleDetail | null> {
+export const getArticleDetail = cache(async (slug: string): Promise<ArticleDetail | null> => {
   try {
     const { articles, ai, metrics } = await getRepositories();
     const row = await articles.getBySlug(slug);
@@ -1260,7 +1314,7 @@ export async function getArticleDetail(slug: string): Promise<ArticleDetail | nu
     console.error("[article-read-service] getArticleDetail failed:", error);
     return null;
   }
-}
+});
 
 /** Same-category articles (excluding the current one), most-trending first - the real "Similar Articles" list for the article detail page's sidebar. */
 export async function getSimilarArticles(category: string, excludeId: string, limit = 4): Promise<CategoryNewsItem[]> {

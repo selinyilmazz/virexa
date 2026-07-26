@@ -9,9 +9,9 @@ import { categories, getCategoryBySlug } from "@/data/categories";
 import type { PulseTopicKey } from "@/lib/explorer/developer-pulse-data";
 import type { ExplorerSearchParams } from "@/lib/news-explorer/shared";
 import {
+  getActiveCategoryCounts,
   getRecentArticlesForCategory,
   getTopSourcesForCategory,
-  getTrendingCategories,
   searchCategoryArticles,
 } from "@/services/articles/article-read-service";
 
@@ -108,11 +108,17 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   // sayfası gerçek veritabanından beslenecek"). Taxonomy (name,
   // description, breadcrumb) still comes from the static registry above -
   // the article list, pagination, and every sidebar widget are live.
+  //
+  // Uses `getActiveCategoryCounts` (not `getTrendingCategories`) for the
+  // "Related Categories" pool below - this page only ever reads
+  // name/icon/count off it, so there's no reason to pay for
+  // `getTrendingCategories`'s extra 14-day sparkline query on every
+  // category page view (Vercel performance audit).
   const [newsPage, recentNews, topSources, allActiveCategories] = await Promise.all([
     searchCategoryArticles(category.name, currentPage, PAGE_SIZE),
     getRecentArticlesForCategory(category.name, 5),
     getTopSourcesForCategory(category.name, 5),
-    getTrendingCategories(12),
+    getActiveCategoryCounts(12),
   ]);
   const relatedCategories = allActiveCategories
     .filter((entry) => entry.name !== category.name)
