@@ -420,7 +420,23 @@
       "deleting": "Siliniyor…",
       "update": "Güncelle",
       "loadError": "Bu veri yüklenemedi.",
-      "filters": "Filtreler"
+      "filters": "Filtreler",
+      "working": "İşleniyor…",
+      "confirm": "Onayla",
+      "actionFailed": "İşlem başarısız oldu.",
+      "done": "Tamamlandı."
+    },
+    "notifications": {
+      "title": "Bildirimler",
+      "empty": "Şu anda bildirim yok. Her şey yolunda görünüyor.",
+      "justNow": "az önce",
+      "minutesAgo": "{minutes} dk önce",
+      "hoursAgo": "{hours} sa önce",
+      "daysAgo": "{days} gün önce"
+    },
+    "search": {
+      "srLabel": "Yönetici içinde ara",
+      "placeholder": "Makale, kullanıcı, depo, sürüm, kaynak ara…"
     },
     "pagination": {
       "ariaLabel": "Sayfalama",

@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/admin/ToastProvider";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 type AdminActionButtonVariant = "primary" | "secondary" | "warning";
 
@@ -45,20 +46,24 @@ const VARIANT_CLASSES: Record<AdminActionButtonVariant, string> = {
  */
 export function AdminActionButton({
   label,
-  pendingLabel = "Working…",
+  pendingLabel,
   endpoint,
   method = "POST",
   buildBody,
   confirmTitle,
   confirmDescription,
-  confirmLabel = "Confirm",
+  confirmLabel,
   successMessage,
-  errorFallbackMessage = "Action failed.",
+  errorFallbackMessage,
   variant = "secondary",
   disabled = false,
   className = "",
   onSuccess,
 }: AdminActionButtonProps) {
+  const t = useTranslations();
+  const resolvedPendingLabel = pendingLabel ?? t("admin.common.working");
+  const resolvedConfirmLabel = confirmLabel ?? t("admin.common.confirm");
+  const resolvedErrorFallback = errorFallbackMessage ?? t("admin.common.actionFailed");
   const toast = useToast();
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -75,14 +80,14 @@ export function AdminActionButton({
       const json = (await response.json().catch(() => ({}))) as Record<string, unknown>;
 
       if (!response.ok || json.ok === false) {
-        throw new Error(typeof json.error === "string" ? json.error : errorFallbackMessage);
+        throw new Error(typeof json.error === "string" ? json.error : resolvedErrorFallback);
       }
 
-      toast.success(typeof successMessage === "function" ? successMessage(json) : successMessage ?? "Done.");
+      toast.success(typeof successMessage === "function" ? successMessage(json) : successMessage ?? t("admin.common.done"));
       onSuccess?.(json);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : errorFallbackMessage);
+      toast.error(error instanceof Error ? error.message : resolvedErrorFallback);
     } finally {
       setPending(false);
       setConfirmOpen(false);
@@ -105,7 +110,7 @@ export function AdminActionButton({
         disabled={disabled || pending}
         className={`rounded-xl px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${VARIANT_CLASSES[variant]} ${className}`}
       >
-        {pending ? pendingLabel : label}
+        {pending ? resolvedPendingLabel : label}
       </button>
 
       {confirmOpen && (
@@ -120,7 +125,7 @@ export function AdminActionButton({
                 disabled={pending}
                 className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 type="button"
@@ -128,7 +133,7 @@ export function AdminActionButton({
                 disabled={pending}
                 className="rounded-xl bg-[#2f67e8] px-4 py-2 text-sm font-semibold text-white hover:bg-[#2556c9] disabled:opacity-50"
               >
-                {pending ? pendingLabel : confirmLabel}
+                {pending ? resolvedPendingLabel : resolvedConfirmLabel}
               </button>
             </div>
           </div>

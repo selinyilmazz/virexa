@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 /**
  * Global admin search box (requirement 14) - submits to `/admin/search`,
@@ -12,6 +13,7 @@ import { useState } from "react";
  * shareable, no client-side data fetching for the results themselves).
  */
 export function AdminHeaderSearch() {
+  const t = useTranslations();
   const router = useRouter();
   const [value, setValue] = useState("");
 
@@ -24,7 +26,7 @@ export function AdminHeaderSearch() {
   return (
     <form onSubmit={handleSubmit} className="hidden min-w-0 flex-1 max-w-md md:block">
       <label className="relative block">
-        <span className="sr-only">Search admin</span>
+        <span className="sr-only">{t("admin.search.srLabel")}</span>
         <svg
           aria-hidden="true"
           viewBox="0 0 24 24"
@@ -40,7 +42,7 @@ export function AdminHeaderSearch() {
           type="search"
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          placeholder="Search articles, users, repositories, releases, sources…"
+          placeholder={t("admin.search.placeholder")}
           className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-900 outline-none transition-colors focus:border-[#2f67e8] focus:bg-white"
         />
       </label>

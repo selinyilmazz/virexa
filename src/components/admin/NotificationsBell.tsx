@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { AdminNotification } from "@/services/admin/admin-notifications-service";
+import { useTranslations } from "@/i18n/i18n-provider";
+import type { TFunction } from "@/i18n/translate";
 
 const SEVERITY_DOT: Record<AdminNotification["severity"], string> = {
   warning: "bg-amber-500",
@@ -13,15 +15,15 @@ const SEVERITY_DOT: Record<AdminNotification["severity"], string> = {
 /** Every 90s while the panel/page is open - cheap enough (5 small reads, all already-cached-ish) that polling beats building a realtime channel for this. */
 const POLL_MS = 90_000;
 
-function formatRelativeTime(iso?: string): string | null {
+function formatRelativeTime(iso: string | undefined, t: TFunction): string | null {
   if (!iso) return null;
   const diffMs = Date.now() - new Date(iso).getTime();
   const minutes = Math.round(diffMs / 60_000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return t("admin.notifications.justNow");
+  if (minutes < 60) return t("admin.notifications.minutesAgo", { minutes });
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.round(hours / 24)}d ago`;
+  if (hours < 24) return t("admin.notifications.hoursAgo", { hours });
+  return t("admin.notifications.daysAgo", { days: Math.round(hours / 24) });
 }
 
 /**
@@ -33,6 +35,7 @@ function formatRelativeTime(iso?: string): string | null {
  * don't need to demand attention the way a degraded health check does).
  */
 export function NotificationsBell() {
+  const t = useTranslations();
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -82,7 +85,7 @@ export function NotificationsBell() {
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        aria-label="Notifications"
+        aria-label={t("admin.notifications.title")}
         aria-expanded={isOpen}
         className="relative flex size-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
       >
@@ -100,11 +103,11 @@ export function NotificationsBell() {
       {isOpen && (
         <div className="absolute right-0 top-full z-30 mt-2 w-80 max-w-[85vw] rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
           <div className="px-3 py-2">
-            <p className="text-sm font-bold text-slate-950">Notifications</p>
+            <p className="text-sm font-bold text-slate-950">{t("admin.notifications.title")}</p>
           </div>
           <div className="max-h-80 space-y-1 overflow-y-auto">
             {notifications.length === 0 ? (
-              <p className="px-3 py-6 text-center text-sm text-slate-500">No notifications right now. Everything looks healthy.</p>
+              <p className="px-3 py-6 text-center text-sm text-slate-500">{t("admin.notifications.empty")}</p>
             ) : (
               notifications.map((item) => (
                 <Link
@@ -118,7 +121,7 @@ export function NotificationsBell() {
                     <span className="block text-sm font-semibold text-slate-950">{item.title}</span>
                     <span className="block truncate text-xs text-slate-500">{item.description}</span>
                   </span>
-                  {item.createdAt && <span className="shrink-0 text-[11px] text-slate-400">{formatRelativeTime(item.createdAt)}</span>}
+                  {item.createdAt && <span className="shrink-0 text-[11px] text-slate-400">{formatRelativeTime(item.createdAt, t)}</span>}
                 </Link>
               ))
             )}

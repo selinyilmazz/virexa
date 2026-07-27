@@ -420,7 +420,23 @@
       "deleting": "Deleting…",
       "update": "Update",
       "loadError": "Couldn't load this data.",
-      "filters": "Filters"
+      "filters": "Filters",
+      "working": "Working…",
+      "confirm": "Confirm",
+      "actionFailed": "Action failed.",
+      "done": "Done."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "empty": "No notifications right now. Everything looks healthy.",
+      "justNow": "just now",
+      "minutesAgo": "{minutes}m ago",
+      "hoursAgo": "{hours}h ago",
+      "daysAgo": "{days}d ago"
+    },
+    "search": {
+      "srLabel": "Search admin",
+      "placeholder": "Search articles, users, repositories, releases, sources…"
     },
     "pagination": {
       "ariaLabel": "Pagination",

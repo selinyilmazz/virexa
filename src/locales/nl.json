@@ -420,7 +420,23 @@
       "deleting": "Bezig met verwijderen…",
       "update": "Bijwerken",
       "loadError": "Kon deze gegevens niet laden.",
-      "filters": "Filters"
+      "filters": "Filters",
+      "working": "Bezig…",
+      "confirm": "Bevestigen",
+      "actionFailed": "Actie mislukt.",
+      "done": "Klaar."
+    },
+    "notifications": {
+      "title": "Meldingen",
+      "empty": "Op dit moment geen meldingen. Alles ziet er gezond uit.",
+      "justNow": "zojuist",
+      "minutesAgo": "{minutes}m geleden",
+      "hoursAgo": "{hours}u geleden",
+      "daysAgo": "{days}d geleden"
+    },
+    "search": {
+      "srLabel": "Beheer doorzoeken",
+      "placeholder": "Zoek artikelen, gebruikers, repositories, releases, bronnen…"
     },
     "pagination": {
       "ariaLabel": "Paginering",
