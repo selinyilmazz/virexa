@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AdminNavGroups } from "@/components/admin/AdminNavGroups";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 /**
  * Small-screen counterpart to `AdminSidebar` (which is `hidden lg:flex`
@@ -14,6 +15,7 @@ import { AdminNavGroups } from "@/components/admin/AdminNavGroups";
  * already used by `ArticleDetailDrawer` and `HeaderAuthArea`'s dropdown.
  */
 export function AdminMobileNav() {
+  const t = useTranslations();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -39,7 +41,7 @@ export function AdminMobileNav() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        aria-label="Open admin navigation"
+        aria-label={t("admin.nav.openAriaLabel")}
         aria-expanded={isOpen}
         className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 lg:hidden"
       >
@@ -50,17 +52,17 @@ export function AdminMobileNav() {
 
       {isOpen && (
         <div className="fixed inset-0 z-[120] flex lg:hidden">
-          <button type="button" aria-label="Close admin navigation" onClick={() => setIsOpen(false)} className="absolute inset-0 bg-slate-950/40" />
+          <button type="button" aria-label={t("admin.nav.closeAriaLabel")} onClick={() => setIsOpen(false)} className="absolute inset-0 bg-slate-950/40" />
           <div className="relative flex h-full w-72 max-w-[85vw] flex-col overflow-y-auto bg-white shadow-2xl">
             <div className="flex h-16 items-center justify-between gap-2 border-b border-slate-200 px-5">
               <div className="flex items-center gap-2">
                 <span className="flex size-8 items-center justify-center rounded-lg bg-[#2f67e8] text-sm font-bold text-white">V</span>
-                <p className="text-sm font-bold text-slate-950">Virexa Admin</p>
+                <p className="text-sm font-bold text-slate-950">{t("admin.common.virexaAdmin")}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                aria-label="Close"
+                aria-label={t("common.close")}
                 className="flex size-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600"
               >
                 <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2">

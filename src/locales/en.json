@@ -403,5 +403,35 @@
     "notFoundTitle": "Page not found",
     "notFoundDescription": "The page you're looking for doesn't exist, or may have been moved.",
     "notFoundBack": "Back to Home"
+  },
+  "admin": {
+    "common": {
+      "admin": "Admin",
+      "virexaAdmin": "Virexa Admin",
+      "backToWebsite": "Back to Website",
+      "logout": "Logout"
+    },
+    "nav": {
+      "ariaLabel": "Admin navigation",
+      "openAriaLabel": "Open admin navigation",
+      "closeAriaLabel": "Close admin navigation",
+      "dashboard": "Dashboard",
+      "articles": "Articles",
+      "sources": "Sources",
+      "repositories": "Repositories",
+      "developerReleases": "Developer Releases",
+      "githubCollections": "GitHub Collections",
+      "developerHubCatalog": "Developer Hub Catalog",
+      "users": "Users",
+      "analytics": "Analytics",
+      "auditLog": "Audit Log",
+      "runtime": "Runtime",
+      "settings": "Settings",
+      "groupContent": "Content",
+      "groupDeveloperHub": "Developer Hub",
+      "groupUsers": "Users",
+      "groupOperations": "Operations",
+      "groupSystem": "System"
+    }
   }
 }

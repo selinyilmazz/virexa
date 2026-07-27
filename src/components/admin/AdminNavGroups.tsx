@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ADMIN_NAV_GROUPS, isActiveAdminPath } from "@/components/admin/admin-nav-items";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 type AdminNavGroupsProps = {
   pathname: string;
@@ -19,6 +20,7 @@ type AdminNavGroupsProps = {
  * page inside a collapsed section).
  */
 export function AdminNavGroups({ pathname }: AdminNavGroupsProps) {
+  const t = useTranslations();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -30,9 +32,9 @@ export function AdminNavGroups({ pathname }: AdminNavGroupsProps) {
     }
   }, []);
 
-  function toggleGroup(label: string) {
+  function toggleGroup(id: string) {
     setOpenGroups((previous) => {
-      const next = { ...previous, [label]: !isGroupOpen(label, previous) };
+      const next = { ...previous, [id]: !isGroupOpen(id, previous) };
       try {
         window.localStorage.setItem("admin-nav-open-groups", JSON.stringify(next));
       } catch {
@@ -42,38 +44,38 @@ export function AdminNavGroups({ pathname }: AdminNavGroupsProps) {
     });
   }
 
-  function isGroupOpen(label: string, state: Record<string, boolean> = openGroups): boolean {
-    if (label in state) return state[label];
+  function isGroupOpen(id: string, state: Record<string, boolean> = openGroups): boolean {
+    if (id in state) return state[id];
     return true; // Default every section to open until the admin explicitly collapses it.
   }
 
   return (
-    <nav aria-label="Admin navigation" className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+    <nav aria-label={t("admin.nav.ariaLabel")} className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
       {ADMIN_NAV_GROUPS.map((group, index) => {
-        if (group.label === null) {
+        if (group.id === null) {
           return (
             <div key={`top-${index}`} className="space-y-1 pb-2">
               {group.items.map((item) => (
-                <AdminNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} active={isActiveAdminPath(pathname, item.href)} />
+                <AdminNavLink key={item.href} href={item.href} label={t(item.labelKey)} icon={item.icon} active={isActiveAdminPath(pathname, item.href)} />
               ))}
             </div>
           );
         }
 
-        const open = isGroupOpen(group.label);
+        const open = isGroupOpen(group.id);
         const groupHasActive = group.items.some((item) => isActiveAdminPath(pathname, item.href));
 
         return (
-          <div key={group.label} className="pb-1">
+          <div key={group.id} className="pb-1">
             <button
               type="button"
-              onClick={() => toggleGroup(group.label!)}
+              onClick={() => toggleGroup(group.id!)}
               aria-expanded={open}
               className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-colors ${
                 groupHasActive ? "text-[#2f67e8]" : "text-slate-400 hover:text-slate-600"
               }`}
             >
-              {group.label}
+              {t(group.labelKey!)}
               <svg
                 viewBox="0 0 24 24"
                 className={`size-3.5 transition-transform ${open ? "rotate-0" : "-rotate-90"}`}
@@ -87,7 +89,7 @@ export function AdminNavGroups({ pathname }: AdminNavGroupsProps) {
             {open && (
               <div className="mt-0.5 space-y-1">
                 {group.items.map((item) => (
-                  <AdminNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} active={isActiveAdminPath(pathname, item.href)} />
+                  <AdminNavLink key={item.href} href={item.href} label={t(item.labelKey)} icon={item.icon} active={isActiveAdminPath(pathname, item.href)} />
                 ))}
               </div>
             )}

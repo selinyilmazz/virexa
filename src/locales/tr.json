@@ -403,5 +403,35 @@
     "notFoundTitle": "Sayfa bulunamadı",
     "notFoundDescription": "Aradığın sayfa mevcut değil ya da taşınmış olabilir.",
     "notFoundBack": "Anasayfaya Dön"
+  },
+  "admin": {
+    "common": {
+      "admin": "Yönetici",
+      "virexaAdmin": "Virexa Yönetici",
+      "backToWebsite": "Siteye Dön",
+      "logout": "Çıkış Yap"
+    },
+    "nav": {
+      "ariaLabel": "Yönetici navigasyonu",
+      "openAriaLabel": "Yönetici navigasyonunu aç",
+      "closeAriaLabel": "Yönetici navigasyonunu kapat",
+      "dashboard": "Panel",
+      "articles": "Makaleler",
+      "sources": "Kaynaklar",
+      "repositories": "Depolar",
+      "developerReleases": "Geliştirici Sürümleri",
+      "githubCollections": "GitHub Koleksiyonları",
+      "developerHubCatalog": "Geliştirici Merkezi Kataloğu",
+      "users": "Kullanıcılar",
+      "analytics": "Analitik",
+      "auditLog": "Denetim Günlüğü",
+      "runtime": "Çalışma Zamanı",
+      "settings": "Ayarlar",
+      "groupContent": "İçerik",
+      "groupDeveloperHub": "Geliştirici Merkezi",
+      "groupUsers": "Kullanıcılar",
+      "groupOperations": "Operasyonlar",
+      "groupSystem": "Sistem"
+    }
   }
 }

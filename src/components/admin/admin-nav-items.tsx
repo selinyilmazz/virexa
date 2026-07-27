@@ -25,13 +25,16 @@ import type { ReactNode } from "react";
 
 export type AdminNavItem = {
   href: string;
-  label: string;
+  /** i18n key (`admin.nav.*`) - the renderer (`AdminNavGroups`) calls `t(labelKey)`. Not `label` directly: this file is a plain module-level const array, not a component, so it can never call `useTranslations()` itself. */
+  labelKey: string;
   icon: ReactNode;
 };
 
 export type AdminNavGroup = {
-  /** `null` for the top-level, always-visible "Dashboard" entry - it isn't part of a collapsible section. */
-  label: string | null;
+  /** Stable, untranslated identifier - `null` for the top-level, always-visible "Dashboard" entry (not part of a collapsible section). Used as the React key and the `localStorage` open/closed key, which must stay stable across a language switch (unlike the displayed label). */
+  id: string | null;
+  /** i18n key for the group heading, or `null` to match `id`. */
+  labelKey: string | null;
   items: AdminNavItem[];
 };
 
@@ -45,7 +48,7 @@ const ICON_PROPS = {
 
 const DASHBOARD_ITEM: AdminNavItem = {
   href: "/admin",
-  label: "Dashboard",
+  labelKey: "admin.nav.dashboard",
   icon: (
     <svg {...ICON_PROPS}>
       <rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.5" />
@@ -58,7 +61,7 @@ const DASHBOARD_ITEM: AdminNavItem = {
 
 const ARTICLES_ITEM: AdminNavItem = {
   href: "/admin/articles",
-  label: "Articles",
+  labelKey: "admin.nav.articles",
   icon: (
     <svg {...ICON_PROPS}>
       <path d="M6 3.5h9L19 8v12.5H6z" strokeLinejoin="round" />
@@ -69,7 +72,7 @@ const ARTICLES_ITEM: AdminNavItem = {
 
 const SOURCES_ITEM: AdminNavItem = {
   href: "/admin/sources",
-  label: "Sources",
+  labelKey: "admin.nav.sources",
   icon: (
     <svg {...ICON_PROPS}>
       <path d="M4 4.5c8 0 15.5 7.5 15.5 15.5" strokeLinecap="round" />
@@ -81,7 +84,7 @@ const SOURCES_ITEM: AdminNavItem = {
 
 const REPOSITORIES_ITEM: AdminNavItem = {
   href: "/admin/repositories",
-  label: "Repositories",
+  labelKey: "admin.nav.repositories",
   icon: (
     <svg {...ICON_PROPS}>
       <path d="M4 3.5h16v8.5H4z" strokeLinejoin="round" />
@@ -93,7 +96,7 @@ const REPOSITORIES_ITEM: AdminNavItem = {
 
 const RELEASES_ITEM: AdminNavItem = {
   href: "/admin/releases",
-  label: "Developer Releases",
+  labelKey: "admin.nav.developerReleases",
   icon: (
     <svg {...ICON_PROPS}>
       <path d="M12 3v10M12 13l4-4M12 13 8 9" strokeLinecap="round" strokeLinejoin="round" />
@@ -104,7 +107,7 @@ const RELEASES_ITEM: AdminNavItem = {
 
 const COLLECTIONS_ITEM: AdminNavItem = {
   href: "/admin/collections",
-  label: "GitHub Collections",
+  labelKey: "admin.nav.githubCollections",
   icon: (
     <svg {...ICON_PROPS}>
       <path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h5l1.5 2h6.5A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5v-11Z" strokeLinejoin="round" />
@@ -114,7 +117,7 @@ const COLLECTIONS_ITEM: AdminNavItem = {
 
 const CATALOG_ITEM: AdminNavItem = {
   href: "/admin/catalog-items",
-  label: "Developer Hub Catalog",
+  labelKey: "admin.nav.developerHubCatalog",
   icon: (
     <svg {...ICON_PROPS}>
       <path d="M12 3.5 4 7v10l8 3.5 8-3.5V7l-8-3.5Z" strokeLinejoin="round" />
@@ -125,7 +128,7 @@ const CATALOG_ITEM: AdminNavItem = {
 
 const USERS_ITEM: AdminNavItem = {
   href: "/admin/users",
-  label: "Users",
+  labelKey: "admin.nav.users",
   icon: (
     <svg {...ICON_PROPS}>
       <circle cx="9" cy="8" r="3.2" />
@@ -137,7 +140,7 @@ const USERS_ITEM: AdminNavItem = {
 
 const ANALYTICS_ITEM: AdminNavItem = {
   href: "/admin/analytics",
-  label: "Analytics",
+  labelKey: "admin.nav.analytics",
   icon: (
     <svg {...ICON_PROPS}>
       <path d="M4 20V10M11 20V4M18 20v-7" strokeLinecap="round" />
@@ -147,7 +150,7 @@ const ANALYTICS_ITEM: AdminNavItem = {
 
 const AUDIT_ITEM: AdminNavItem = {
   href: "/admin/audit",
-  label: "Audit Log",
+  labelKey: "admin.nav.auditLog",
   icon: (
     <svg {...ICON_PROPS}>
       <path d="M6 3.5h9L19 8v12.5H6z" strokeLinejoin="round" />
@@ -159,7 +162,7 @@ const AUDIT_ITEM: AdminNavItem = {
 
 const RUNTIME_ITEM: AdminNavItem = {
   href: "/admin/runtime",
-  label: "Runtime",
+  labelKey: "admin.nav.runtime",
   icon: (
     <svg {...ICON_PROPS}>
       <rect x="7" y="7" width="10" height="10" rx="1.5" />
@@ -170,7 +173,7 @@ const RUNTIME_ITEM: AdminNavItem = {
 
 const SETTINGS_ITEM: AdminNavItem = {
   href: "/admin/settings",
-  label: "Settings",
+  labelKey: "admin.nav.settings",
   icon: (
     <svg {...ICON_PROPS}>
       <circle cx="12" cy="12" r="3" />
@@ -195,12 +198,12 @@ const SETTINGS_ITEM: AdminNavItem = {
  * real destination again rather than staying folded into the Dashboard.
  */
 export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
-  { label: null, items: [DASHBOARD_ITEM] },
-  { label: "Content", items: [ARTICLES_ITEM, SOURCES_ITEM] },
-  { label: "Developer Hub", items: [REPOSITORIES_ITEM, COLLECTIONS_ITEM, RELEASES_ITEM, CATALOG_ITEM] },
-  { label: "Users", items: [USERS_ITEM] },
-  { label: "Operations", items: [ANALYTICS_ITEM, RUNTIME_ITEM, AUDIT_ITEM] },
-  { label: "System", items: [SETTINGS_ITEM] },
+  { id: null, labelKey: null, items: [DASHBOARD_ITEM] },
+  { id: "content", labelKey: "admin.nav.groupContent", items: [ARTICLES_ITEM, SOURCES_ITEM] },
+  { id: "developer-hub", labelKey: "admin.nav.groupDeveloperHub", items: [REPOSITORIES_ITEM, COLLECTIONS_ITEM, RELEASES_ITEM, CATALOG_ITEM] },
+  { id: "users", labelKey: "admin.nav.groupUsers", items: [USERS_ITEM] },
+  { id: "operations", labelKey: "admin.nav.groupOperations", items: [ANALYTICS_ITEM, RUNTIME_ITEM, AUDIT_ITEM] },
+  { id: "system", labelKey: "admin.nav.groupSystem", items: [SETTINGS_ITEM] },
 ];
 
 /** Flat list derived from `ADMIN_NAV_GROUPS` - kept for any caller that just needs "every admin destination" without the grouping (e.g. active-path checks). */

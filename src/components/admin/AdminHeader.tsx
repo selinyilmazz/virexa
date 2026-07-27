@@ -8,6 +8,7 @@ import { getAvatarUrl, getDisplayName } from "@/lib/supabase/utils";
 import { AdminMobileNav } from "@/components/admin/AdminMobileNav";
 import { AdminHeaderSearch } from "@/components/admin/AdminHeaderSearch";
 import { NotificationsBell } from "@/components/admin/NotificationsBell";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 /**
  * Top bar for the whole `/admin` area - deliberately separate from the
@@ -26,6 +27,7 @@ import { NotificationsBell } from "@/components/admin/NotificationsBell";
  * `HeaderAuthArea` already uses), and Logout.
  */
 export function AdminHeader() {
+  const t = useTranslations();
   const { user } = useAuth();
 
   return (
@@ -39,12 +41,12 @@ export function AdminHeader() {
         <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M19 12H5M11 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        Back to Website
+        {t("admin.common.backToWebsite")}
       </Link>
 
       <div className="hidden shrink-0 sm:block">
         <p className="text-sm font-medium text-slate-500">Virexa</p>
-        <p className="text-lg font-bold text-slate-950">Admin</p>
+        <p className="text-lg font-bold text-slate-950">{t("admin.common.admin")}</p>
       </div>
 
       <div className="min-w-0 flex-1" />
@@ -61,7 +63,7 @@ export function AdminHeader() {
             </span>
             <span className="hidden text-sm font-semibold text-slate-950 lg:inline">{getDisplayName(user)}</span>
             <LogoutButton className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50">
-              Logout
+              {t("admin.common.logout")}
             </LogoutButton>
           </>
         )}

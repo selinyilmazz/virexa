@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AdminNavGroups } from "@/components/admin/AdminNavGroups";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 /**
  * Fixed desktop sidebar for the whole `/admin` area. Shares
@@ -11,6 +12,7 @@ import { AdminNavGroups } from "@/components/admin/AdminNavGroups";
  * exactly the same destinations, grouped the same way (requirement 12).
  */
 export function AdminSidebar() {
+  const t = useTranslations();
   const pathname = usePathname();
 
   return (
@@ -21,7 +23,7 @@ export function AdminSidebar() {
         </span>
         <div>
           <p className="text-base font-bold leading-tight text-slate-950">Virexa</p>
-          <p className="text-xs text-slate-500">Admin</p>
+          <p className="text-xs text-slate-500">{t("admin.common.admin")}</p>
         </div>
       </div>
 
@@ -36,7 +38,7 @@ export function AdminSidebar() {
             <path d="m4 11 8-7 8 7" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M6 10v9.5h12V10" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Back to Website
+          {t("admin.common.backToWebsite")}
         </Link>
       </div>
     </aside>

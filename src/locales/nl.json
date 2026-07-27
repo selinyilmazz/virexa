@@ -403,5 +403,35 @@
     "notFoundTitle": "Pagina niet gevonden",
     "notFoundDescription": "De pagina die je zoekt bestaat niet, of is mogelijk verplaatst.",
     "notFoundBack": "Terug naar Home"
+  },
+  "admin": {
+    "common": {
+      "admin": "Beheer",
+      "virexaAdmin": "Virexa Beheer",
+      "backToWebsite": "Terug naar Website",
+      "logout": "Uitloggen"
+    },
+    "nav": {
+      "ariaLabel": "Beheernavigatie",
+      "openAriaLabel": "Beheernavigatie openen",
+      "closeAriaLabel": "Beheernavigatie sluiten",
+      "dashboard": "Dashboard",
+      "articles": "Artikelen",
+      "sources": "Bronnen",
+      "repositories": "Repositories",
+      "developerReleases": "Ontwikkelaarsreleases",
+      "githubCollections": "GitHub-collecties",
+      "developerHubCatalog": "Developer Hub-catalogus",
+      "users": "Gebruikers",
+      "analytics": "Analyse",
+      "auditLog": "Auditlogboek",
+      "runtime": "Runtime",
+      "settings": "Instellingen",
+      "groupContent": "Inhoud",
+      "groupDeveloperHub": "Developer Hub",
+      "groupUsers": "Gebruikers",
+      "groupOperations": "Operaties",
+      "groupSystem": "Systeem"
+    }
   }
 }
