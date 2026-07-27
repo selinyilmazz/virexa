@@ -223,6 +223,49 @@
     "close": "Kapat",
     "readMore": "Devamını Oku"
   },
+  "article": {
+    "notFound": {
+      "metaTitle": "Makale Bulunamadı | Virexa"
+    },
+    "breadcrumb": {
+      "ariaLabel": "Gezinme Yolu"
+    },
+    "meta": {
+      "viewsCount": "{count} görüntülenme"
+    },
+    "content": {
+      "background": "Arka Plan",
+      "whyItMatters": "Neden Önemli",
+      "technicalDetails": "Teknik Detaylar",
+      "keyHighlights": "Öne Çıkanlar",
+      "conclusion": "Sonuç",
+      "keyPoints": "Önemli Noktalar"
+    },
+    "originalSource": {
+      "readOriginal": "Orijinal Makaleyi Oku"
+    },
+    "trendingNow": {
+      "heading": "Şu Anda Trend"
+    },
+    "discussions": {
+      "heading": "En Çok Tartışılanlar",
+      "viewAll": "Tüm tartışmaları görüntüle"
+    },
+    "codeBlock": {
+      "copy": "Kopyala",
+      "copied": "Kopyalandı"
+    },
+    "share": {
+      "button": "Paylaş",
+      "copyLink": "Bağlantıyı Kopyala",
+      "linkCopied": "Bağlantı kopyalandı",
+      "copyFailed": "Bağlantı kopyalanamadı",
+      "onX": "X'te Paylaş",
+      "onFacebook": "Facebook'ta Paylaş",
+      "onLinkedin": "LinkedIn'de Paylaş",
+      "onWhatsapp": "Whatsapp'ta Paylaş"
+    }
+  },
   "auth": {
     "signIn": {
       "metaTitle": "Giriş Yap | Virexa",

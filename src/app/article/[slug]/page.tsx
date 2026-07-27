@@ -17,6 +17,7 @@ import { getArticleDetail } from "@/services/articles/article-read-service";
 import { incrementArticleView, recordArticleRead } from "@/services/articles/article-metrics-service";
 import { createClient } from "@/lib/supabase/server";
 import { isBotUserAgent } from "@/lib/bots/is-bot-request";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 type ArticlePageProps = {
   params: Promise<{ slug: string }>;
@@ -48,7 +49,8 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
   const article = await getArticleDetail(slug);
 
   if (!article || !article.visible) {
-    return { title: "Article Not Found | Virexa" };
+    const { t } = await getServerTranslations();
+    return { title: t("article.notFound.metaTitle") };
   }
 
   const description = article.description || article.title;
@@ -77,6 +79,7 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
   const { slug } = await params;
+  const { t } = await getServerTranslations();
   const article = await getArticleDetail(slug);
 
   if (!article || !article.visible) {
@@ -134,7 +137,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const pulseTopic = resolvePulseTopicForCategory(article.category);
 
   const breadcrumb = [
-    { label: "Home", href: "/" },
+    { label: t("common.home"), href: "/" },
     { label: article.category, href: findCategoryHref(article.category) },
     { label: article.source, href: `/news?sources=${article.sourceId}` },
     { label: article.title, href: null },
@@ -145,7 +148,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       <Header />
       <main className="bg-[#f8fafc] px-5 py-10 sm:px-8">
         <div className="mx-auto max-w-[1440px]">
-          <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+          <nav aria-label={t("article.breadcrumb.ariaLabel")} className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
             {breadcrumb.map((crumb, index) => {
               const isLast = index === breadcrumb.length - 1;
               return (

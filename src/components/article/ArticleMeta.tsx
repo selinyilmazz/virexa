@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 type ArticleMetaProps = {
   sourceLogo: string;
@@ -31,7 +32,9 @@ const eyeIcon = (
  * again) with the source's real logo, so the row reads as one coherent
  * publisher credit instead of a fake person.
  */
-export function ArticleMeta({ sourceLogo, sourceName, publishedDate, readTime, viewCount }: ArticleMetaProps) {
+export async function ArticleMeta({ sourceLogo, sourceName, publishedDate, readTime, viewCount }: ArticleMetaProps) {
+  const { t } = await getServerTranslations();
+
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
       <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1.5">
@@ -53,7 +56,7 @@ export function ArticleMeta({ sourceLogo, sourceName, publishedDate, readTime, v
           </span>
           <span className="inline-flex items-center gap-1 text-sm text-slate-500">
             {eyeIcon}
-            {formatViewCount(viewCount)} views
+            {t("article.meta.viewsCount", { count: formatViewCount(viewCount) })}
           </span>
         </>
       )}

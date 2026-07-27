@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 const copyIcon = (
   <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -17,6 +18,7 @@ const checkIcon = (
 
 /** Article body's code block (structure item 9) - dark theme, rounded corners, copy button, per the redesign spec. */
 export function ArticleCodeBlock({ code, language }: { code: string; language?: string }) {
+  const t = useTranslations();
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -39,7 +41,7 @@ export function ArticleCodeBlock({ code, language }: { code: string; language?: 
           className="flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-semibold text-white transition-colors hover:bg-white/20"
         >
           {copied ? checkIcon : copyIcon}
-          {copied ? "Copied" : "Copy"}
+          {copied ? t("article.codeBlock.copied") : t("article.codeBlock.copy")}
         </button>
       </div>
       <pre className="overflow-x-auto p-4 text-sm leading-relaxed text-slate-100">

@@ -1,4 +1,5 @@
 import { DEVELOPER_PULSE_DATA, type PulseTopicKey, type PulseTrend } from "@/lib/explorer/developer-pulse-data";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 function formatCount(value: number): string {
   return Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(value);
@@ -19,12 +20,13 @@ const TREND_STYLES: Record<PulseTrend, { arrow: string; className: string }> = {
  * discussion panel, per this page's "only two cards, each focused"
  * sidebar spec.
  */
-export function ArticleTrendingNow({ topic }: { topic: PulseTopicKey }) {
+export async function ArticleTrendingNow({ topic }: { topic: PulseTopicKey }) {
+  const { t } = await getServerTranslations();
   const { topics } = DEVELOPER_PULSE_DATA[topic];
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-base font-bold tracking-tight text-slate-950">Trending Now</h2>
+      <h2 className="text-base font-bold tracking-tight text-slate-950">{t("article.trendingNow.heading")}</h2>
 
       <ul className="mt-3 space-y-0.5">
         {topics.map((item) => {

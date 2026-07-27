@@ -5,6 +5,7 @@ import { BookmarkButton } from "@/components/news/BookmarkButton";
 import { AuthToast, type AuthToastVariant } from "@/components/auth/AuthToast";
 import type { BookmarkItem } from "@/lib/bookmarks";
 import { reportArticleMetric } from "@/lib/metrics-client";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 type ShareButtonsProps = {
   bookmarkItem: BookmarkItem;
@@ -67,6 +68,7 @@ const shareIcon = (
 );
 
 export function ShareButtons({ bookmarkItem, title }: ShareButtonsProps) {
+  const t = useTranslations();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; variant: AuthToastVariant } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -106,10 +108,10 @@ export function ShareButtons({ bookmarkItem, title }: ShareButtonsProps) {
   async function handleCopyLink() {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      showToast("Link copied");
+      showToast(t("article.share.linkCopied"));
       void reportArticleMetric(bookmarkItem.slug, "share");
     } catch {
-      showToast("Couldn't copy link", "error");
+      showToast(t("article.share.copyFailed"), "error");
     }
     setIsPopoverOpen(false);
   }
@@ -117,22 +119,22 @@ export function ShareButtons({ bookmarkItem, title }: ShareButtonsProps) {
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
   const shareLinks = [
     {
-      label: "Share on X",
+      label: t("article.share.onX"),
       href: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(title)}`,
       icon: xIcon,
     },
     {
-      label: "Share on Facebook",
+      label: t("article.share.onFacebook"),
       href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
       icon: facebookIcon,
     },
     {
-      label: "Share on LinkedIn",
+      label: t("article.share.onLinkedin"),
       href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
       icon: linkedinIcon,
     },
     {
-      label: "Share on Whatsapp",
+      label: t("article.share.onWhatsapp"),
       href: `https://wa.me/?text=${encodeURIComponent(`${title} ${shareUrl}`)}`,
       icon: whatsappIcon,
     },
@@ -152,7 +154,7 @@ export function ShareButtons({ bookmarkItem, title }: ShareButtonsProps) {
         className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50"
       >
         {shareIcon}
-        Share
+        {t("article.share.button")}
       </button>
 
       {isPopoverOpen && (
@@ -163,7 +165,7 @@ export function ShareButtons({ bookmarkItem, title }: ShareButtonsProps) {
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-base font-medium text-slate-700 transition-colors hover:bg-slate-50"
           >
             {copyLinkIcon}
-            Copy Link
+            {t("article.share.copyLink")}
           </button>
 
           <div className="my-1 h-px bg-slate-100" />

@@ -223,6 +223,49 @@
     "close": "Sluiten",
     "readMore": "Lees meer"
   },
+  "article": {
+    "notFound": {
+      "metaTitle": "Artikel Niet Gevonden | Virexa"
+    },
+    "breadcrumb": {
+      "ariaLabel": "Broodkruimel"
+    },
+    "meta": {
+      "viewsCount": "{count} weergaven"
+    },
+    "content": {
+      "background": "Achtergrond",
+      "whyItMatters": "Waarom dit belangrijk is",
+      "technicalDetails": "Technische Details",
+      "keyHighlights": "Belangrijkste Hoogtepunten",
+      "conclusion": "Conclusie",
+      "keyPoints": "Belangrijkste Punten"
+    },
+    "originalSource": {
+      "readOriginal": "Lees Origineel Artikel"
+    },
+    "trendingNow": {
+      "heading": "Nu Trending"
+    },
+    "discussions": {
+      "heading": "Topdiscussies",
+      "viewAll": "Bekijk alle discussies"
+    },
+    "codeBlock": {
+      "copy": "Kopiëren",
+      "copied": "Gekopieerd"
+    },
+    "share": {
+      "button": "Delen",
+      "copyLink": "Link Kopiëren",
+      "linkCopied": "Link gekopieerd",
+      "copyFailed": "Kon link niet kopiëren",
+      "onX": "Delen op X",
+      "onFacebook": "Delen op Facebook",
+      "onLinkedin": "Delen op LinkedIn",
+      "onWhatsapp": "Delen op Whatsapp"
+    }
+  },
   "auth": {
     "signIn": {
       "metaTitle": "Inloggen | Virexa",

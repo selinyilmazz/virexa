@@ -3,6 +3,8 @@ import type { StoredArticleRewrite } from "@/types/database";
 import type { StructuredSummary } from "@/services/articles/article-read-service";
 import { splitIntoParagraphs } from "@/lib/news";
 import { ArticleCodeBlock } from "@/components/article/ArticleCodeBlock";
+import { getServerTranslations } from "@/i18n/get-server-translations";
+import type { TFunction } from "@/i18n/translate";
 
 type ArticleContentProps = {
   blocks: ArticleContentBlock[];
@@ -56,42 +58,42 @@ function BulletList({ items }: { items: string[] }) {
  * technical details (only when the rewrite actually produced one) -> key
  * highlights -> conclusion.
  */
-function RewrittenArticleView({ article }: { article: StoredArticleRewrite }) {
+function RewrittenArticleView({ article, t }: { article: StoredArticleRewrite; t: TFunction }) {
   return (
     <div className="space-y-8">
       <ParagraphGroup text={article.mainContent} />
 
       {article.background && (
         <div className="space-y-3">
-          <SectionHeading>Background</SectionHeading>
+          <SectionHeading>{t("article.content.background")}</SectionHeading>
           <ParagraphGroup text={article.background} />
         </div>
       )}
 
       {article.whyItMatters && (
         <div className="space-y-3">
-          <SectionHeading>Why It Matters</SectionHeading>
+          <SectionHeading>{t("article.content.whyItMatters")}</SectionHeading>
           <ParagraphGroup text={article.whyItMatters} />
         </div>
       )}
 
       {article.technicalDetails && (
         <div className="space-y-3">
-          <SectionHeading>Technical Details</SectionHeading>
+          <SectionHeading>{t("article.content.technicalDetails")}</SectionHeading>
           <ParagraphGroup text={article.technicalDetails} />
         </div>
       )}
 
       {article.keyHighlights.length > 0 && (
         <div className="space-y-3">
-          <SectionHeading>Key Highlights</SectionHeading>
+          <SectionHeading>{t("article.content.keyHighlights")}</SectionHeading>
           <BulletList items={article.keyHighlights} />
         </div>
       )}
 
       {article.conclusion && (
         <div className="space-y-3">
-          <SectionHeading>Conclusion</SectionHeading>
+          <SectionHeading>{t("article.content.conclusion")}</SectionHeading>
           <p className="text-base leading-[1.9] text-slate-700">{article.conclusion}</p>
         </div>
       )}
@@ -104,26 +106,26 @@ function RewrittenArticleView({ article }: { article: StoredArticleRewrite }) {
  * rewrite. `overview` is skipped for the same reason `intro` is skipped
  * above - it's already shown as the page's deck.
  */
-function StructuredSummaryView({ summary }: { summary: StructuredSummary }) {
+function StructuredSummaryView({ summary, t }: { summary: StructuredSummary; t: TFunction }) {
   return (
     <div className="space-y-8">
       {summary.keyPoints.length > 0 && (
         <div className="space-y-3">
-          <SectionHeading>Key Points</SectionHeading>
+          <SectionHeading>{t("article.content.keyPoints")}</SectionHeading>
           <BulletList items={summary.keyPoints} />
         </div>
       )}
 
       {summary.technicalDetails && (
         <div className="space-y-3">
-          <SectionHeading>Technical Details</SectionHeading>
+          <SectionHeading>{t("article.content.technicalDetails")}</SectionHeading>
           <p className="text-base leading-[1.9] text-slate-700">{summary.technicalDetails}</p>
         </div>
       )}
 
       {summary.whyItMatters && (
         <div className="space-y-3">
-          <SectionHeading>Why It Matters</SectionHeading>
+          <SectionHeading>{t("article.content.whyItMatters")}</SectionHeading>
           <p className="text-base leading-[1.9] text-slate-700">{summary.whyItMatters}</p>
         </div>
       )}
@@ -228,13 +230,15 @@ function RawBlocksView({ blocks }: { blocks: ArticleContentBlock[] }) {
  * has moved to the dedicated `ArticleOriginalSourceCard` (structure item
  * 10) so the source is mentioned exactly once after the metadata row.
  */
-export function ArticleContent({ blocks, structuredSummary, rewrittenArticle }: ArticleContentProps) {
+export async function ArticleContent({ blocks, structuredSummary, rewrittenArticle }: ArticleContentProps) {
+  const { t } = await getServerTranslations();
+
   return (
     <div className="max-w-[720px]">
       {rewrittenArticle ? (
-        <RewrittenArticleView article={rewrittenArticle} />
+        <RewrittenArticleView article={rewrittenArticle} t={t} />
       ) : structuredSummary ? (
-        <StructuredSummaryView summary={structuredSummary} />
+        <StructuredSummaryView summary={structuredSummary} t={t} />
       ) : (
         <RawBlocksView blocks={blocks} />
       )}

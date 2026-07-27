@@ -1,5 +1,6 @@
 import type { PulseTopicKey } from "@/lib/explorer/developer-pulse-data";
 import { TOP_DISCUSSIONS, type DiscussionPlatform } from "@/lib/article/article-sidebar-data";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 const PLATFORM_META: Record<DiscussionPlatform, { label: string; initials: string; color: string }> = {
   hackernews: { label: "Hacker News", initials: "HN", color: "bg-[#FF6600]" },
@@ -36,13 +37,14 @@ function formatCount(value: number): string {
  * "realistic illustrative counts, always a real working URL" convention
  * `DEVELOPER_PULSE_DATA` already established). Capped at 3 per the spec.
  */
-export function ArticleTopDiscussions({ topic }: { topic: PulseTopicKey }) {
+export async function ArticleTopDiscussions({ topic }: { topic: PulseTopicKey }) {
+  const { t } = await getServerTranslations();
   const discussions = TOP_DISCUSSIONS[topic].slice(0, 3);
   const viewAllUrl = discussions[0]?.url ?? "https://news.ycombinator.com/";
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-base font-bold tracking-tight text-slate-950">Top Discussions</h2>
+      <h2 className="text-base font-bold tracking-tight text-slate-950">{t("article.discussions.heading")}</h2>
 
       <ul className="mt-3 space-y-2.5">
         {discussions.map((item) => {
@@ -87,7 +89,7 @@ export function ArticleTopDiscussions({ topic }: { topic: PulseTopicKey }) {
         rel="noopener noreferrer"
         className="group mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#2f67e8] transition-colors duration-150 hover:text-[#2556c9]"
       >
-        View all discussions
+        {t("article.discussions.viewAll")}
         <span aria-hidden="true" className="transition-transform duration-150 group-hover:translate-x-1">
           →
         </span>

@@ -223,6 +223,49 @@
     "readMore": "Read More",
     "home": "Home"
   },
+  "article": {
+    "notFound": {
+      "metaTitle": "Article Not Found | Virexa"
+    },
+    "breadcrumb": {
+      "ariaLabel": "Breadcrumb"
+    },
+    "meta": {
+      "viewsCount": "{count} views"
+    },
+    "content": {
+      "background": "Background",
+      "whyItMatters": "Why It Matters",
+      "technicalDetails": "Technical Details",
+      "keyHighlights": "Key Highlights",
+      "conclusion": "Conclusion",
+      "keyPoints": "Key Points"
+    },
+    "originalSource": {
+      "readOriginal": "Read Original Article"
+    },
+    "trendingNow": {
+      "heading": "Trending Now"
+    },
+    "discussions": {
+      "heading": "Top Discussions",
+      "viewAll": "View all discussions"
+    },
+    "codeBlock": {
+      "copy": "Copy",
+      "copied": "Copied"
+    },
+    "share": {
+      "button": "Share",
+      "copyLink": "Copy Link",
+      "linkCopied": "Link copied",
+      "copyFailed": "Couldn't copy link",
+      "onX": "Share on X",
+      "onFacebook": "Share on Facebook",
+      "onLinkedin": "Share on LinkedIn",
+      "onWhatsapp": "Share on Whatsapp"
+    }
+  },
   "auth": {
     "signIn": {
       "metaTitle": "Sign In | Virexa",

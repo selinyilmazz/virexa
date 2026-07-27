@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 type ArticleOriginalSourceCardProps = {
   sourceLogo: string;
@@ -32,7 +33,8 @@ function hostnameOf(website: string | undefined): string | null {
  * source info elsewhere, per the redesign's "no duplicated source card"
  * rule).
  */
-export function ArticleOriginalSourceCard({ sourceLogo, sourceName, sourceWebsite, sourceUrl }: ArticleOriginalSourceCardProps) {
+export async function ArticleOriginalSourceCard({ sourceLogo, sourceName, sourceWebsite, sourceUrl }: ArticleOriginalSourceCardProps) {
+  const { t } = await getServerTranslations();
   const hostname = hostnameOf(sourceWebsite);
 
   return (
@@ -53,7 +55,7 @@ export function ArticleOriginalSourceCard({ sourceLogo, sourceName, sourceWebsit
         rel="noopener noreferrer"
         className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
       >
-        Read Original Article
+        {t("article.originalSource.readOriginal")}
         {externalIcon}
       </a>
     </div>
