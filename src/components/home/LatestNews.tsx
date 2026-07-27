@@ -2,6 +2,7 @@ import Link from "next/link";
 import { NewsCard } from "@/components/news/NewsCard";
 import { getServerTranslations } from "@/i18n/get-server-translations";
 import { getFeaturedArticles, getLatestArticles } from "@/services/articles/article-read-service";
+import { getServerPreferredCategories } from "@/lib/preferred-categories.server";
 
 /**
  * Homepage refinement pass: back to a 2x2 grid of large editorial cards
@@ -22,12 +23,20 @@ import { getFeaturedArticles, getLatestArticles } from "@/services/articles/arti
  * dedicated `/news` News Explorer page instead of `/categories` - a real
  * separate page (per the explicit requirement that this button navigate
  * away, not expand/load-more in place on the homepage).
+ *
+ * (Settings > General > Content Preferences fix) Passes the signed-in
+ * visitor's real `preferred_categories` through to `getLatestArticles`,
+ * which prioritizes matching-category articles to the front of this
+ * section - this is what makes that saved preference actually do
+ * something, rather than being stored and never read anywhere. `[]` for
+ * an anonymous visitor (or a Supabase hiccup) is a no-op for
+ * `getLatestArticles` - identical output to before this change.
  */
 export async function LatestNews() {
   const { t } = await getServerTranslations();
-  const featured = await getFeaturedArticles(4);
+  const [featured, preferredCategories] = await Promise.all([getFeaturedArticles(4), getServerPreferredCategories()]);
   const excludeSlug = featured[0]?.slug;
-  const latestNewsItems = await getLatestArticles(4, excludeSlug);
+  const latestNewsItems = await getLatestArticles(4, excludeSlug, preferredCategories);
 
   return (
     <section aria-labelledby="latest-news-title" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">

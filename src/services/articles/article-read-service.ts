@@ -144,12 +144,39 @@ function emptyPage(page: number, pageSize: number): ArticlesPage {
  * extra row specifically to absorb that exclusion without silently
  * returning fewer than `limit` items on the common case where the
  * excluded article really was in the newest page.
+ *
+ * `preferredCategories` (Settings > General > Content Preferences -
+ * "the Home page feed should prioritize articles matching the user's
+ * preferred topics", see `src/lib/preferred-categories.server.ts`) -
+ * when given a non-empty list, matching-category articles are moved to
+ * the front of the result, newest-first within each group. This is a
+ * real PRIORITIZATION, not a filter: a reader whose preferred topics
+ * haven't published anything new recently still sees a full, real
+ * "Latest News" section, just with their topics surfaced first when
+ * there's a real match. Pulls a wider recency-ordered candidate pool
+ * (`Math.max(limit * 5, 30)` - same sizing convention `getBreakingNews`
+ * already uses below) so there's enough real, already-fetched data to
+ * reorder from, rather than a second query.
  */
-export async function getLatestArticles(limit = 8, excludeSlug?: string): Promise<CategoryNewsItem[]> {
+export async function getLatestArticles(limit = 8, excludeSlug?: string, preferredCategories?: string[]): Promise<CategoryNewsItem[]> {
   try {
     const { articles } = await getRepositories();
-    const result = await articles.search({ page: 1, pageSize: excludeSlug ? limit + 1 : limit });
-    const items = excludeSlug ? result.items.filter((row) => row.slug !== excludeSlug) : result.items;
+    const hasPreferences = Boolean(preferredCategories && preferredCategories.length > 0);
+    const poolSize = hasPreferences ? Math.max(limit * 5, 30) : excludeSlug ? limit + 1 : limit;
+
+    const result = await articles.search({ page: 1, pageSize: poolSize });
+    let items = excludeSlug ? result.items.filter((row) => row.slug !== excludeSlug) : result.items;
+
+    if (hasPreferences) {
+      const preferredSet = new Set(preferredCategories);
+      // `Array.prototype.filter` preserves relative order, so both
+      // groups stay newest-first internally - this only reorders
+      // matching-vs-not, it never re-sorts by anything else.
+      const matching = items.filter((row) => preferredSet.has(row.category));
+      const rest = items.filter((row) => !preferredSet.has(row.category));
+      items = [...matching, ...rest];
+    }
+
     return items.slice(0, limit).map(toCategoryNewsItem);
   } catch (error) {
     console.error("[article-read-service] getLatestArticles failed:", error);

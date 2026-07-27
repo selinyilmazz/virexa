@@ -9,9 +9,10 @@
  */
 export type UserSettings = {
   language: string;
-  /** Not a `user_settings` column - the Settings page's General/Account sections both read and write this via `profiles.country` (`lib/profile.ts`) so there is exactly one stored value, not two that could drift. */
+  /** Real `user_settings.timezone` column - see `settings-repository.ts`. */
   timezone: string;
   summaryLength: "short" | "medium" | "long";
+  /** Settings > General > "Content Preferences" chip selection. Read by `getLatestArticles` (via `src/lib/preferred-categories.server.ts`) to prioritize matching articles on the Home page's "Top Stories" section. */
   preferredCategories: string[];
   /** Saved preference only - Virexa has no dark theme implemented app-wide yet (see `HeaderThemeToggle.tsx`). */
   theme: "light" | "dark" | "system";
