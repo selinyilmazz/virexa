@@ -7,6 +7,7 @@ import { AdminSourceActions } from "@/components/admin/AdminSourceActions";
 import { AdminSourceRowActions } from "@/components/admin/AdminSourceRowActions";
 import { AdminActionButton } from "@/components/admin/AdminActionButton";
 import type { AdminSourceListItem } from "@/services/admin/admin-source-service";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 type AdminSourcesTableProps = {
   items: AdminSourceListItem[];
@@ -22,6 +23,7 @@ type AdminSourcesTableProps = {
  * Enable-Disable/Manual Sync" set from the current Admin Panel spec.
  */
 export function AdminSourcesTable({ items }: AdminSourcesTableProps) {
+  const t = useTranslations();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [trustInput, setTrustInput] = useState("50");
 
@@ -50,34 +52,34 @@ export function AdminSourcesTable({ items }: AdminSourcesTableProps) {
           type="checkbox"
           checked={selectedIds.has(row.id)}
           onChange={() => toggleOne(row.id)}
-          aria-label={`Select ${row.name}`}
+          aria-label={t("admin.sources.selectRow", { name: row.name })}
           className="size-4 rounded accent-[#2f67e8]"
         />
       ),
     },
-    { key: "name", header: "Name", className: "font-medium text-slate-950" },
-    { key: "domain", header: "Domain", className: "text-slate-500" },
-    { key: "country", header: "Country", render: (row) => row.country || "—" },
+    { key: "name", header: t("admin.sources.columnName"), className: "font-medium text-slate-950" },
+    { key: "domain", header: t("admin.sources.columnDomain"), className: "text-slate-500" },
+    { key: "country", header: t("admin.table.country"), render: (row) => row.country || "—" },
     {
       key: "active",
-      header: "Active",
-      render: (row) => <StatusBadge status={row.active ? "healthy" : "offline"} label={row.active ? "Active" : "Inactive"} />,
+      header: t("admin.sources.columnActive"),
+      render: (row) => <StatusBadge status={row.active ? "healthy" : "offline"} label={row.active ? t("admin.sources.active") : t("admin.sources.inactive")} />,
     },
     {
       key: "official",
-      header: "Official",
-      render: (row) => <StatusBadge status={row.official ? "healthy" : "unknown"} label={row.official ? "Official" : "Unofficial"} />,
+      header: t("admin.sources.columnOfficial"),
+      render: (row) => <StatusBadge status={row.official ? "healthy" : "unknown"} label={row.official ? t("admin.sources.official") : t("admin.sources.unofficial")} />,
     },
-    { key: "trust_score", header: "Trust Score", render: (row) => `${row.trust_score}/100` },
-    { key: "totalArticles", header: "Total Articles", render: (row) => row.totalArticles.toLocaleString() },
+    { key: "trust_score", header: t("admin.sources.columnTrustScore"), render: (row) => `${row.trust_score}/100` },
+    { key: "totalArticles", header: t("admin.sources.columnTotalArticles"), render: (row) => row.totalArticles.toLocaleString() },
     {
       key: "quickActions",
-      header: "Trust Score",
+      header: t("admin.sources.columnTrustScore"),
       render: (row) => <AdminSourceActions sourceId={row.id} trustScore={row.trust_score} />,
     },
     {
       key: "actions",
-      header: "Actions",
+      header: t("admin.table.actions"),
       render: (row) => <AdminSourceRowActions id={row.id} name={row.name} active={row.active} totalArticles={row.totalArticles} />,
     },
   ];
@@ -93,30 +95,30 @@ export function AdminSourcesTable({ items }: AdminSourcesTableProps) {
             disabled={items.length === 0}
             className="size-4 rounded accent-[#2f67e8]"
           />
-          Select all
+          {t("admin.common.selectAll")}
         </label>
-        <span className="text-sm text-slate-500">{selectedIds.size} selected</span>
+        <span className="text-sm text-slate-500">{t("admin.common.nSelected", { count: selectedIds.size })}</span>
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <AdminActionButton
-            label="Activate"
+            label={t("admin.sources.activate")}
             endpoint="/api/admin/sources/bulk"
             buildBody={() => ({ ids: selectedArray, action: "activate" })}
-            confirmTitle="Activate selected sources?"
-            confirmDescription={`${selectedArray.length} source(s) will be marked Active.`}
-            confirmLabel="Activate"
-            successMessage={(json) => `${json.updated ?? selectedArray.length} source(s) activated.`}
+            confirmTitle={t("admin.sources.activateConfirmTitle")}
+            confirmDescription={t("admin.sources.activateConfirmDescription", { count: selectedArray.length })}
+            confirmLabel={t("admin.sources.activate")}
+            successMessage={(json) => t("admin.sources.activatedSuccess", { count: json.updated ?? selectedArray.length })}
             disabled={selectedIds.size === 0}
             className="!px-3 !py-1.5 text-xs"
           />
           <AdminActionButton
-            label="Deactivate"
+            label={t("admin.sources.deactivate")}
             endpoint="/api/admin/sources/bulk"
             buildBody={() => ({ ids: selectedArray, action: "deactivate" })}
-            confirmTitle="Deactivate selected sources?"
-            confirmDescription={`${selectedArray.length} source(s) will be marked Inactive.`}
-            confirmLabel="Deactivate"
-            successMessage={(json) => `${json.updated ?? selectedArray.length} source(s) deactivated.`}
+            confirmTitle={t("admin.sources.deactivateConfirmTitle")}
+            confirmDescription={t("admin.sources.deactivateConfirmDescription", { count: selectedArray.length })}
+            confirmLabel={t("admin.sources.deactivate")}
+            successMessage={(json) => t("admin.sources.deactivatedSuccess", { count: json.updated ?? selectedArray.length })}
             variant="warning"
             disabled={selectedIds.size === 0}
             className="!px-3 !py-1.5 text-xs"
@@ -132,13 +134,13 @@ export function AdminSourcesTable({ items }: AdminSourcesTableProps) {
               className="w-16 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-950 focus:border-[#2f67e8] focus:outline-none disabled:opacity-50"
             />
             <AdminActionButton
-              label="Set Trust Score"
+              label={t("admin.sources.setTrustScore")}
               endpoint="/api/admin/sources/bulk"
               buildBody={() => ({ ids: selectedArray, action: "set-trust-score", trustScore: Number(trustInput) })}
-              confirmTitle="Update trust score for selected sources?"
-              confirmDescription={`${selectedArray.length} source(s) will be set to trust score ${trustInput}.`}
-              confirmLabel="Update"
-              successMessage={(json) => `${json.updated ?? selectedArray.length} source(s) updated.`}
+              confirmTitle={t("admin.sources.updateTrustConfirmTitle")}
+              confirmDescription={t("admin.sources.updateTrustConfirmDescription", { count: selectedArray.length, score: trustInput })}
+              confirmLabel={t("admin.common.update")}
+              successMessage={(json) => t("admin.sources.updatedSuccess", { count: json.updated ?? selectedArray.length })}
               disabled={selectedIds.size === 0 || trustInput.trim() === ""}
               className="!px-3 !py-1.5 text-xs"
             />
@@ -146,7 +148,13 @@ export function AdminSourcesTable({ items }: AdminSourcesTableProps) {
         </div>
       </div>
 
-      <AdminTable columns={columns} rows={items} getRowKey={(row) => row.id} emptyMessage="No sources found." />
+      <AdminTable
+        columns={columns}
+        rows={items}
+        getRowKey={(row) => row.id}
+        emptyMessage={t("admin.sources.emptyMessage")}
+        errorHeading={t("admin.common.loadError")}
+      />
     </div>
   );
 }

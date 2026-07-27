@@ -8,6 +8,8 @@ import { AdminUserFilters } from "@/components/admin/AdminUserFilters";
 import { AdminUserActions } from "@/components/admin/AdminUserActions";
 import { getAdminUserOrNull } from "@/lib/admin/authorization";
 import { getAdminUsersPage, type AdminUserFilters as UserFilters, type AdminUserListItem } from "@/services/admin/admin-user-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
+import type { TFunction } from "@/i18n/translate";
 
 export const metadata: Metadata = {
   title: "Users | Virexa Admin",
@@ -39,8 +41,8 @@ function toBooleanParam(value: string | string[] | undefined): boolean | undefin
   return undefined;
 }
 
-function formatDate(value: string | null): string {
-  return value ? new Date(value).toLocaleDateString() : "Never";
+function formatDate(value: string | null, t: TFunction): string {
+  return value ? new Date(value).toLocaleDateString() : t("admin.repositories.never");
 }
 
 /**
@@ -53,6 +55,7 @@ function formatDate(value: string | null): string {
  * list), both via `/api/admin/users/[id]`.
  */
 export default async function AdminUsersPage({ searchParams }: AdminUsersPageProps) {
+  const { t } = await getServerTranslations();
   const params = await searchParams;
   const currentAdmin = await getAdminUserOrNull();
 
@@ -68,30 +71,30 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
   const usersPage = await getAdminUsersPage(filters, page, pageSize);
 
   const columns: AdminTableColumn<AdminUserListItem>[] = [
-    { key: "displayName", header: "User", className: "font-medium text-slate-950" },
-    { key: "email", header: "Email", className: "text-slate-500" },
+    { key: "displayName", header: t("admin.users.columnUser"), className: "font-medium text-slate-950" },
+    { key: "email", header: t("admin.users.columnEmail"), className: "text-slate-500" },
     {
       key: "role",
-      header: "Role",
-      render: (row) => <StatusBadge status={row.role === "admin" ? "healthy" : "unknown"} label={row.role === "admin" ? "Admin" : "User"} />,
+      header: t("admin.users.columnRole"),
+      render: (row) => <StatusBadge status={row.role === "admin" ? "healthy" : "unknown"} label={row.role === "admin" ? t("admin.common.admin") : t("admin.users.roleUser")} />,
     },
     {
       key: "emailVerified",
-      header: "Email Verified",
-      render: (row) => <StatusBadge status={row.emailVerified ? "healthy" : "warning"} label={row.emailVerified ? "Verified" : "Unverified"} />,
+      header: t("admin.users.columnEmailVerified"),
+      render: (row) => <StatusBadge status={row.emailVerified ? "healthy" : "warning"} label={row.emailVerified ? t("admin.users.verified") : t("admin.users.unverified")} />,
     },
-    { key: "createdAt", header: "Created", render: (row) => formatDate(row.createdAt) },
-    { key: "lastSignInAt", header: "Last Sign-in", render: (row) => formatDate(row.lastSignInAt) },
-    { key: "bookmarkCount", header: "Bookmarks", render: (row) => row.bookmarkCount.toLocaleString() },
-    { key: "articlesReadCount", header: "Articles Read", render: () => "—" },
+    { key: "createdAt", header: t("admin.users.columnCreated"), render: (row) => formatDate(row.createdAt, t) },
+    { key: "lastSignInAt", header: t("admin.users.columnLastSignIn"), render: (row) => formatDate(row.lastSignInAt, t) },
+    { key: "bookmarkCount", header: t("admin.table.bookmarks"), render: (row) => row.bookmarkCount.toLocaleString() },
+    { key: "articlesReadCount", header: t("admin.users.columnArticlesRead"), render: () => "—" },
     {
       key: "status",
-      header: "Status",
-      render: (row) => <StatusBadge status={row.suspended ? "offline" : "healthy"} label={row.suspended ? "Suspended" : "Active"} />,
+      header: t("admin.table.status"),
+      render: (row) => <StatusBadge status={row.suspended ? "offline" : "healthy"} label={row.suspended ? t("admin.users.suspended") : t("admin.sources.active")} />,
     },
     {
       key: "actions",
-      header: "Actions",
+      header: t("admin.table.actions"),
       render: (row) => (
         <AdminUserActions userId={row.id} role={row.role} suspended={row.suspended} isSelf={row.id === currentAdmin?.id} />
       ),
@@ -101,28 +104,34 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-950">Users</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-950">{t("admin.nav.users")}</h1>
         <p className="mt-1 text-sm text-slate-500">
-          {usersPage.total.toLocaleString()} user{usersPage.total === 1 ? "" : "s"}.
-          {usersPage.truncated && " Showing the most recent 1,000 accounts."}
+          {t("admin.users.totalCount", { count: usersPage.total.toLocaleString() })}
+          {usersPage.truncated && ` ${t("admin.users.truncatedNotice")}`}
         </p>
       </div>
 
-      <SectionCard title="Filters">
+      <SectionCard title={t("admin.common.filters")}>
         <AdminUserFilters />
       </SectionCard>
 
-      <SectionCard title="All Users" description='"Articles Read" is not shown ("—") - Virexa does not yet track per-user article reads.'>
+      <SectionCard title={t("admin.users.allUsers")} description={t("admin.users.articlesReadNote")}>
         {usersPage.items.length === 0 ? (
           <EmptyState
             icon="👤"
-            title="No users found"
-            description="No users match the current filters, or Supabase's service role key isn't configured yet."
+            title={t("admin.users.emptyTitle")}
+            description={t("admin.users.emptyDescription")}
           />
         ) : (
           <>
-            <AdminTable columns={columns} rows={usersPage.items} getRowKey={(row) => row.id} emptyMessage="No users found." />
-            <AdminPagination page={usersPage.page} pageSize={pageSize} totalItems={usersPage.total} itemLabel="users" />
+            <AdminTable
+              columns={columns}
+              rows={usersPage.items}
+              getRowKey={(row) => row.id}
+              emptyMessage={t("admin.users.emptyTitle")}
+              errorHeading={t("admin.common.loadError")}
+            />
+            <AdminPagination page={usersPage.page} pageSize={pageSize} totalItems={usersPage.total} itemLabel={t("admin.users.itemLabel")} />
           </>
         )}
       </SectionCard>

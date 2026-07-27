@@ -4,6 +4,8 @@ import { buildHealthGroups } from "@/lib/admin/health-groups";
 import { SectionCard } from "@/components/admin/SectionCard";
 import { StatusBadge, type AdminStatus } from "@/components/admin/StatusBadge";
 import { AdminTable, type AdminTableColumn } from "@/components/admin/AdminTable";
+import { getServerTranslations } from "@/i18n/get-server-translations";
+import type { TFunction } from "@/i18n/translate";
 
 type HealthOverviewSectionProps = {
   /** Compact mode drops the detailed per-check table - used on the Dashboard home preview; the full `/admin/health` page shows both. */
@@ -17,16 +19,18 @@ const CHECK_STATUS_LABEL: Record<HealthCheckResult["status"], AdminStatus> = {
   down: "offline",
 };
 
-const columns: AdminTableColumn<HealthCheckResult>[] = [
-  { key: "id", header: "Check" },
-  {
-    key: "status",
-    header: "Status",
-    render: (row) => <StatusBadge status={CHECK_STATUS_LABEL[row.status]} label={row.status} />,
-  },
-  { key: "message", header: "Message", className: "whitespace-normal text-slate-500" },
-  { key: "durationMs", header: "Duration", render: (row) => `${row.durationMs}ms` },
-];
+function getColumns(t: TFunction): AdminTableColumn<HealthCheckResult>[] {
+  return [
+    { key: "id", header: t("admin.health.columnCheck") },
+    {
+      key: "status",
+      header: t("admin.table.status"),
+      render: (row) => <StatusBadge status={CHECK_STATUS_LABEL[row.status]} label={row.status} />,
+    },
+    { key: "message", header: t("admin.health.columnMessage"), className: "whitespace-normal text-slate-500" },
+    { key: "durationMs", header: t("admin.health.columnDuration"), render: (row) => `${row.durationMs}ms` },
+  ];
+}
 
 /**
  * System status cards - Database / Runtime / News Pipeline / AI
@@ -39,6 +43,7 @@ const columns: AdminTableColumn<HealthCheckResult>[] = [
  * an all-"unknown" state rather than crashing the page it's embedded in.
  */
 export async function HealthOverviewSection({ compact = false }: HealthOverviewSectionProps) {
+  const { t } = await getServerTranslations();
   let checks: HealthCheckResult[] = [];
   let checkedAt: string | null = null;
 
@@ -51,11 +56,12 @@ export async function HealthOverviewSection({ compact = false }: HealthOverviewS
   }
 
   const groups = buildHealthGroups(checks);
+  const columns = getColumns(t);
 
   return (
     <SectionCard
-      title="System Health"
-      description={checkedAt ? `Last checked ${new Date(checkedAt).toLocaleString()}` : "Health checks unavailable."}
+      title={t("admin.health.title")}
+      description={checkedAt ? t("admin.health.lastChecked", { time: new Date(checkedAt).toLocaleString() }) : t("admin.health.unavailable")}
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {groups.map((group) => (
@@ -71,9 +77,15 @@ export async function HealthOverviewSection({ compact = false }: HealthOverviewS
 
       {!compact && (
         <div className="mt-6">
-          <h3 className="text-sm font-semibold text-slate-950">Raw Checks</h3>
+          <h3 className="text-sm font-semibold text-slate-950">{t("admin.health.rawChecks")}</h3>
           <div className="mt-3">
-            <AdminTable columns={columns} rows={checks} getRowKey={(row) => row.id} emptyMessage="No health checks recorded yet." />
+            <AdminTable
+              columns={columns}
+              rows={checks}
+              getRowKey={(row) => row.id}
+              emptyMessage={t("admin.health.emptyMessage")}
+              errorHeading={t("admin.common.loadError")}
+            />
           </div>
         </div>
       )}

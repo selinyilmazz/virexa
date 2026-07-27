@@ -1,5 +1,12 @@
 import type { ReactNode } from "react";
 
+/**
+ * `emptyMessage` and `errorHeading` are required (no built-in English
+ * fallback) on purpose: this component is rendered directly from Server
+ * Component pages (`/admin/articles`, `/admin/users`) as well as
+ * Client Component table wrappers, so it can never call `useTranslations()`
+ * itself - every caller must supply already-translated text.
+ */
 export type AdminTableColumn<T> = {
   key: string;
   header: string;
@@ -11,11 +18,13 @@ type AdminTableProps<T> = {
   columns: AdminTableColumn<T>[];
   rows: T[];
   getRowKey: (row: T) => string;
-  emptyMessage?: string;
+  emptyMessage: string;
   /** Renders skeleton rows instead of `rows` - for the rare client-fetched table; Server-Component-first tables (the vast majority) never need this since the data is already there on first paint. */
   loading?: boolean;
   /** Real error message from a failed fetch - shown instead of the table body. Distinct from `emptyMessage` (no error, genuinely zero rows). */
   error?: string | null;
+  /** Heading shown above `error` - already-translated text from the caller. */
+  errorHeading: string;
   /** Optional per-row click handler (requirement 11: "Row click") - the row gets a pointer cursor and hover affordance when set. Cells that need their own click target (buttons/links in an Actions column) should call `event.stopPropagation()`. */
   onRowClick?: (row: T) => void;
 };
@@ -28,11 +37,11 @@ type AdminTableProps<T> = {
  * from another"). Sticky header, loading skeleton, and error state are
  * opt-in via props; empty/hover/responsive-scroll behavior is always on.
  */
-export function AdminTable<T>({ columns, rows, getRowKey, emptyMessage = "No data yet.", loading = false, error = null, onRowClick }: AdminTableProps<T>) {
+export function AdminTable<T>({ columns, rows, getRowKey, emptyMessage, loading = false, error = null, errorHeading, onRowClick }: AdminTableProps<T>) {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-red-200 bg-red-50/60 px-4 py-8 text-center">
-        <p className="text-sm font-medium text-red-700">Couldn&apos;t load this data.</p>
+        <p className="text-sm font-medium text-red-700">{errorHeading}</p>
         <p className="text-xs text-red-600">{error}</p>
       </div>
     );

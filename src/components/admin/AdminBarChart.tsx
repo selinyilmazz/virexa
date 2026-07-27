@@ -8,7 +8,8 @@ type AdminBarChartProps = {
   items: AdminBarChartItem[];
   color?: string;
   formatValue?: (value: number) => string;
-  emptyMessage?: string;
+  /** Already-translated text from the caller - this component has no `useTranslations()` of its own default. */
+  emptyMessage: string;
 };
 
 /**
@@ -21,7 +22,7 @@ type AdminBarChartProps = {
  * active sources, most-used categories) and every AI distribution
  * (provider/model/sentiment/bias), same component throughout.
  */
-export function AdminBarChart({ items, color = "#2f67e8", formatValue, emptyMessage = "No data yet." }: AdminBarChartProps) {
+export function AdminBarChart({ items, color = "#2f67e8", formatValue, emptyMessage }: AdminBarChartProps) {
   const format = formatValue ?? ((value: number) => value.toLocaleString());
 
   if (items.length === 0) {

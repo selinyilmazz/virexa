@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 type AdminRowActionsMenuProps = {
   /** The always-visible primary action (requirement 12: "Show only the primary action (Edit)") - typically a `<Link>` or small button, rendered as-is next to the menu trigger. */
@@ -20,7 +21,8 @@ type AdminRowActionsMenuProps = {
  * based toggles, syncs, deletes, etc. via the `AdminMenuActionButton`
  * wrapper), so no table has to reimplement its write logic to adopt this.
  */
-export function AdminRowActionsMenu({ primary, children, label = "More actions" }: AdminRowActionsMenuProps) {
+export function AdminRowActionsMenu({ primary, children, label }: AdminRowActionsMenuProps) {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -53,7 +55,7 @@ export function AdminRowActionsMenu({ primary, children, label = "More actions" 
           type="button"
           aria-haspopup="menu"
           aria-expanded={open}
-          aria-label={label}
+          aria-label={label ?? t("admin.common.moreActions")}
           onClick={() => setOpen((value) => !value)}
           className={`flex size-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f67e8] ${
             open ? "bg-slate-100 text-slate-700" : ""

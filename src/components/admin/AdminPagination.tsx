@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 export type AdminPaginationProps = {
   page: number;
@@ -59,10 +60,11 @@ export function AdminPagination({
   page,
   pageSize,
   totalItems,
-  itemLabel = "results",
+  itemLabel,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   excludeParams = DEFAULT_EXCLUDED_PARAMS,
 }: AdminPaginationProps) {
+  const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -110,19 +112,21 @@ export function AdminPagination({
 
   return (
     <nav
-      aria-label="Pagination"
+      aria-label={t("admin.pagination.ariaLabel")}
       className="mt-6 flex flex-col items-center justify-between gap-4 border-t border-slate-100 pt-5 sm:flex-row"
     >
       <div className="flex items-center gap-3 text-sm text-slate-500">
         <span>
-          Showing <span className="font-medium text-slate-700">{rangeStart.toLocaleString()}</span>
+          {t("admin.pagination.showing")}{" "}
+          <span className="font-medium text-slate-700">{rangeStart.toLocaleString()}</span>
           {"–"}
-          <span className="font-medium text-slate-700">{rangeEnd.toLocaleString()}</span> of{" "}
-          <span className="font-medium text-slate-700">{totalItems.toLocaleString()}</span> {itemLabel}
+          <span className="font-medium text-slate-700">{rangeEnd.toLocaleString()}</span> {t("admin.pagination.of")}{" "}
+          <span className="font-medium text-slate-700">{totalItems.toLocaleString()}</span>{" "}
+          {itemLabel ?? t("admin.pagination.defaultItemLabel")}
         </span>
 
         <label className="flex items-center gap-1.5">
-          <span className="sr-only">Rows per page</span>
+          <span className="sr-only">{t("admin.pagination.rowsPerPage")}</span>
           <select
             value={pageSize}
             onChange={(event) => router.push(buildHref(1, Number(event.target.value)))}
@@ -130,7 +134,7 @@ export function AdminPagination({
           >
             {pageSizeOptions.map((size) => (
               <option key={size} value={size}>
-                {size} / page
+                {t("admin.pagination.perPage", { size })}
               </option>
             ))}
           </select>
@@ -138,12 +142,12 @@ export function AdminPagination({
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-1.5">
-        <NavLink targetPage={1} disabled={isFirst} label="First page">
+        <NavLink targetPage={1} disabled={isFirst} label={t("admin.pagination.firstPage")}>
           <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="m17 6-6 6 6 6M8 6v12" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </NavLink>
-        <NavLink targetPage={currentPage - 1} disabled={isFirst} label="Previous page">
+        <NavLink targetPage={currentPage - 1} disabled={isFirst} label={t("admin.pagination.previousPage")}>
           <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="m15 6-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -170,12 +174,12 @@ export function AdminPagination({
           )
         )}
 
-        <NavLink targetPage={currentPage + 1} disabled={isLast} label="Next page">
+        <NavLink targetPage={currentPage + 1} disabled={isLast} label={t("admin.pagination.nextPage")}>
           <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="m9 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </NavLink>
-        <NavLink targetPage={totalPages} disabled={isLast} label="Last page">
+        <NavLink targetPage={totalPages} disabled={isLast} label={t("admin.pagination.lastPage")}>
           <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="m7 6 6 6-6 6M16 6v12" strokeLinecap="round" strokeLinejoin="round" />
           </svg>

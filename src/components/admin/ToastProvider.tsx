@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 type ToastType = "success" | "error" | "info";
 
@@ -41,6 +42,7 @@ const AUTO_DISMISS_MS = 4500;
  * reload.
  */
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const t = useTranslations();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const timers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
@@ -78,7 +80,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <button
               type="button"
               onClick={() => dismiss(toast.id)}
-              aria-label="Dismiss notification"
+              aria-label={t("admin.common.dismissNotification")}
               className="shrink-0 text-current opacity-60 hover:opacity-100"
             >
               <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2">
