@@ -1,7 +1,28 @@
 {
   "home": {
     "hero": {
-      "srHeading": "Uitgelicht verhaal"
+      "srHeading": "Uitgelicht verhaal",
+      "featuredStoryLabel": "Uitgelicht verhaal",
+      "readFullStory": "Lees het volledige verhaal",
+      "featuredToday": "Vandaag uitgelicht",
+      "showSlide": "Toon uitgelicht verhaal {number}"
+    },
+    "breakingNews": {
+      "heading": "Breaking News",
+      "justIn": "Zojuist binnen"
+    },
+    "companyTicker": {
+      "eyebrow": "Markten",
+      "heading": "Trending bedrijven"
+    },
+    "resources": {
+      "heading": "Ontwikkelaarsbronnen",
+      "viewAll": "Alles bekijken"
+    },
+    "trending": {
+      "eyebrow": "Deze week",
+      "heading": "Trending onderwerpen",
+      "new": "Nieuw"
     },
     "news": {
       "eyebrow": "Nieuwsredactie",

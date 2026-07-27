@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { NewsImage } from "@/components/news/NewsImage";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 export type FeaturedSlide = {
   slug: string;
@@ -50,6 +51,7 @@ const AUTO_ADVANCE_MS = 7000;
  * that case - see `HeroSection.tsx`).
  */
 export function FeaturedStoryCarousel({ slides }: { slides: FeaturedSlide[] }) {
+  const t = useTranslations();
   const [index, setIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -102,7 +104,7 @@ export function FeaturedStoryCarousel({ slides }: { slides: FeaturedSlide[] }) {
       <div className="relative flex min-h-[520px] flex-col justify-end gap-5 p-6 sm:p-10 lg:min-h-[600px] lg:max-w-2xl lg:justify-center lg:p-14">
         <div className="flex flex-wrap items-center gap-3">
           <span className="w-fit text-xs font-semibold uppercase tracking-[0.16em] text-[#5b8def]">
-            Featured Story
+            {t("home.hero.featuredStoryLabel")}
           </span>
           <Link
             href={slide.categoryHref}
@@ -143,14 +145,14 @@ export function FeaturedStoryCarousel({ slides }: { slides: FeaturedSlide[] }) {
           href={slide.articleHref}
           className="mt-2 inline-flex w-fit items-center gap-2 rounded-2xl bg-white px-6 py-3 text-base font-semibold text-slate-950 transition-colors hover:bg-slate-100"
         >
-          Read Full Story
+          {t("home.hero.readFullStory")}
           <span aria-hidden="true">→</span>
         </Link>
       </div>
 
       {/* Small "Featured Today" info tag, bottom-left corner. */}
       <span className="absolute bottom-5 left-6 z-10 hidden items-center gap-1.5 rounded-full bg-black/30 px-3 py-1 text-[11px] font-medium text-white/80 backdrop-blur-sm sm:flex">
-        🔥 Featured Today
+        🔥 {t("home.hero.featuredToday")}
       </span>
 
       {slides.length > 1 && (
@@ -160,7 +162,7 @@ export function FeaturedStoryCarousel({ slides }: { slides: FeaturedSlide[] }) {
               key={item.slug}
               type="button"
               onClick={() => setIndex(dotIndex)}
-              aria-label={`Show featured story ${dotIndex + 1}`}
+              aria-label={t("home.hero.showSlide", { number: dotIndex + 1 })}
               aria-current={dotIndex === index}
               className={`h-1.5 rounded-full transition-all ${
                 dotIndex === index ? "w-6 bg-white" : "w-1.5 bg-white/40 hover:bg-white/60"

@@ -1,7 +1,28 @@
 {
   "home": {
     "hero": {
-      "srHeading": "Featured Story"
+      "srHeading": "Featured Story",
+      "featuredStoryLabel": "Featured Story",
+      "readFullStory": "Read Full Story",
+      "featuredToday": "Featured Today",
+      "showSlide": "Show featured story {number}"
+    },
+    "breakingNews": {
+      "heading": "Breaking News",
+      "justIn": "Just In"
+    },
+    "companyTicker": {
+      "eyebrow": "Markets",
+      "heading": "Trending Companies"
+    },
+    "resources": {
+      "heading": "Developer Resources",
+      "viewAll": "View all"
+    },
+    "trending": {
+      "eyebrow": "This Week",
+      "heading": "Trending Topics",
+      "new": "New"
     },
     "news": {
       "eyebrow": "Newsroom",

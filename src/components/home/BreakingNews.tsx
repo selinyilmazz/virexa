@@ -2,6 +2,7 @@ import Link from "next/link";
 import { NewsImage } from "@/components/news/NewsImage";
 import { resolveFallbackImageForCategory } from "@/lib/news";
 import { getBreakingNews, getFeaturedArticle } from "@/services/articles/article-read-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 /**
  * "Breaking News" - a slim, urgent-feeling horizontal strip placed right
@@ -13,6 +14,7 @@ import { getBreakingNews, getFeaturedArticle } from "@/services/articles/article
  * there's nothing to show, rather than an empty section shell.
  */
 export async function BreakingNews() {
+  const { t } = await getServerTranslations();
   const featured = await getFeaturedArticle();
   const items = await getBreakingNews(4, featured ? [featured.slug] : []);
 
@@ -26,7 +28,7 @@ export async function BreakingNews() {
           <span className="relative inline-flex size-2.5 rounded-full bg-red-500" />
         </span>
         <h2 id="breaking-news-title" className="text-sm font-bold uppercase tracking-[0.14em] text-red-600">
-          Breaking News
+          {t("home.breakingNews.heading")}
         </h2>
       </div>
 
@@ -50,7 +52,7 @@ export async function BreakingNews() {
             <span className="min-w-0 flex-1">
               {item.isFresh && (
                 <span className="mb-1 inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-600">
-                  Just In
+                  {t("home.breakingNews.justIn")}
                 </span>
               )}
               <span className="line-clamp-2 block text-sm font-semibold leading-snug text-slate-950 group-hover:text-slate-700">

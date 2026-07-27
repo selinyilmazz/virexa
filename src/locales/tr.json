@@ -1,7 +1,28 @@
 {
   "home": {
     "hero": {
-      "srHeading": "Öne Çıkan Haber"
+      "srHeading": "Öne Çıkan Haber",
+      "featuredStoryLabel": "Öne Çıkan Haber",
+      "readFullStory": "Haberin Tamamını Oku",
+      "featuredToday": "Bugün Öne Çıkan",
+      "showSlide": "{number}. öne çıkan haberi göster"
+    },
+    "breakingNews": {
+      "heading": "Son Dakika",
+      "justIn": "Az Önce"
+    },
+    "companyTicker": {
+      "eyebrow": "Piyasalar",
+      "heading": "Trend Şirketler"
+    },
+    "resources": {
+      "heading": "Geliştirici Kaynakları",
+      "viewAll": "Tümünü gör"
+    },
+    "trending": {
+      "eyebrow": "Bu Hafta",
+      "heading": "Trend Konular",
+      "new": "Yeni"
     },
     "news": {
       "eyebrow": "Haber Merkezi",

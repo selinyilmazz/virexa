@@ -5,11 +5,13 @@ import type { TrendingTopic } from "@/data/trendingTopics";
 import { Sparkline, TREND_COLOR } from "@/components/home/Sparkline";
 import { getTrendingCategories } from "@/services/articles/article-read-service";
 import type { TrendingCategoryStat } from "@/services/articles/article-read-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
+import type { TFunction } from "@/i18n/translate";
 
 /** Small colored pill showing this-week-vs-last-week direction - "New" for a category with zero articles last week, an up/down arrow + percent otherwise, "—" for genuinely flat. Color matches the sparkline bars via the shared `TREND_COLOR` scale. */
-function TrendBadge({ direction, percent }: { direction: TrendingTopic["trendDirection"]; percent: number }) {
+function TrendBadge({ direction, percent, t }: { direction: TrendingTopic["trendDirection"]; percent: number; t: TFunction }) {
   const color = TREND_COLOR[direction];
-  const label = direction === "new" ? "New" : direction === "flat" ? "—" : `${direction === "up" ? "↑" : "↓"} ${percent}%`;
+  const label = direction === "new" ? t("home.trending.new") : direction === "flat" ? "—" : `${direction === "up" ? "↑" : "↓"} ${percent}%`;
 
   return (
     <span
@@ -31,7 +33,7 @@ function TrendBadge({ direction, percent }: { direction: TrendingTopic["trendDir
  * sparkline share the next, so the whole card is about two-thirds the
  * height of the earlier standalone-grid version.
  */
-function TrendingTopicCard({ topic }: { topic: TrendingCategoryStat | TrendingTopic }) {
+function TrendingTopicCard({ topic, t }: { topic: TrendingCategoryStat | TrendingTopic; t: TFunction }) {
   const categoryHref = findCategoryHref(topic.name);
 
   return (
@@ -43,7 +45,7 @@ function TrendingTopicCard({ topic }: { topic: TrendingCategoryStat | TrendingTo
         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-950 group-hover:text-slate-700">
           {topic.name}
         </span>
-        <TrendBadge direction={topic.trendDirection} percent={topic.trendPercent} />
+        <TrendBadge direction={topic.trendDirection} percent={topic.trendPercent} t={t} />
       </Link>
 
       <div className="mt-1.5 flex items-center justify-between gap-2 pl-10">
@@ -67,20 +69,21 @@ function TrendingTopicCard({ topic }: { topic: TrendingCategoryStat | TrendingTo
  * the database has no articles yet.
  */
 export async function TrendingTopics() {
+  const { t } = await getServerTranslations();
   const realTopics = await getTrendingCategories(6);
   const topics: (TrendingCategoryStat | TrendingTopic)[] = realTopics.length > 0 ? realTopics : trendingTopics;
 
   return (
     <section aria-labelledby="trending-topics-title">
       <div className="px-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">This Week</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{t("home.trending.eyebrow")}</p>
         <h2 id="trending-topics-title" className="mt-1 text-xl font-bold tracking-tight text-slate-950">
-          🔥 Trending Topics
+          🔥 {t("home.trending.heading")}
         </h2>
       </div>
       <ol className="mt-4 space-y-2">
         {topics.map((topic) => (
-          <TrendingTopicCard key={topic.rank} topic={topic} />
+          <TrendingTopicCard key={topic.rank} topic={topic} t={t} />
         ))}
       </ol>
     </section>

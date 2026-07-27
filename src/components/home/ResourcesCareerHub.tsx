@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getResourcesNews, type ResourceBadge } from "@/services/articles/article-read-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 /** Badge colors - FREE=green (a benefit), UPDATED=blue (informational), NEW=amber (draws the eye) - all real-article-derived (see `classifyResourceBadge`). */
 const BADGE_CLASSES: Record<ResourceBadge, string> = {
@@ -24,6 +25,7 @@ const BADGE_CLASSES: Record<ResourceBadge, string> = {
  * 5 to 6 rows.
  */
 export async function ResourcesCareerHub() {
+  const { t } = await getServerTranslations();
   const items = await getResourcesNews(6);
   if (items.length === 0) return null;
 
@@ -35,10 +37,10 @@ export async function ResourcesCareerHub() {
     >
       <div className="flex items-center justify-between gap-2 px-1">
         <h2 id="resources-title" className="text-lg font-bold tracking-tight text-slate-950">
-          Developer Resources
+          {t("home.resources.heading")}
         </h2>
         <Link href="/developer-hub" className="shrink-0 text-sm font-medium text-[#2f67e8] transition-colors hover:text-[#2556c9]">
-          View all
+          {t("home.resources.viewAll")}
         </Link>
       </div>
 
