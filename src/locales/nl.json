@@ -305,7 +305,8 @@
       "timezoneLabel": "Tijdzone",
       "contentTitle": "Inhoud",
       "contentDescription": "Kies de onderwerpen waar je meer van wilt zien op Virexa.",
-      "countryErrorToast": "Je land kon niet worden opgeslagen. Probeer het opnieuw."
+      "countryErrorToast": "Je land kon niet worden opgeslagen. Probeer het opnieuw.",
+      "countryErrorSchemaToast": "Er is niets opgeslagen - de database mist een vereiste kolom. Meld dit bij een beheerder."
     },
     "reading": {
       "openLinksLabel": "Bronlinks openen in nieuw tabblad",
@@ -391,7 +392,8 @@
     },
     "saveButton": "Wijzigingen opslaan",
     "savedToast": "Instellingen opgeslagen!",
-    "saveErrorToast": "Je instellingen konden niet worden opgeslagen. Probeer het opnieuw."
+    "saveErrorToast": "Je instellingen konden niet worden opgeslagen. Probeer het opnieuw.",
+    "saveErrorSchemaToast": "Er is niets opgeslagen - de database mist recent toegevoegde instellingenkolommen (een migratie is niet uitgevoerd). Meld dit bij een beheerder."
   },
   "errors": {
     "pageTitle": "Er is iets misgegaan",

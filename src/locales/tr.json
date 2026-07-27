@@ -305,7 +305,8 @@
       "timezoneLabel": "Saat Dilimi",
       "contentTitle": "İçerik",
       "contentDescription": "Virexa genelinde daha fazla görmek istediğin konuları seç.",
-      "countryErrorToast": "Ülken kaydedilemedi. Lütfen tekrar dene."
+      "countryErrorToast": "Ülken kaydedilemedi. Lütfen tekrar dene.",
+      "countryErrorSchemaToast": "Hiçbir şey kaydedilmedi - veritabanında gerekli bir sütun eksik. Lütfen bir yöneticiye bildir."
     },
     "reading": {
       "openLinksLabel": "Kaynak bağlantılarını yeni sekmede aç",
@@ -391,7 +392,8 @@
     },
     "saveButton": "Değişiklikleri Kaydet",
     "savedToast": "Ayarlar kaydedildi!",
-    "saveErrorToast": "Ayarların kaydedilemedi. Lütfen tekrar dene."
+    "saveErrorToast": "Ayarların kaydedilemedi. Lütfen tekrar dene.",
+    "saveErrorSchemaToast": "Hiçbir şey kaydedilmedi - veritabanında yakın zamanda eklenen ayar sütunları eksik (bekleyen bir migration uygulanmamış). Lütfen bir yöneticiye bildir."
   },
   "errors": {
     "pageTitle": "Bir şeyler ters gitti",

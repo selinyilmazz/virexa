@@ -305,7 +305,8 @@
       "timezoneLabel": "Timezone",
       "contentTitle": "Content",
       "contentDescription": "Pick the topics you want to see more of across Virexa.",
-      "countryErrorToast": "Couldn't save your country. Please try again."
+      "countryErrorToast": "Couldn't save your country. Please try again.",
+      "countryErrorSchemaToast": "Nothing was saved - the database is missing a required column. Please tell an administrator."
     },
     "reading": {
       "openLinksLabel": "Open source links in new tab",
@@ -391,7 +392,8 @@
     },
     "saveButton": "Save Changes",
     "savedToast": "Settings saved!",
-    "saveErrorToast": "Couldn't save your settings. Please try again."
+    "saveErrorToast": "Couldn't save your settings. Please try again.",
+    "saveErrorSchemaToast": "Nothing was saved - the database is missing recent settings columns (a pending migration hasn't been applied). Please tell an administrator."
   },
   "errors": {
     "pageTitle": "Something went wrong",

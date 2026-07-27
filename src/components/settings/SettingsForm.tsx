@@ -73,6 +73,28 @@ function isSettingsCategoryId(value: string | null): value is SettingsCategoryId
   return SETTINGS_CATEGORIES.some((category) => category.id === value);
 }
 
+/**
+ * Distinguishes "the DB rejected this write because a column it expects
+ * doesn't exist yet" (Postgres code 42703 - see
+ * `settings-repository.ts`/`profile-repository.ts`, both of which
+ * `.select("*").single()` after every upsert specifically so this class
+ * of error surfaces as a real thrown error instead of a silent no-op)
+ * from an ordinary transient failure. Checked against the raw message
+ * text (not just the code) since the repositories re-throw Supabase's
+ * error object as-is and its `code` isn't always preserved through every
+ * error path - "does not exist" is what PostgREST always includes for a
+ * missing-column error regardless.
+ */
+function isMissingColumnError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /does not exist/i.test(message) && /column/i.test(message);
+}
+
+/** Logs the full, untranslated error so it's actually findable in the browser console - the toast itself only ever shows a short, translated summary. */
+function logSaveFailure(context: string, error: unknown) {
+  console.error(`[SettingsForm] ${context} failed:`, error);
+}
+
 export function SettingsForm() {
   const t = useTranslations();
   const router = useRouter();
@@ -121,7 +143,15 @@ export function SettingsForm() {
   }
 
   function handleCountryChange(country: string) {
-    saveProfile({ country }).catch(() => showToast(t("settings.general.countryErrorToast"), "error", 4000));
+    saveProfile({ country }).catch((error: unknown) => {
+      logSaveFailure("Country save", error);
+      const message = isMissingColumnError(error)
+        ? t("settings.general.countryErrorSchemaToast")
+        : t("settings.general.countryErrorToast");
+      // Schema errors stay up long enough to actually read and act on -
+      // this isn't a "try again" case, retrying changes nothing.
+      showToast(message, "error", isMissingColumnError(error) ? 10000 : 4000);
+    });
   }
 
   async function handleSave() {
@@ -143,8 +173,12 @@ export function SettingsForm() {
       if (languageChanged) {
         router.refresh();
       }
-    } catch {
-      showToast(t("settings.saveErrorToast"), "error", 4000);
+    } catch (error) {
+      logSaveFailure("Settings save", error);
+      const message = isMissingColumnError(error) ? t("settings.saveErrorSchemaToast") : t("settings.saveErrorToast");
+      // Schema errors stay up long enough to actually read and act on -
+      // this isn't a "try again" case, retrying changes nothing.
+      showToast(message, "error", isMissingColumnError(error) ? 10000 : 4000);
     } finally {
       setIsSaving(false);
     }
