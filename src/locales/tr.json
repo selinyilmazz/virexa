@@ -514,6 +514,69 @@
       "bookmark": {
         "save": "Depoyu kaydet"
       }
+    },
+    "releases": {
+      "library": {
+        "eyebrow": "Geliştirici Merkezi",
+        "title": "Sürümler",
+        "subtitle": "Geliştiricilerin en çok takip ettiği framework, çalışma zamanı ve araçlar için güncel sürümler - versiyon, durum ve neler değişti, her projenin kendi sürüm notlarından derlenir.",
+        "empty": "Şu anda kullanılabilir sürüm yok."
+      },
+      "detail": {
+        "notFoundMetaTitle": "Teknoloji Bulunamadı | Virexa"
+      },
+      "hero": {
+        "latestVersion": "En Son Sürüm",
+        "releaseDate": "Yayın Tarihi",
+        "maintainer": "Sürdürücü",
+        "type": "Tür"
+      },
+      "actions": {
+        "save": "Kaydet",
+        "saved": "Kaydedildi",
+        "share": "Paylaş",
+        "shareTitle": "{name} | Virexa Geliştirici Merkezi"
+      },
+      "quickLinks": {
+        "heading": "Hızlı Bağlantılar",
+        "officialWebsite": "Resmi Web Sitesi",
+        "documentation": "Dokümantasyon",
+        "githubRepository": "GitHub Deposu"
+      },
+      "install": {
+        "heading": "Kurulum"
+      },
+      "whatsNew": {
+        "heading": "{version} Sürümünde Yenilikler",
+        "newFeatures": "Yeni Özellikler",
+        "improvements": "İyileştirmeler",
+        "performance": "Performans",
+        "bugFixes": "Hata Düzeltmeleri"
+      },
+      "breakingChanges": {
+        "heading": "Kırıcı Değişiklikler",
+        "migrationGuide": "Geçiş Kılavuzu"
+      },
+      "tabs": {
+        "overview": "Genel Bakış",
+        "changelog": "Değişiklik Günlüğü",
+        "migration": "Geçiş Kılavuzu",
+        "api": "API Değişiklikleri",
+        "resources": "Kaynaklar",
+        "migrationIntro": "{name} {version} sürümüne yükseltirken işlem gerektirmesi en olası değişiklikler bunlardır.",
+        "readFullGuide": "Tam geçiş kılavuzunu okuyun"
+      },
+      "sidebar": {
+        "releaseInfo": "Sürüm Bilgisi",
+        "version": "Sürüm",
+        "releaseDate": "Yayın Tarihi",
+        "status": "Durum",
+        "maintainer": "Sürdürücü",
+        "platform": "Platform",
+        "license": "Lisans",
+        "relatedReleases": "İlgili Sürümler",
+        "relatedNews": "İlgili Haberler"
+      }
     }
   },
   "auth": {

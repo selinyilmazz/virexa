@@ -514,6 +514,69 @@
       "bookmark": {
         "save": "Repository opslaan"
       }
+    },
+    "releases": {
+      "library": {
+        "eyebrow": "Developer Hub",
+        "title": "Releases",
+        "subtitle": "Actuele releases van de frameworks, runtimes en tools die ontwikkelaars het meest volgen - versie, status en wat er is veranderd, rechtstreeks van elk project.",
+        "empty": "Er zijn momenteel geen releases beschikbaar."
+      },
+      "detail": {
+        "notFoundMetaTitle": "Technologie niet gevonden | Virexa"
+      },
+      "hero": {
+        "latestVersion": "Nieuwste versie",
+        "releaseDate": "Releasedatum",
+        "maintainer": "Beheerder",
+        "type": "Type"
+      },
+      "actions": {
+        "save": "Opslaan",
+        "saved": "Opgeslagen",
+        "share": "Delen",
+        "shareTitle": "{name} | Virexa Developer Hub"
+      },
+      "quickLinks": {
+        "heading": "Snelle Links",
+        "officialWebsite": "Officiële Website",
+        "documentation": "Documentatie",
+        "githubRepository": "GitHub-repository"
+      },
+      "install": {
+        "heading": "Installatie"
+      },
+      "whatsNew": {
+        "heading": "Wat is er nieuw in {version}",
+        "newFeatures": "Nieuwe functies",
+        "improvements": "Verbeteringen",
+        "performance": "Prestaties",
+        "bugFixes": "Bugfixes"
+      },
+      "breakingChanges": {
+        "heading": "Breaking Changes",
+        "migrationGuide": "Migratiehandleiding"
+      },
+      "tabs": {
+        "overview": "Overzicht",
+        "changelog": "Changelog",
+        "migration": "Migratiehandleiding",
+        "api": "API-wijzigingen",
+        "resources": "Bronnen",
+        "migrationIntro": "Dit zijn de wijzigingen die het meest waarschijnlijk actie vereisen bij het upgraden naar {name} {version}.",
+        "readFullGuide": "Lees de volledige migratiehandleiding"
+      },
+      "sidebar": {
+        "releaseInfo": "Release-informatie",
+        "version": "Versie",
+        "releaseDate": "Releasedatum",
+        "status": "Status",
+        "maintainer": "Beheerder",
+        "platform": "Platform",
+        "license": "Licentie",
+        "relatedReleases": "Gerelateerde Releases",
+        "relatedNews": "Gerelateerd Nieuws"
+      }
     }
   },
   "auth": {

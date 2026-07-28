@@ -6,6 +6,7 @@ import { useBookmarkAction } from "@/hooks/useBookmarkAction";
 import type { BookmarkItem } from "@/lib/bookmarks";
 import type { TechnologyRelease } from "@/data/releases";
 import { recordReleaseView } from "@/lib/release-views";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 type ReleaseActionsProps = {
   release: TechnologyRelease;
@@ -80,6 +81,7 @@ const linkedinIcon = (
  * article and has no such row to increment).
  */
 export function ReleaseActions({ release }: ReleaseActionsProps) {
+  const t = useTranslations();
   const techSlug = release.slug;
   const technologyName = release.name;
   const { bookmarked: isSaved, trigger: toggleSaved, error: bookmarkError } = useBookmarkAction(toBookmarkItem(release));
@@ -114,7 +116,7 @@ export function ReleaseActions({ release }: ReleaseActionsProps) {
     const url = window.location.href;
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({ title: `${technologyName} | Virexa Developer Hub`, url });
+        await navigator.share({ title: t("developerHub.releases.actions.shareTitle", { name: technologyName }), url });
       } catch {
         // User cancelled the native share sheet.
       }
@@ -126,17 +128,17 @@ export function ReleaseActions({ release }: ReleaseActionsProps) {
   async function handleCopyLink() {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      showToast("Link copied");
+      showToast(t("article.share.linkCopied"));
     } catch {
-      showToast("Couldn't copy link", "error");
+      showToast(t("article.share.copyFailed"), "error");
     }
     setIsPopoverOpen(false);
   }
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
   const shareLinks = [
-    { label: "Share on X", href: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(technologyName)}`, icon: xIcon },
-    { label: "Share on LinkedIn", href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, icon: linkedinIcon },
+    { label: t("article.share.onX"), href: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(technologyName)}`, icon: xIcon },
+    { label: t("article.share.onLinkedin"), href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, icon: linkedinIcon },
   ];
 
   return (
@@ -153,7 +155,7 @@ export function ReleaseActions({ release }: ReleaseActionsProps) {
         }`}
       >
         {bookmarkIcon(isSaved)}
-        {isSaved ? "Saved" : "Save"}
+        {isSaved ? t("developerHub.releases.actions.saved") : t("developerHub.releases.actions.save")}
       </button>
 
       <button
@@ -164,7 +166,7 @@ export function ReleaseActions({ release }: ReleaseActionsProps) {
         className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50"
       >
         {shareIcon}
-        Share
+        {t("developerHub.releases.actions.share")}
       </button>
 
       {isPopoverOpen && (
@@ -175,7 +177,7 @@ export function ReleaseActions({ release }: ReleaseActionsProps) {
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-base font-medium text-slate-700 transition-colors hover:bg-slate-50"
           >
             {copyLinkIcon}
-            Copy Link
+            {t("article.share.copyLink")}
           </button>
           <div className="my-1 h-px bg-slate-100" />
           {shareLinks.map((link) => (

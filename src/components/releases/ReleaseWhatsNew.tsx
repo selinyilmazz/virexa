@@ -1,10 +1,11 @@
 import type { TechnologyRelease } from "@/data/releases";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
-const CHECKLIST_GROUPS: { key: keyof TechnologyRelease["whatsNew"]; label: string }[] = [
-  { key: "features", label: "New Features" },
-  { key: "improvements", label: "Improvements" },
-  { key: "performance", label: "Performance" },
-  { key: "bugFixes", label: "Bug Fixes" },
+const CHECKLIST_GROUPS: { key: keyof TechnologyRelease["whatsNew"]; labelKey: string }[] = [
+  { key: "features", labelKey: "developerHub.releases.whatsNew.newFeatures" },
+  { key: "improvements", labelKey: "developerHub.releases.whatsNew.improvements" },
+  { key: "performance", labelKey: "developerHub.releases.whatsNew.performance" },
+  { key: "bugFixes", labelKey: "developerHub.releases.whatsNew.bugFixes" },
 ];
 
 const checkIcon = (
@@ -23,14 +24,17 @@ const checkIcon = (
  * "no invented imagery" convention elsewhere (see `releases.ts`'s
  * `gradient` field doc comment).
  */
-export function ReleaseWhatsNew({ release }: { release: TechnologyRelease }) {
-  const groups = CHECKLIST_GROUPS.map((group) => ({ ...group, items: release.whatsNew[group.key] ?? [] })).filter((group) => group.items.length > 0);
+export async function ReleaseWhatsNew({ release }: { release: TechnologyRelease }) {
+  const { t } = await getServerTranslations();
+  const groups = CHECKLIST_GROUPS.map((group) => ({ ...group, label: t(group.labelKey), items: release.whatsNew[group.key] ?? [] })).filter(
+    (group) => group.items.length > 0
+  );
   if (groups.length === 0) return null;
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-lg font-bold tracking-tight text-slate-950">What&apos;s New in {release.version}</h2>
+        <h2 className="text-lg font-bold tracking-tight text-slate-950">{t("developerHub.releases.whatsNew.heading", { version: release.version })}</h2>
       </div>
 
       <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">

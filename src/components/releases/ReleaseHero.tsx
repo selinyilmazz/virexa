@@ -1,5 +1,6 @@
 import type { TechnologyRelease } from "@/data/releases";
 import { ReleaseActions } from "@/components/releases/ReleaseActions";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 /** Same channel-badge palette as the homepage's `LatestReleases` widget (`STATUS_BADGE_CLASSES`) - Stable=green, Beta=amber, RC=purple, LTS=blue - kept visually consistent between the widget row and this page. */
 const STATUS_BADGE_CLASSES: Record<TechnologyRelease["status"], string> = {
@@ -10,7 +11,8 @@ const STATUS_BADGE_CLASSES: Record<TechnologyRelease["status"], string> = {
 };
 
 /** Hero Card (requirement 2): logo, name, status badge, short description, a 4-up metadata row (Latest Version / Release Date / Maintainer / Type), and the Bookmark + Share row. */
-export function ReleaseHero({ release }: { release: TechnologyRelease }) {
+export async function ReleaseHero({ release }: { release: TechnologyRelease }) {
+  const { t } = await getServerTranslations();
   // `T00:00:00` forces local-time parsing of the plain `yyyy-mm-dd` date -
   // without it, JS parses a bare date as UTC midnight, which can render as
   // the previous day in any timezone behind UTC.
@@ -37,19 +39,19 @@ export function ReleaseHero({ release }: { release: TechnologyRelease }) {
 
       <dl className="mt-7 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-slate-100 pt-6 sm:grid-cols-4">
         <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Latest Version</dt>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t("developerHub.releases.hero.latestVersion")}</dt>
           <dd className="mt-1 text-sm font-bold text-slate-950">{release.version}</dd>
         </div>
         <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Release Date</dt>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t("developerHub.releases.hero.releaseDate")}</dt>
           <dd className="mt-1 text-sm font-bold text-slate-950">{releaseDate}</dd>
         </div>
         <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Maintainer</dt>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t("developerHub.releases.hero.maintainer")}</dt>
           <dd className="mt-1 truncate text-sm font-bold text-slate-950">{release.maintainer}</dd>
         </div>
         <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Type</dt>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t("developerHub.releases.hero.type")}</dt>
           <dd className="mt-1 text-sm font-bold text-slate-950">{release.type}</dd>
         </div>
       </dl>

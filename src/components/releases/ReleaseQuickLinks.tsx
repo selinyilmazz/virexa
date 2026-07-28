@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { TechnologyRelease } from "@/data/releases";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 const websiteIcon = (
   <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -37,18 +38,19 @@ const externalIcon = (
 type QuickLink = { label: string; url: string; icon: ReactNode };
 
 /** Quick Links (requirement 3) - Website / Documentation / GitHub / Package Registry. Any field the technology doesn't have (`packageRegistry` is the most common omission - e.g. Node.js and Kubernetes don't ship one) is simply not rendered, never shown as a dead/placeholder tile. Hides the whole section if somehow none apply. */
-export function ReleaseQuickLinks({ release }: { release: TechnologyRelease }) {
+export async function ReleaseQuickLinks({ release }: { release: TechnologyRelease }) {
+  const { t } = await getServerTranslations();
   const links: QuickLink[] = [];
-  if (release.website) links.push({ label: "Official Website", url: release.website, icon: websiteIcon });
-  if (release.docs) links.push({ label: "Documentation", url: release.docs, icon: docsIcon });
-  if (release.github) links.push({ label: "GitHub Repository", url: release.github, icon: githubIcon });
+  if (release.website) links.push({ label: t("developerHub.releases.quickLinks.officialWebsite"), url: release.website, icon: websiteIcon });
+  if (release.docs) links.push({ label: t("developerHub.releases.quickLinks.documentation"), url: release.docs, icon: docsIcon });
+  if (release.github) links.push({ label: t("developerHub.releases.quickLinks.githubRepository"), url: release.github, icon: githubIcon });
   if (release.packageRegistry) links.push({ label: release.packageRegistry.label, url: release.packageRegistry.url, icon: packageIcon });
 
   if (links.length === 0) return null;
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-      <h2 className="text-lg font-bold tracking-tight text-slate-950">Quick Links</h2>
+      <h2 className="text-lg font-bold tracking-tight text-slate-950">{t("developerHub.releases.quickLinks.heading")}</h2>
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {links.map((link) => (
           <a

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { TechnologyRelease } from "@/data/releases";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 type TabId = "overview" | "changelog" | "migration" | "api" | "resources";
 
@@ -21,11 +22,12 @@ const externalIcon = (
  * renders a perfectly valid single-tab page instead of four empty tabs.
  */
 export function ReleaseTabs({ release }: { release: TechnologyRelease }) {
-  const tabs: { id: TabId; label: string }[] = [{ id: "overview", label: "Overview" }];
-  if (release.changelog && release.changelog.length > 0) tabs.push({ id: "changelog", label: "Changelog" });
-  if (release.breakingChanges && release.breakingChanges.length > 0) tabs.push({ id: "migration", label: "Migration Guide" });
-  if (release.apiChanges && release.apiChanges.length > 0) tabs.push({ id: "api", label: "API Changes" });
-  if (release.resources && release.resources.length > 0) tabs.push({ id: "resources", label: "Resources" });
+  const t = useTranslations();
+  const tabs: { id: TabId; label: string }[] = [{ id: "overview", label: t("developerHub.releases.tabs.overview") }];
+  if (release.changelog && release.changelog.length > 0) tabs.push({ id: "changelog", label: t("developerHub.releases.tabs.changelog") });
+  if (release.breakingChanges && release.breakingChanges.length > 0) tabs.push({ id: "migration", label: t("developerHub.releases.tabs.migration") });
+  if (release.apiChanges && release.apiChanges.length > 0) tabs.push({ id: "api", label: t("developerHub.releases.tabs.api") });
+  if (release.resources && release.resources.length > 0) tabs.push({ id: "resources", label: t("developerHub.releases.tabs.resources") });
 
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const active = tabs.some((tab) => tab.id === activeTab) ? activeTab : "overview";
@@ -71,7 +73,7 @@ export function ReleaseTabs({ release }: { release: TechnologyRelease }) {
         {active === "migration" && release.breakingChanges && (
           <div className="space-y-4">
             <p className="text-sm leading-relaxed text-slate-600">
-              These are the changes most likely to require action when upgrading to {release.name} {release.version}.
+              {t("developerHub.releases.tabs.migrationIntro", { name: release.name, version: release.version })}
             </p>
             <ul className="space-y-4">
               {release.breakingChanges.map((change) => (
@@ -88,7 +90,7 @@ export function ReleaseTabs({ release }: { release: TechnologyRelease }) {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2f67e8] hover:underline"
               >
-                Read the full migration guide {externalIcon}
+                {t("developerHub.releases.tabs.readFullGuide")} {externalIcon}
               </a>
             )}
           </div>

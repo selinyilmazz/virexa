@@ -1,4 +1,5 @@
 import type { TechnologyRelease } from "@/data/releases";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 const warningIcon = (
   <svg viewBox="0 0 24 24" className="size-5 shrink-0 text-amber-500" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -8,15 +9,16 @@ const warningIcon = (
 );
 
 /** Breaking Changes (requirement 6): only rendered when the technology actually has breaking changes recorded - otherwise this whole section is hidden entirely (no "None" placeholder), per the "gracefully hide missing sections" instruction. */
-export function ReleaseBreakingChanges({ release }: { release: TechnologyRelease }) {
+export async function ReleaseBreakingChanges({ release }: { release: TechnologyRelease }) {
   if (!release.breakingChanges || release.breakingChanges.length === 0) return null;
+  const { t } = await getServerTranslations();
 
   return (
     <div className="rounded-3xl border border-amber-200 bg-amber-50/40 p-6 shadow-sm sm:p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight text-slate-950">
           {warningIcon}
-          Breaking Changes
+          {t("developerHub.releases.breakingChanges.heading")}
         </h2>
         {release.migrationGuideUrl && (
           <a
@@ -25,7 +27,7 @@ export function ReleaseBreakingChanges({ release }: { release: TechnologyRelease
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
           >
-            Migration Guide
+            {t("developerHub.releases.breakingChanges.migrationGuide")}
           </a>
         )}
       </div>

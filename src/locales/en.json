@@ -514,6 +514,69 @@
       "bookmark": {
         "save": "Save repository"
       }
+    },
+    "releases": {
+      "library": {
+        "eyebrow": "Developer Hub",
+        "title": "Releases",
+        "subtitle": "Real, current releases for the frameworks, runtimes and tools developers track most - version, status and what changed, sourced from each project's own release.",
+        "empty": "No releases are available right now."
+      },
+      "detail": {
+        "notFoundMetaTitle": "Technology Not Found | Virexa"
+      },
+      "hero": {
+        "latestVersion": "Latest Version",
+        "releaseDate": "Release Date",
+        "maintainer": "Maintainer",
+        "type": "Type"
+      },
+      "actions": {
+        "save": "Save",
+        "saved": "Saved",
+        "share": "Share",
+        "shareTitle": "{name} | Virexa Developer Hub"
+      },
+      "quickLinks": {
+        "heading": "Quick Links",
+        "officialWebsite": "Official Website",
+        "documentation": "Documentation",
+        "githubRepository": "GitHub Repository"
+      },
+      "install": {
+        "heading": "Installation"
+      },
+      "whatsNew": {
+        "heading": "What's New in {version}",
+        "newFeatures": "New Features",
+        "improvements": "Improvements",
+        "performance": "Performance",
+        "bugFixes": "Bug Fixes"
+      },
+      "breakingChanges": {
+        "heading": "Breaking Changes",
+        "migrationGuide": "Migration Guide"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "changelog": "Changelog",
+        "migration": "Migration Guide",
+        "api": "API Changes",
+        "resources": "Resources",
+        "migrationIntro": "These are the changes most likely to require action when upgrading to {name} {version}.",
+        "readFullGuide": "Read the full migration guide"
+      },
+      "sidebar": {
+        "releaseInfo": "Release Info",
+        "version": "Version",
+        "releaseDate": "Release Date",
+        "status": "Status",
+        "maintainer": "Maintainer",
+        "platform": "Platform",
+        "license": "License",
+        "relatedReleases": "Related Releases",
+        "relatedNews": "Related News"
+      }
     }
   },
   "auth": {

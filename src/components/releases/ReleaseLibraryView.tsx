@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import type { TechnologyRelease } from "@/data/releases";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 const STATUS_BADGE_CLASSES: Record<TechnologyRelease["status"], string> = {
   Stable: "bg-emerald-50 text-emerald-700",
@@ -36,24 +37,22 @@ type ReleaseLibraryViewProps = {
  * every other Developer Hub sub-page - see `CatalogExplorerView`'s doc
  * comment.
  */
-export function ReleaseLibraryView({ releases }: ReleaseLibraryViewProps) {
+export async function ReleaseLibraryView({ releases }: ReleaseLibraryViewProps) {
+  const { t } = await getServerTranslations();
   return (
     <>
       <Header />
       <main className="bg-[#f8fafc] px-5 py-8 sm:px-8">
         <div className="mx-auto max-w-[1820px]">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Developer Hub</p>
-            <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">Releases</h1>
-            <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-500">
-              Real, current releases for the frameworks, runtimes and tools developers track most - version, status
-              and what changed, sourced from each project's own release.
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{t("developerHub.releases.library.eyebrow")}</p>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{t("developerHub.releases.library.title")}</h1>
+            <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-500">{t("developerHub.releases.library.subtitle")}</p>
           </div>
 
           {releases.length === 0 ? (
             <div className="mt-8 rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
-              No releases are available right now.
+              {t("developerHub.releases.library.empty")}
             </div>
           ) : (
             <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

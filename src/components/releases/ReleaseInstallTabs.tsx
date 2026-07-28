@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { InstallCommand } from "@/data/releases";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 const copyIcon = (
   <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -18,6 +19,7 @@ const checkIcon = (
 
 /** Installation (requirement 4): a tabbed installer - which tabs make sense varies per technology (npm/pnpm/yarn/bun for a JS library, an OS-installer picker for a runtime/tool) - so this simply renders whatever `TechnologyRelease.install` provides, with a copyable command. */
 export function ReleaseInstallTabs({ commands }: { commands: InstallCommand[] }) {
+  const t = useTranslations();
   const [activeIndex, setActiveIndex] = useState(0);
   const [copied, setCopied] = useState(false);
   const active = commands[activeIndex];
@@ -36,7 +38,7 @@ export function ReleaseInstallTabs({ commands }: { commands: InstallCommand[] })
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-      <h2 className="text-lg font-bold tracking-tight text-slate-950">Installation</h2>
+      <h2 className="text-lg font-bold tracking-tight text-slate-950">{t("developerHub.releases.install.heading")}</h2>
 
       <div className="mt-4 flex flex-wrap gap-1.5 rounded-xl bg-slate-100 p-1.5">
         {commands.map((command, index) => (
@@ -61,7 +63,7 @@ export function ReleaseInstallTabs({ commands }: { commands: InstallCommand[] })
           className="flex shrink-0 items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/20"
         >
           {copied ? checkIcon : copyIcon}
-          {copied ? "Copied" : "Copy"}
+          {copied ? t("article.codeBlock.copied") : t("article.codeBlock.copy")}
         </button>
       </div>
     </div>

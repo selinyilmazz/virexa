@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { CategoryNewsItem } from "@/data/categories";
 import { getRelatedTechnologyReleases, type TechnologyRelease } from "@/data/releases";
 import { SidebarMiniCard } from "@/components/shared/SidebarMiniCard";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 const STATUS_BADGE_CLASSES: Record<TechnologyRelease["status"], string> = {
   Stable: "bg-emerald-50 text-emerald-700",
@@ -16,40 +17,41 @@ type ReleaseSidebarProps = {
 };
 
 /** Right Sidebar (requirement 8): Release Info, Related Releases (latest 3), Related News (3-4 real articles). Each sub-section hides itself when it has nothing to show, rather than rendering an empty card. */
-export function ReleaseSidebar({ release, relatedNews }: ReleaseSidebarProps) {
+export async function ReleaseSidebar({ release, relatedNews }: ReleaseSidebarProps) {
   const relatedReleases = getRelatedTechnologyReleases(release, 3);
+  const { t } = await getServerTranslations();
 
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-base font-bold tracking-tight text-slate-950">Release Info</h2>
+        <h2 className="text-base font-bold tracking-tight text-slate-950">{t("developerHub.releases.sidebar.releaseInfo")}</h2>
         <dl className="mt-4 space-y-3.5">
           <div className="flex items-center justify-between gap-3 text-sm">
-            <dt className="text-slate-500">Version</dt>
+            <dt className="text-slate-500">{t("developerHub.releases.sidebar.version")}</dt>
             <dd className="font-semibold text-slate-950">{release.version}</dd>
           </div>
           <div className="flex items-center justify-between gap-3 text-sm">
-            <dt className="text-slate-500">Release Date</dt>
+            <dt className="text-slate-500">{t("developerHub.releases.sidebar.releaseDate")}</dt>
             <dd className="font-semibold text-slate-950">
               {new Date(`${release.releaseDate}T00:00:00`).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
             </dd>
           </div>
           <div className="flex items-center justify-between gap-3 text-sm">
-            <dt className="text-slate-500">Status</dt>
+            <dt className="text-slate-500">{t("developerHub.releases.sidebar.status")}</dt>
             <dd>
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_BADGE_CLASSES[release.status]}`}>{release.status}</span>
             </dd>
           </div>
           <div className="flex items-center justify-between gap-3 text-sm">
-            <dt className="shrink-0 text-slate-500">Maintainer</dt>
+            <dt className="shrink-0 text-slate-500">{t("developerHub.releases.sidebar.maintainer")}</dt>
             <dd className="truncate text-right font-semibold text-slate-950">{release.maintainer}</dd>
           </div>
           <div className="flex items-center justify-between gap-3 text-sm">
-            <dt className="shrink-0 text-slate-500">Platform</dt>
+            <dt className="shrink-0 text-slate-500">{t("developerHub.releases.sidebar.platform")}</dt>
             <dd className="truncate text-right font-semibold text-slate-950">{release.platform}</dd>
           </div>
           <div className="flex items-center justify-between gap-3 text-sm">
-            <dt className="text-slate-500">License</dt>
+            <dt className="text-slate-500">{t("developerHub.releases.sidebar.license")}</dt>
             <dd className="truncate text-right font-semibold text-slate-950">{release.license}</dd>
           </div>
         </dl>
@@ -57,7 +59,7 @@ export function ReleaseSidebar({ release, relatedNews }: ReleaseSidebarProps) {
 
       {relatedReleases.length > 0 && (
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-base font-bold tracking-tight text-slate-950">Related Releases</h2>
+          <h2 className="text-base font-bold tracking-tight text-slate-950">{t("developerHub.releases.sidebar.relatedReleases")}</h2>
           <ul className="mt-3 space-y-1">
             {relatedReleases.map((related) => (
               <li key={related.slug}>
@@ -81,7 +83,7 @@ export function ReleaseSidebar({ release, relatedNews }: ReleaseSidebarProps) {
 
       {relatedNews.length > 0 && (
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-base font-bold tracking-tight text-slate-950">Related News</h2>
+          <h2 className="text-base font-bold tracking-tight text-slate-950">{t("developerHub.releases.sidebar.relatedNews")}</h2>
           <ul className="mt-3 space-y-1">
             {relatedNews.map((item) => (
               <li key={item.slug}>

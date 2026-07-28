@@ -6,6 +6,7 @@ import { ReleaseDetailView } from "@/components/releases/ReleaseDetailView";
 import { getAllTechnologySlugs } from "@/data/releases";
 import { getReleaseDetail } from "@/services/developer-hub/release-detail-service";
 import { getRelatedNewsForTechnology } from "@/services/articles/article-read-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 type ReleaseDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -20,7 +21,8 @@ export async function generateMetadata({ params }: ReleaseDetailPageProps): Prom
   const { slug } = await params;
   const release = await getReleaseDetail(slug);
   if (!release) {
-    return { title: "Technology Not Found | Virexa" };
+    const { t } = await getServerTranslations();
+    return { title: t("developerHub.releases.detail.notFoundMetaTitle") };
   }
   return {
     title: `${release.name} ${release.version} | Developer Hub | Virexa`,
@@ -50,11 +52,12 @@ export default async function ReleaseDetailPage({ params }: ReleaseDetailPagePro
   }
 
   const relatedNews = await getRelatedNewsForTechnology(release.relatedNewsSearchTerms ?? [release.name], 4);
+  const { t } = await getServerTranslations();
 
   const breadcrumb = [
-    { label: "Home", href: "/" },
-    { label: "Developer Hub", href: "/developer-hub" },
-    { label: "Releases", href: "/developer-hub/releases" },
+    { label: t("common.home"), href: "/" },
+    { label: t("developerHub.landing.breadcrumbCurrent"), href: "/developer-hub" },
+    { label: t("developerHub.landing.navReleases"), href: "/developer-hub/releases" },
     { label: release.name, href: `/developer-hub/releases/${release.slug}` },
   ];
 
@@ -63,7 +66,7 @@ export default async function ReleaseDetailPage({ params }: ReleaseDetailPagePro
       <Header />
       <main className="bg-[#f8fafc] px-5 py-8 sm:px-8">
         <div className="mx-auto max-w-[1820px]">
-          <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+          <nav aria-label={t("article.breadcrumb.ariaLabel")} className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
             {breadcrumb.map((crumb, index) => {
               const isLast = index === breadcrumb.length - 1;
               return (
