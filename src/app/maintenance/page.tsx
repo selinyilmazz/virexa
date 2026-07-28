@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 export const metadata: Metadata = {
   title: "Under Maintenance | Virexa",
@@ -13,12 +14,13 @@ export const metadata: Metadata = {
  * relevant here and every other route is currently unreachable anyway.
  * Visual language matches `app/error.tsx`'s centered-card pattern.
  */
-export default function MaintenancePage() {
+export default async function MaintenancePage() {
+  const { t } = await getServerTranslations();
   return (
     <main className="flex min-h-screen flex-col bg-[#f8fafc]">
       <header className="border-b border-slate-200 bg-white shadow-sm">
         <div className="mx-auto flex min-h-24 max-w-[1920px] items-center px-5 py-3 sm:px-8">
-          <Link href="/" className="flex shrink-0 items-center gap-2 text-[#2f67e8]" aria-label="Virexa home">
+          <Link href="/" className="flex shrink-0 items-center gap-2 text-[#2f67e8]" aria-label={t("nav.logoAria")}>
             <svg aria-hidden="true" viewBox="0 0 64 56" className="h-10 w-12 sm:h-11 sm:w-13" fill="none">
               <path d="M3 4h16l14 26L47 4h14L38 52H24L3 4Z" fill="currentColor" />
               <path d="m35 18 7-13h13l-8 13H35Z" fill="currentColor" />
@@ -33,9 +35,9 @@ export default function MaintenancePage() {
           <span aria-hidden="true" className="flex size-16 items-center justify-center rounded-full bg-slate-100 text-3xl">
             🛠️
           </span>
-          <h1 className="mt-6 text-2xl font-bold tracking-tight text-slate-950">We&apos;ll be right back</h1>
+          <h1 className="mt-6 text-2xl font-bold tracking-tight text-slate-950">{t("maintenance.title")}</h1>
           <p className="mt-2 max-w-md text-base leading-relaxed text-slate-500">
-            Virexa is currently undergoing scheduled maintenance. Please check back shortly.
+            {t("maintenance.description")}
           </p>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ExplorerView } from "@/components/explorer/ExplorerView";
 import type { ExplorerSearchParams } from "@/lib/news-explorer/shared";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 export const metadata: Metadata = {
   title: "Most Read | Virexa",
@@ -32,11 +33,12 @@ type MostReadPageProps = {
  */
 export default async function MostReadPage({ searchParams }: MostReadPageProps) {
   const params = await searchParams;
+  const { t } = await getServerTranslations();
 
   return (
     <ExplorerView
-      title="Most Read"
-      subtitle="The most-read articles on Virexa, ranked by real reader engagement."
+      title={t("explorer.pages.mostRead.title")}
+      subtitle={t("explorer.pages.mostRead.subtitle")}
       basePath="/most-read"
       searchParams={params}
       defaultSort="most-read"

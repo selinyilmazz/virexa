@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { primaryNavItems as navItems } from "@/lib/layout/primary-nav-items";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 /**
  * Category navigation row, a separate horizontal bar under the header's
@@ -47,24 +48,25 @@ import { primaryNavItems as navItems } from "@/lib/layout/primary-nav-items";
  */
 export function CategoryNav() {
   const pathname = usePathname();
+  const t = useTranslations();
 
   // Picks the LONGEST matching `activePrefix` rather than checking each
   // item independently - useful if any future item's prefix is itself a
   // `startsWith` match of another item's URLs (e.g. a nested route).
-  const activeLabel = navItems.reduce<string | null>((best, item) => {
+  const activeLabelKey = navItems.reduce<string | null>((best, item) => {
     if (!item.activePrefix || !pathname.startsWith(item.activePrefix)) return best;
-    const bestPrefix = best ? (navItems.find((candidate) => candidate.label === best)?.activePrefix ?? "") : "";
-    return item.activePrefix.length > bestPrefix.length ? item.label : best;
+    const bestPrefix = best ? (navItems.find((candidate) => candidate.labelKey === best)?.activePrefix ?? "") : "";
+    return item.activePrefix.length > bestPrefix.length ? item.labelKey : best;
   }, null);
 
   return (
-    <nav aria-label="Category navigation" className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <nav aria-label={t("nav.categoryNavAria")} className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
       <div className="mx-auto flex h-12 max-w-[1820px] items-center justify-start gap-2 overflow-x-auto px-5 sm:justify-center sm:gap-3 sm:px-8 lg:gap-5">
         {navItems.map((item) => {
-          const isActive = item.label === activeLabel;
+          const isActive = item.labelKey === activeLabelKey;
           return (
             <Link
-              key={item.label}
+              key={item.labelKey}
               href={item.href}
               className={`flex shrink-0 items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
                 isActive
@@ -73,7 +75,7 @@ export function CategoryNav() {
               }`}
             >
               {item.icon}
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           );
         })}

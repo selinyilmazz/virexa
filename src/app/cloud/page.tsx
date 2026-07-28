@@ -1,5 +1,6 @@
 import { ExplorerView } from "@/components/explorer/ExplorerView";
 import type { ExplorerSearchParams } from "@/lib/news-explorer/shared";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 export const metadata = {
   title: "Cloud | VIREXA",
@@ -24,11 +25,12 @@ type CloudPageProps = {
  */
 export default async function CloudPage({ searchParams }: CloudPageProps) {
   const params = await searchParams;
+  const { t } = await getServerTranslations();
 
   return (
     <ExplorerView
-      title="Cloud"
-      subtitle="Cloud infrastructure, Kubernetes, AWS, Azure, GCP and DevOps news."
+      title={t("explorer.pages.cloud.title")}
+      subtitle={t("explorer.pages.cloud.subtitle")}
       basePath="/cloud"
       searchParams={params}
       defaultQuery="cloud"

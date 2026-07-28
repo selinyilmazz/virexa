@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 type PaginationProps = {
   currentPage: number;
@@ -6,10 +7,11 @@ type PaginationProps = {
   buildHref: (page: number) => string;
 };
 
-export function Pagination({ currentPage, totalPages, buildHref }: PaginationProps) {
+export async function Pagination({ currentPage, totalPages, buildHref }: PaginationProps) {
   if (totalPages <= 1) {
     return null;
   }
+  const { t } = await getServerTranslations();
 
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
   const isFirst = currentPage <= 1;
@@ -21,7 +23,7 @@ export function Pagination({ currentPage, totalPages, buildHref }: PaginationPro
     "flex size-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-300 cursor-not-allowed opacity-40";
 
   return (
-    <nav aria-label="Pagination" className="mt-8 flex items-center justify-center gap-2">
+    <nav aria-label={t("common.pagination.ariaLabel")} className="mt-8 flex items-center justify-center gap-2">
       {isFirst ? (
         <span aria-hidden="true" className={navButtonDisabledClass}>
           <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2">
@@ -29,7 +31,7 @@ export function Pagination({ currentPage, totalPages, buildHref }: PaginationPro
           </svg>
         </span>
       ) : (
-        <Link href={buildHref(currentPage - 1)} aria-label="Previous page" className={navButtonClass}>
+        <Link href={buildHref(currentPage - 1)} aria-label={t("common.pagination.previousPage")} className={navButtonClass}>
           <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="m15 6-6 6 6 6" />
           </svg>
@@ -58,7 +60,7 @@ export function Pagination({ currentPage, totalPages, buildHref }: PaginationPro
           </svg>
         </span>
       ) : (
-        <Link href={buildHref(currentPage + 1)} aria-label="Next page" className={navButtonClass}>
+        <Link href={buildHref(currentPage + 1)} aria-label={t("common.pagination.nextPage")} className={navButtonClass}>
           <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="m9 6 6 6-6 6" />
           </svg>

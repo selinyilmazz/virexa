@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/layout/Header";
 import { LegalPageLayout } from "@/components/legal/LegalPageLayout";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Virexa",
 };
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const { t } = await getServerTranslations();
   return (
     <>
       <Header />
       <LegalPageLayout
-        title="Privacy Policy"
-        description="Last updated July 2026. This page explains what information Virexa handles and how."
+        title={t("legal.privacy.title")}
+        description={t("legal.privacy.description")}
       >
         <section>
           <h2 className="text-xl font-bold text-slate-950">Information We Collect</h2>

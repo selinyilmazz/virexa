@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 type LegalPageLayoutProps = {
   title: string;
@@ -6,13 +7,14 @@ type LegalPageLayoutProps = {
   children: React.ReactNode;
 };
 
-export function LegalPageLayout({ title, description, children }: LegalPageLayoutProps) {
+export async function LegalPageLayout({ title, description, children }: LegalPageLayoutProps) {
+  const { t } = await getServerTranslations();
   return (
     <main className="bg-[#f8fafc] px-5 py-8 sm:px-8">
       <div className="mx-auto max-w-4xl">
-        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+        <nav aria-label={t("article.breadcrumb.ariaLabel")} className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
           <Link href="/" className="transition-colors hover:text-[#2f67e8]">
-            Home
+            {t("common.home")}
           </Link>
           <span aria-hidden="true">›</span>
           <span className="font-medium text-slate-950">{title}</span>

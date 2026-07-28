@@ -4,6 +4,7 @@ import { TopSources } from "@/components/category/TopSources";
 import { SidebarMiniCard } from "@/components/shared/SidebarMiniCard";
 import type { CategoryNewsItem } from "@/data/categories";
 import type { TopSourceStat } from "@/services/articles/article-read-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 type CategorySidebarProps = {
   topSources: TopSourceStat[];
@@ -19,7 +20,8 @@ type CategorySidebarProps = {
  * paths to more content; Recently Added now uses `SidebarMiniCard` so
  * every row is a genuinely clickable, thumbnail-bearing feed item.
  */
-export function CategorySidebar({ topSources, relatedCategories, recentNews }: CategorySidebarProps) {
+export async function CategorySidebar({ topSources, relatedCategories, recentNews }: CategorySidebarProps) {
+  const { t } = await getServerTranslations();
   return (
     <div className="space-y-6 xl:sticky xl:top-28">
       <TopSources sources={topSources} />
@@ -31,7 +33,7 @@ export function CategorySidebar({ topSources, relatedCategories, recentNews }: C
           className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
         >
           <h2 id="recent-news-title" className="text-xl font-bold tracking-tight text-slate-950">
-            Recently Added
+            {t("category.sidebar.recentlyAddedTitle")}
           </h2>
 
           <div className="mt-3 space-y-1">

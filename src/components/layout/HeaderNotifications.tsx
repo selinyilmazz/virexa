@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 /**
  * Notifications bell (authenticated navbar redesign). There is no
@@ -15,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
  */
 export function HeaderNotifications() {
   const { user } = useAuth();
+  const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -38,7 +40,7 @@ export function HeaderNotifications() {
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
         aria-haspopup="true"
-        aria-label="Notifications"
+        aria-label={t("nav.notifications.ariaLabel")}
         className="flex items-center justify-center text-slate-500 transition-colors hover:text-[#2f67e8] dark:text-slate-400 dark:hover:text-blue-400"
       >
         <svg aria-hidden="true" viewBox="0 0 24 24" className="size-7" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -52,9 +54,9 @@ export function HeaderNotifications() {
           <span aria-hidden="true" className="mx-auto flex size-11 items-center justify-center rounded-full bg-slate-50 text-xl dark:bg-slate-800">
             🔔
           </span>
-          <p className="mt-3 text-sm font-semibold text-slate-950 dark:text-white">You&apos;re all caught up</p>
+          <p className="mt-3 text-sm font-semibold text-slate-950 dark:text-white">{t("nav.notifications.emptyTitle")}</p>
           <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-            Breaking news and Developer Release alerts will show up here once you turn them on in Settings.
+            {t("nav.notifications.emptyDescription")}
           </p>
         </div>
       )}

@@ -6,6 +6,7 @@ import { OpenSourceFilterBar } from "@/components/open-source/OpenSourceFilterBa
 import { RepositoryListCard } from "@/components/open-source/RepositoryListCard";
 import { OpenSourceSidebar } from "@/components/open-source/OpenSourceSidebar";
 import { getOpenSourceRepos, type OpenSourceSort } from "@/services/open-source/open-source-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 // Stabilization pass: force-dynamic (never statically cached) so an
 // admin-added/edited/hidden repository (`/admin/repositories`) shows up
@@ -42,6 +43,7 @@ type OpenSourcePageProps = {
  * the data layer (live GitHub data, honest filtering/sorting/pagination).
  */
 export default async function OpenSourcePage({ searchParams }: OpenSourcePageProps) {
+  const { t } = await getServerTranslations();
   const params = await searchParams;
   const sort = params.sort && VALID_SORTS.includes(params.sort as OpenSourceSort) ? (params.sort as OpenSourceSort) : "trending";
   const topic = params.topic || undefined;
@@ -68,12 +70,12 @@ export default async function OpenSourcePage({ searchParams }: OpenSourcePagePro
       <Header initialSearchQuery={query} />
       <main className="bg-[#f8fafc] px-5 py-8 dark:bg-slate-950 sm:px-8">
         <div className="mx-auto max-w-[1820px]">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+          <nav aria-label={t("article.breadcrumb.ariaLabel")} className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
             <Link href="/" className="transition-colors duration-200 hover:text-slate-700 dark:hover:text-slate-200">
-              Home
+              {t("common.home")}
             </Link>
             <span aria-hidden="true">›</span>
-            <span className="font-medium text-slate-950 dark:text-white">Open Source</span>
+            <span className="font-medium text-slate-950 dark:text-white">{t("openSource.breadcrumb.current")}</span>
           </nav>
 
           <OpenSourceHero />
@@ -83,11 +85,13 @@ export default async function OpenSourcePage({ searchParams }: OpenSourcePagePro
           <div className="mt-6 grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
             <div className="min-w-0">
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                {results.total.toLocaleString("en-US")} repositor{results.total === 1 ? "y" : "ies"}
+                {t(results.total === 1 ? "openSource.resultSingular" : "openSource.resultPlural", { count: results.total.toLocaleString("en-US") })}
                 {topic && (
                   <>
                     <span className="text-slate-400"> • </span>
-                    Filtered by <span className="font-semibold text-slate-700 dark:text-slate-200">{topic}</span>
+                    {t("openSource.filteredBy").split("{topic}")[0]}
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">{topic}</span>
+                    {t("openSource.filteredBy").split("{topic}")[1]}
                   </>
                 )}
               </p>
@@ -99,7 +103,7 @@ export default async function OpenSourcePage({ searchParams }: OpenSourcePagePro
 
                 {results.items.length === 0 && (
                   <div className="rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center text-sm text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
-                    No repositories match this filter yet.
+                    {t("openSource.emptyState")}
                   </div>
                 )}
               </div>

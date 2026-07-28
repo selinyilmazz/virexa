@@ -2,16 +2,18 @@ import { Header } from "@/components/layout/Header";
 import { CategoriesHero } from "@/components/categories/CategoriesHero";
 import { CategoryGrid } from "@/components/categories/CategoryGrid";
 import { categories } from "@/data/categories";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
-export default function CategoriesPage() {
+export default async function CategoriesPage() {
+  const { t } = await getServerTranslations();
   return (
     <>
       <Header />
       <main className="bg-[#f8fafc] px-5 py-8 sm:px-8">
         <div className="mx-auto max-w-[1820px]">
           <CategoriesHero
-            title="Explore Categories"
-            description="Browse Virexa's full coverage across technology, business, science, and more — find the topics that matter to you."
+            title={t("categoriesPage.title")}
+            description={t("categoriesPage.description")}
           />
 
           <div className="mt-8">

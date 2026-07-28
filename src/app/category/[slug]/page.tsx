@@ -14,6 +14,7 @@ import {
   getTopSourcesForCategory,
   searchCategoryArticles,
 } from "@/services/articles/article-read-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 const PAGE_SIZE = 8;
 
@@ -33,26 +34,51 @@ const PAGE_SIZE = 8;
  * "general" fallback `pulseTopic`, same as Cloud/Open Source's dedicated
  * top-level routes.
  */
-const EXPLORER_CATEGORIES: Record<string, { title: string; subtitle: string; pulseTopic: PulseTopicKey }> = {
-  ai: { title: "Artificial Intelligence", subtitle: "Latest AI news, model releases, research and developer updates.", pulseTopic: "ai" },
+/**
+ * `metaTitle`/`metaDescription` stay literal English (static `metadata`
+ * SEO text is deliberately left untranslated throughout this app - see
+ * every other route's `generateMetadata`). `titleKey`/`subtitleKey` are
+ * what actually render in the page - looked up via `t()` so the visible
+ * heading/subheading follow the active locale like every other Explorer
+ * route (`/most-read`, `/news`, `/cloud`, `/resources`, `/search`).
+ */
+const EXPLORER_CATEGORIES: Record<
+  string,
+  { titleKey: string; subtitleKey: string; metaTitle: string; metaDescription: string; pulseTopic: PulseTopicKey }
+> = {
+  ai: {
+    titleKey: "explorer.pages.aiCategory.title",
+    subtitleKey: "explorer.pages.aiCategory.subtitle",
+    metaTitle: "Artificial Intelligence",
+    metaDescription: "Latest AI news, model releases, research and developer updates.",
+    pulseTopic: "ai",
+  },
   programming: {
-    title: "Programming",
-    subtitle: "Latest programming news, frameworks, languages and developer tools.",
+    titleKey: "explorer.pages.programmingCategory.title",
+    subtitleKey: "explorer.pages.programmingCategory.subtitle",
+    metaTitle: "Programming",
+    metaDescription: "Latest programming news, frameworks, languages and developer tools.",
     pulseTopic: "programming",
   },
   security: {
-    title: "Security",
-    subtitle: "Security news, CVEs, vulnerabilities and industry advisories.",
+    titleKey: "explorer.pages.securityCategory.title",
+    subtitleKey: "explorer.pages.securityCategory.subtitle",
+    metaTitle: "Security",
+    metaDescription: "Security news, CVEs, vulnerabilities and industry advisories.",
     pulseTopic: "security",
   },
   games: {
-    title: "Games",
-    subtitle: "Console, PC, and industry gaming news - releases, studios, esports, and the tech behind the games.",
+    titleKey: "explorer.pages.gamesCategory.title",
+    subtitleKey: "explorer.pages.gamesCategory.subtitle",
+    metaTitle: "Games",
+    metaDescription: "Console, PC, and industry gaming news - releases, studios, esports, and the tech behind the games.",
     pulseTopic: "general",
   },
   "mobile-games": {
-    title: "Mobile Games",
-    subtitle: "Mobile gaming news - hit titles, studios, monetization trends, and the platforms powering play on the go.",
+    titleKey: "explorer.pages.mobileGamesCategory.title",
+    subtitleKey: "explorer.pages.mobileGamesCategory.subtitle",
+    metaTitle: "Mobile Games",
+    metaDescription: "Mobile gaming news - hit titles, studios, monetization trends, and the platforms powering play on the go.",
     pulseTopic: "general",
   },
 };
@@ -91,7 +117,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const explorerConfig = EXPLORER_CATEGORIES[slug];
   if (explorerConfig) {
-    return { title: `${explorerConfig.title} | VIREXA`, description: explorerConfig.subtitle };
+    return { title: `${explorerConfig.metaTitle} | VIREXA`, description: explorerConfig.metaDescription };
   }
   const category = getCategoryBySlug(slug);
   return category ? { title: `${category.name} | VIREXA`, description: category.description } : {};
@@ -99,14 +125,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
   const { slug } = await params;
+  const { t } = await getServerTranslations();
 
   const explorerConfig = EXPLORER_CATEGORIES[slug];
   if (explorerConfig) {
     const resolvedSearchParams = await searchParams;
     return (
       <ExplorerView
-        title={explorerConfig.title}
-        subtitle={explorerConfig.subtitle}
+        title={t(explorerConfig.titleKey)}
+        subtitle={t(explorerConfig.subtitleKey)}
         basePath={`/category/${slug}`}
         searchParams={resolvedSearchParams}
         defaultCategorySlug={slug}
@@ -165,9 +192,9 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                   <span className="text-4xl" aria-hidden="true">
                     📰
                   </span>
-                  <p className="mt-3 text-base font-semibold text-slate-700">No articles yet</p>
+                  <p className="mt-3 text-base font-semibold text-slate-700">{t("category.emptyState.title")}</p>
                   <p className="mt-1 max-w-sm text-sm text-slate-500">
-                    No {category.name.toLowerCase()} articles have been published yet. Check back soon.
+                    {t("category.emptyState.subtitle", { category: category.name.toLowerCase() })}
                   </p>
                 </div>
               ) : (

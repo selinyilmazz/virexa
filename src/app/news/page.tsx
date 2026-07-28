@@ -1,5 +1,6 @@
 import { ExplorerView } from "@/components/explorer/ExplorerView";
 import type { ExplorerSearchParams } from "@/lib/news-explorer/shared";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 export const metadata = {
   title: "News Explorer | VIREXA",
@@ -18,11 +19,12 @@ type NewsExplorerPageProps = {
  */
 export default async function NewsExplorerPage({ searchParams }: NewsExplorerPageProps) {
   const params = await searchParams;
+  const { t } = await getServerTranslations();
 
   return (
     <ExplorerView
-      title="News Explorer"
-      subtitle="Browse every article collected by VIREXA. Newest articles appear first."
+      title={t("explorer.pages.news.title")}
+      subtitle={t("explorer.pages.news.subtitle")}
       basePath="/news"
       searchParams={params}
     />

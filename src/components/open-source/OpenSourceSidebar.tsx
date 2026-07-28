@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { OPEN_SOURCE_PULSE } from "@/lib/open-source/pulse-data";
 import type { OpenSourceTopic } from "@/services/open-source/open-source-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 type OpenSourceSidebarProps = {
   topics: OpenSourceTopic[];
@@ -16,18 +17,19 @@ type OpenSourceSidebarProps = {
  * NOT reuse `ExplorerSidebar`/`DeveloperPulse` - those are the news-page
  * sidebar widgets this page is explicitly asked not to look like.
  */
-export function OpenSourceSidebar({ topics, activeTopic, buildTopicHref }: OpenSourceSidebarProps) {
+export async function OpenSourceSidebar({ topics, activeTopic, buildTopicHref }: OpenSourceSidebarProps) {
+  const { t } = await getServerTranslations();
   const visibleTopics = topics.slice(0, 8);
 
   return (
     <div className="flex flex-col gap-6">
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="text-base font-bold text-slate-950 dark:text-white">Explore</h2>
-        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Popular repository topics</p>
+        <h2 className="text-base font-bold text-slate-950 dark:text-white">{t("openSource.sidebar.exploreTitle")}</h2>
+        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{t("openSource.sidebar.exploreSubtitle")}</p>
 
         <ul className="mt-4 flex flex-col gap-1">
           {visibleTopics.length === 0 && (
-            <li className="text-sm text-slate-400 dark:text-slate-500">No topics yet.</li>
+            <li className="text-sm text-slate-400 dark:text-slate-500">{t("openSource.sidebar.noTopics")}</li>
           )}
           {visibleTopics.map((topic) => {
             const isActive = topic.name === activeTopic;
@@ -51,14 +53,14 @@ export function OpenSourceSidebar({ topics, activeTopic, buildTopicHref }: OpenS
         </ul>
 
         <Link href="/open-source/topics" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-[#2f67e8] hover:underline">
-          View all topics
+          {t("openSource.sidebar.viewAllTopics")}
           <span aria-hidden="true">→</span>
         </Link>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="text-base font-bold text-slate-950 dark:text-white">Open Source Pulse</h2>
-        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Quick ecosystem stats</p>
+        <h2 className="text-base font-bold text-slate-950 dark:text-white">{t("openSource.sidebar.pulseTitle")}</h2>
+        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{t("openSource.sidebar.pulseSubtitle")}</p>
 
         <ul className="mt-4 flex flex-col gap-3">
           {OPEN_SOURCE_PULSE.map((metric) => (
@@ -78,7 +80,7 @@ export function OpenSourceSidebar({ topics, activeTopic, buildTopicHref }: OpenS
           rel="noopener noreferrer"
           className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#2f67e8] hover:underline"
         >
-          View full analytics
+          {t("openSource.sidebar.viewFullAnalytics")}
           <span aria-hidden="true">→</span>
         </a>
       </section>

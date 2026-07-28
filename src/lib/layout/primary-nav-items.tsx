@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 
 export type NavItem = {
-  label: string;
+  /** Translation key (not literal text) - reuses existing keys from other localized surfaces (`nav.categories.ai`, `explorer.pages.*.title`, `openSource.hero.title`, `developerHub.landing.breadcrumbCurrent`) rather than duplicating strings, since every one of these labels already exists as a real page heading elsewhere. */
+  labelKey: string;
   href: string;
   icon: ReactNode;
   /** Pathname prefix this item is considered "active" for. Every item now has a dedicated page (see the unified-Explorer design), so every item is highlightable. */
@@ -28,7 +29,7 @@ const ICON_PROPS = {
  */
 export const primaryNavItems: NavItem[] = [
   {
-    label: "AI",
+    labelKey: "nav.categories.ai",
     href: "/category/ai",
     activePrefix: "/category/ai",
     icon: (
@@ -39,7 +40,7 @@ export const primaryNavItems: NavItem[] = [
     ),
   },
   {
-    label: "Programming",
+    labelKey: "explorer.pages.programmingCategory.title",
     href: "/category/programming",
     activePrefix: "/category/programming",
     icon: (
@@ -49,7 +50,7 @@ export const primaryNavItems: NavItem[] = [
     ),
   },
   {
-    label: "Cloud",
+    labelKey: "explorer.pages.cloud.title",
     href: "/cloud",
     activePrefix: "/cloud",
     icon: (
@@ -59,7 +60,7 @@ export const primaryNavItems: NavItem[] = [
     ),
   },
   {
-    label: "Security",
+    labelKey: "explorer.pages.securityCategory.title",
     href: "/category/security",
     activePrefix: "/category/security",
     icon: (
@@ -70,7 +71,7 @@ export const primaryNavItems: NavItem[] = [
     ),
   },
   {
-    label: "Open Source",
+    labelKey: "openSource.hero.title",
     href: "/open-source",
     activePrefix: "/open-source",
     icon: (
@@ -87,7 +88,7 @@ export const primaryNavItems: NavItem[] = [
     // `SEARCH_CATEGORY_SLUGS`) routed through `/category/[slug]`'s
     // `EXPLORER_CATEGORIES` map - same unified-Explorer treatment as
     // AI/Programming/Security, not the legacy `CategoryHeader` template.
-    label: "Games",
+    labelKey: "explorer.pages.gamesCategory.title",
     href: "/category/games",
     activePrefix: "/category/games",
     icon: (
@@ -100,7 +101,7 @@ export const primaryNavItems: NavItem[] = [
     ),
   },
   {
-    label: "Mobile Games",
+    labelKey: "explorer.pages.mobileGamesCategory.title",
     href: "/category/mobile-games",
     activePrefix: "/category/mobile-games",
     icon: (
@@ -112,7 +113,7 @@ export const primaryNavItems: NavItem[] = [
     ),
   },
   {
-    label: "Developer Hub",
+    labelKey: "developerHub.landing.breadcrumbCurrent",
     href: "/developer-hub",
     activePrefix: "/developer-hub",
     icon: (

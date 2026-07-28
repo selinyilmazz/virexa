@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { TopSourceStat } from "@/services/articles/article-read-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 type TopSourcesProps = {
   sources: TopSourceStat[];
@@ -15,8 +16,9 @@ type TopSourcesProps = {
  * `MATCH_LABELS`), so this doubles as genuine navigation instead of a
  * decorative label cloud.
  */
-export function TopSources({ sources }: TopSourcesProps) {
+export async function TopSources({ sources }: TopSourcesProps) {
   if (sources.length === 0) return null;
+  const { t } = await getServerTranslations();
 
   const maxCount = sources[0].count;
 
@@ -26,9 +28,9 @@ export function TopSources({ sources }: TopSourcesProps) {
       className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
     >
       <h2 id="top-sources-title" className="text-xl font-bold tracking-tight text-slate-950">
-        Top Sources
+        {t("category.sidebar.topSourcesTitle")}
       </h2>
-      <p className="mt-1 text-sm text-slate-500">Who's covering this category most</p>
+      <p className="mt-1 text-sm text-slate-500">{t("category.sidebar.topSourcesSubtitle")}</p>
 
       <ul className="mt-4 space-y-3">
         {sources.map((source) => (

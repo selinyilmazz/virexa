@@ -142,7 +142,7 @@ export function MobileNav() {
               <DrawerLink
                 key={item.href}
                 href={item.href}
-                label={item.label}
+                label={t(item.labelKey)}
                 icon={item.icon}
                 tabIndex={isOpen ? 0 : -1}
                 pathname={pathname}

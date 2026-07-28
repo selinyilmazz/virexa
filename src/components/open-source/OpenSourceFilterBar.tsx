@@ -1,9 +1,18 @@
 import Link from "next/link";
 import { OPEN_SOURCE_SORT_OPTIONS, type OpenSourceSort } from "@/services/open-source/open-source-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 type OpenSourceFilterBarProps = {
   activeSort: OpenSourceSort;
   buildSortHref: (sort: OpenSourceSort) => string;
+};
+
+const SORT_LABEL_KEYS: Record<OpenSourceSort, string> = {
+  trending: "openSource.filterBar.sortTrending",
+  new: "openSource.filterBar.sortNew",
+  stars: "openSource.filterBar.sortMostStarred",
+  forks: "openSource.filterBar.sortMostForked",
+  updated: "openSource.filterBar.sortRecentlyUpdated",
 };
 
 function GithubMark({ className = "size-4" }: { className?: string }) {
@@ -30,10 +39,11 @@ function ExternalLinkIcon({ className = "size-3.5" }: { className?: string }) {
  * Explorer page in this app already follows, so the active tab survives
  * a refresh/share and Back button works correctly.
  */
-export function OpenSourceFilterBar({ activeSort, buildSortHref }: OpenSourceFilterBarProps) {
+export async function OpenSourceFilterBar({ activeSort, buildSortHref }: OpenSourceFilterBarProps) {
+  const { t } = await getServerTranslations();
   return (
     <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3 dark:border-slate-800">
-      <nav aria-label="Sort repositories" className="flex flex-wrap items-center gap-1.5">
+      <nav aria-label={t("openSource.filterBar.sortAriaLabel")} className="flex flex-wrap items-center gap-1.5">
         {OPEN_SOURCE_SORT_OPTIONS.map((option) => {
           const isActive = option.value === activeSort;
           return (
@@ -47,7 +57,7 @@ export function OpenSourceFilterBar({ activeSort, buildSortHref }: OpenSourceFil
                   : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
               }`}
             >
-              {option.label}
+              {t(SORT_LABEL_KEYS[option.value])}
             </Link>
           );
         })}
@@ -60,7 +70,7 @@ export function OpenSourceFilterBar({ activeSort, buildSortHref }: OpenSourceFil
         className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-semibold text-slate-600 transition-colors duration-200 hover:border-[#2f67e8] hover:text-[#2f67e8] dark:border-slate-800 dark:text-slate-300"
       >
         <GithubMark />
-        View on GitHub
+        {t("openSource.filterBar.viewOnGithub")}
         <ExternalLinkIcon />
       </a>
     </div>

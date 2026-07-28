@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/layout/Header";
 import { LegalPageLayout } from "@/components/legal/LegalPageLayout";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 export const metadata: Metadata = {
   title: "About | Virexa",
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const { t } = await getServerTranslations();
   return (
     <>
       <Header />
       <LegalPageLayout
-        title="About Virexa"
-        description="AI-powered news, curated for people who don't have time to read everything."
+        title={t("legal.about.title")}
+        description={t("legal.about.description")}
       >
         <section>
           <h2 className="text-xl font-bold text-slate-950">Our Mission</h2>

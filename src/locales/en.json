@@ -100,6 +100,44 @@
       "title": "Search Results",
       "resultsFor": "Showing results for:",
       "emptyPrompt": "Enter a keyword in the search bar above to find articles, or use the filters to browse."
+    },
+    "pages": {
+      "mostRead": {
+        "title": "Most Read",
+        "subtitle": "The most-read articles on Virexa, ranked by real reader engagement."
+      },
+      "news": {
+        "title": "News Explorer",
+        "subtitle": "Browse every article collected by VIREXA. Newest articles appear first."
+      },
+      "cloud": {
+        "title": "Cloud",
+        "subtitle": "Cloud infrastructure, Kubernetes, AWS, Azure, GCP and DevOps news."
+      },
+      "resources": {
+        "title": "Developer Resources",
+        "subtitle": "Developer certifications, official learning resources and free opportunities."
+      },
+      "aiCategory": {
+        "title": "Artificial Intelligence",
+        "subtitle": "Latest AI news, model releases, research and developer updates."
+      },
+      "programmingCategory": {
+        "title": "Programming",
+        "subtitle": "Latest programming news, frameworks, languages and developer tools."
+      },
+      "securityCategory": {
+        "title": "Security",
+        "subtitle": "Security news, CVEs, vulnerabilities and industry advisories."
+      },
+      "gamesCategory": {
+        "title": "Games",
+        "subtitle": "Console, PC, and industry gaming news - releases, studios, esports, and the tech behind the games."
+      },
+      "mobileGamesCategory": {
+        "title": "Mobile Games",
+        "subtitle": "Mobile gaming news - hit titles, studios, monetization trends, and the platforms powering play on the go."
+      }
     }
   },
   "profile": {
@@ -313,13 +351,20 @@
     "closeSearch": "Close search",
     "home": "Home",
     "accountMenuAria": "Account menu",
-    "signInAria": "Sign in"
+    "signInAria": "Sign in",
+    "categoryNavAria": "Category navigation",
+    "notifications": {
+      "ariaLabel": "Notifications",
+      "emptyTitle": "You're all caught up",
+      "emptyDescription": "Breaking news and Developer Release alerts will show up here once you turn them on in Settings."
+    }
   },
   "footer": {
     "tagline": "Modern AI news aggregation and newsletter platform covering technology, business, AI, games and world news.",
     "categoriesHeading": "Categories",
     "viewAll": "View All →",
     "resourcesHeading": "Resources",
+    "rssFeed": "RSS Feed",
     "latestNews": "Latest News",
     "search": "Search",
     "allCategories": "All Categories",
@@ -341,7 +386,12 @@
     "retry": "Retry",
     "close": "Close",
     "readMore": "Read More",
-    "home": "Home"
+    "home": "Home",
+    "pagination": {
+      "ariaLabel": "Pagination",
+      "previousPage": "Previous page",
+      "nextPage": "Next page"
+    }
   },
   "article": {
     "notFound": {
@@ -385,6 +435,93 @@
       "onLinkedin": "Share on LinkedIn",
       "onWhatsapp": "Share on Whatsapp"
     }
+  },
+  "openSource": {
+    "hero": {
+      "title": "Open Source",
+      "subtitle": "Discover trending open source repositories from GitHub."
+    },
+    "breadcrumb": {
+      "current": "Open Source"
+    },
+    "filterBar": {
+      "sortAriaLabel": "Sort repositories",
+      "viewOnGithub": "View on GitHub",
+      "sortTrending": "Trending",
+      "sortNew": "New",
+      "sortMostStarred": "Most Starred",
+      "sortMostForked": "Most Forked",
+      "sortRecentlyUpdated": "Recently Updated"
+    },
+    "resultSingular": "{count} repository",
+    "resultPlural": "{count} repositories",
+    "filteredBy": "Filtered by {topic}",
+    "emptyState": "No repositories match this filter yet.",
+    "card": {
+      "organizationRepository": "Organization repository",
+      "license": "{license} License",
+      "updated": "Updated {date}"
+    },
+    "sidebar": {
+      "exploreTitle": "Explore",
+      "exploreSubtitle": "Popular repository topics",
+      "noTopics": "No topics yet.",
+      "viewAllTopics": "View all topics",
+      "pulseTitle": "Open Source Pulse",
+      "pulseSubtitle": "Quick ecosystem stats",
+      "viewFullAnalytics": "View full analytics"
+    },
+    "topicsPage": {
+      "breadcrumbCurrent": "Topics",
+      "title": "Repository Topics",
+      "subtitle": "Browse every topic across the repositories Virexa tracks, and jump straight to a filtered list.",
+      "searchLabel": "Search topics",
+      "searchPlaceholder": "Search topics...",
+      "topicSingular": "{count} topic",
+      "topicPlural": "{count} topics",
+      "matching": "Matching \"{query}\"",
+      "noTopicsMatch": "No topics match \"{query}\".",
+      "repoCountSingular": "{count} repo",
+      "repoCountPlural": "{count} repos"
+    }
+  },
+  "category": {
+    "emptyState": {
+      "title": "No articles yet",
+      "subtitle": "No {category} articles have been published yet. Check back soon."
+    },
+    "articlesFound": "{count} articles found",
+    "sidebar": {
+      "topSourcesTitle": "Top Sources",
+      "topSourcesSubtitle": "Who's covering this category most",
+      "relatedCategoriesTitle": "Related Categories",
+      "relatedCategoriesSubtitle": "Explore more of what's active right now",
+      "articlesCount": "{count} articles",
+      "recentlyAddedTitle": "Recently Added"
+    }
+  },
+  "legal": {
+    "about": {
+      "title": "About Virexa",
+      "description": "AI-powered news, curated for people who don't have time to read everything."
+    },
+    "cookies": {
+      "title": "Cookie Policy",
+      "description": "Last updated July 2026. How Virexa uses cookies and local browser storage."
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "description": "Last updated July 2026. This page explains what information Virexa handles and how."
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "description": "Last updated July 2026. Please read these terms before using Virexa."
+    }
+  },
+  "categoriesPage": {
+    "breadcrumbCurrent": "Categories",
+    "title": "Explore Categories",
+    "description": "Browse Virexa's full coverage across technology, business, science, and more — find the topics that matter to you."
   },
   "developerHub": {
     "title": "Developer Hub",
@@ -916,6 +1053,10 @@
     "notFoundTitle": "Page not found",
     "notFoundDescription": "The page you're looking for doesn't exist, or may have been moved.",
     "notFoundBack": "Back to Home"
+  },
+  "maintenance": {
+    "title": "We'll be right back",
+    "description": "Virexa is currently undergoing scheduled maintenance. Please check back shortly."
   },
   "admin": {
     "common": {

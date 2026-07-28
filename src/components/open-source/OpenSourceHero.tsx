@@ -1,3 +1,5 @@
+import { getServerTranslations } from "@/i18n/get-server-translations";
+
 /**
  * Open Source Explorer's hero - large title + one-line subtitle + a
  * single simple line-art icon. No illustration, no gradient artwork, no
@@ -5,7 +7,8 @@
  * hero) - explicit spec: "This page should NOT look like a normal news
  * category... focused, premium and minimal."
  */
-export function OpenSourceHero() {
+export async function OpenSourceHero() {
+  const { t } = await getServerTranslations();
   return (
     <div className="mt-6 flex items-start gap-4">
       <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
@@ -17,9 +20,9 @@ export function OpenSourceHero() {
         </svg>
       </span>
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-white">Open Source</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-white">{t("openSource.hero.title")}</h1>
         <p className="mt-1.5 max-w-2xl text-base leading-relaxed text-slate-500 dark:text-slate-400">
-          Discover trending open source repositories from GitHub.
+          {t("openSource.hero.subtitle")}
         </p>
       </div>
     </div>

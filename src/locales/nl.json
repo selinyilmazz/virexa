@@ -100,6 +100,44 @@
       "title": "Zoekresultaten",
       "resultsFor": "Resultaten voor:",
       "emptyPrompt": "Voer een trefwoord in de zoekbalk hierboven in om artikelen te vinden, of gebruik de filters om te bladeren."
+    },
+    "pages": {
+      "mostRead": {
+        "title": "Meest Gelezen",
+        "subtitle": "De meest gelezen artikelen op Virexa, gerangschikt op werkelijke lezersbetrokkenheid."
+      },
+      "news": {
+        "title": "Nieuwsoverzicht",
+        "subtitle": "Blader door elk artikel dat VIREXA heeft verzameld. Nieuwste artikelen eerst."
+      },
+      "cloud": {
+        "title": "Cloud",
+        "subtitle": "Cloudinfrastructuur, Kubernetes, AWS, Azure, GCP en DevOps-nieuws."
+      },
+      "resources": {
+        "title": "Ontwikkelaarsbronnen",
+        "subtitle": "Certificeringen voor ontwikkelaars, officiële leermiddelen en gratis kansen."
+      },
+      "aiCategory": {
+        "title": "Kunstmatige Intelligentie",
+        "subtitle": "Laatste AI-nieuws, modelreleases, onderzoek en ontwikkelaarsupdates."
+      },
+      "programmingCategory": {
+        "title": "Programmeren",
+        "subtitle": "Laatste programmeernieuws, frameworks, talen en ontwikkelaarstools."
+      },
+      "securityCategory": {
+        "title": "Beveiliging",
+        "subtitle": "Beveiligingsnieuws, CVE's, kwetsbaarheden en branche-adviezen."
+      },
+      "gamesCategory": {
+        "title": "Games",
+        "subtitle": "Console-, pc- en branchenieuws over gaming - releases, studio's, esports en de techniek achter de games."
+      },
+      "mobileGamesCategory": {
+        "title": "Mobiele Games",
+        "subtitle": "Nieuws over mobiel gamen - hittitels, studio's, monetisatietrends en de platforms die spelen onderweg mogelijk maken."
+      }
     }
   },
   "profile": {
@@ -313,13 +351,20 @@
     "closeSearch": "Zoeken sluiten",
     "home": "Home",
     "accountMenuAria": "Accountmenu",
-    "signInAria": "Inloggen"
+    "signInAria": "Inloggen",
+    "categoryNavAria": "Categorienavigatie",
+    "notifications": {
+      "ariaLabel": "Meldingen",
+      "emptyTitle": "Je bent helemaal bij",
+      "emptyDescription": "Breaking news en Developer Release-meldingen verschijnen hier zodra je ze inschakelt in Instellingen."
+    }
   },
   "footer": {
     "tagline": "Modern AI-nieuwsplatform en nieuwsbrief met dekking van technologie, zakelijk nieuws, AI, games en wereldnieuws.",
     "categoriesHeading": "Categorieën",
     "viewAll": "Alles bekijken →",
     "resourcesHeading": "Bronnen",
+    "rssFeed": "RSS-feed",
     "latestNews": "Laatste Nieuws",
     "search": "Zoeken",
     "allCategories": "Alle Categorieën",
@@ -341,7 +386,12 @@
     "loading": "Laden...",
     "retry": "Opnieuw proberen",
     "close": "Sluiten",
-    "readMore": "Lees meer"
+    "readMore": "Lees meer",
+    "pagination": {
+      "ariaLabel": "Paginering",
+      "previousPage": "Vorige pagina",
+      "nextPage": "Volgende pagina"
+    }
   },
   "article": {
     "notFound": {
@@ -385,6 +435,93 @@
       "onLinkedin": "Delen op LinkedIn",
       "onWhatsapp": "Delen op Whatsapp"
     }
+  },
+  "openSource": {
+    "hero": {
+      "title": "Open Source",
+      "subtitle": "Ontdek trending open source repositories van GitHub."
+    },
+    "breadcrumb": {
+      "current": "Open Source"
+    },
+    "filterBar": {
+      "sortAriaLabel": "Repositories sorteren",
+      "viewOnGithub": "Bekijk op GitHub",
+      "sortTrending": "Trending",
+      "sortNew": "Nieuw",
+      "sortMostStarred": "Meest sterren",
+      "sortMostForked": "Meest geforkt",
+      "sortRecentlyUpdated": "Recent bijgewerkt"
+    },
+    "resultSingular": "{count} repository",
+    "resultPlural": "{count} repositories",
+    "filteredBy": "Gefilterd op {topic}",
+    "emptyState": "Geen repositories komen overeen met dit filter.",
+    "card": {
+      "organizationRepository": "Organisatierepository",
+      "license": "{license}-licentie",
+      "updated": "Bijgewerkt {date}"
+    },
+    "sidebar": {
+      "exploreTitle": "Verkennen",
+      "exploreSubtitle": "Populaire repository-onderwerpen",
+      "noTopics": "Nog geen onderwerpen.",
+      "viewAllTopics": "Alle onderwerpen bekijken",
+      "pulseTitle": "Open Source Pulse",
+      "pulseSubtitle": "Snelle ecosysteemstatistieken",
+      "viewFullAnalytics": "Volledige analyse bekijken"
+    },
+    "topicsPage": {
+      "breadcrumbCurrent": "Onderwerpen",
+      "title": "Repository-onderwerpen",
+      "subtitle": "Blader door elk onderwerp binnen de repositories die Virexa volgt en spring direct naar een gefilterde lijst.",
+      "searchLabel": "Onderwerpen zoeken",
+      "searchPlaceholder": "Onderwerpen zoeken...",
+      "topicSingular": "{count} onderwerp",
+      "topicPlural": "{count} onderwerpen",
+      "matching": "Overeenkomend met \"{query}\"",
+      "noTopicsMatch": "Geen onderwerpen komen overeen met \"{query}\".",
+      "repoCountSingular": "{count} repo",
+      "repoCountPlural": "{count} repo's"
+    }
+  },
+  "category": {
+    "emptyState": {
+      "title": "Nog geen artikelen",
+      "subtitle": "Er zijn nog geen {category}-artikelen gepubliceerd. Kom binnenkort terug."
+    },
+    "articlesFound": "{count} artikelen gevonden",
+    "sidebar": {
+      "topSourcesTitle": "Topbronnen",
+      "topSourcesSubtitle": "Wie deze categorie het meest dekt",
+      "relatedCategoriesTitle": "Gerelateerde Categorieën",
+      "relatedCategoriesSubtitle": "Ontdek meer van wat nu actief is",
+      "articlesCount": "{count} artikelen",
+      "recentlyAddedTitle": "Recent Toegevoegd"
+    }
+  },
+  "legal": {
+    "about": {
+      "title": "Over Virexa",
+      "description": "AI-gestuurd nieuws, samengesteld voor mensen die geen tijd hebben om alles te lezen."
+    },
+    "cookies": {
+      "title": "Cookiebeleid",
+      "description": "Laatst bijgewerkt juli 2026. Hoe Virexa cookies en lokale browseropslag gebruikt."
+    },
+    "privacy": {
+      "title": "Privacybeleid",
+      "description": "Laatst bijgewerkt juli 2026. Deze pagina legt uit welke informatie Virexa verwerkt en hoe."
+    },
+    "terms": {
+      "title": "Gebruiksvoorwaarden",
+      "description": "Laatst bijgewerkt juli 2026. Lees deze voorwaarden voordat je Virexa gebruikt."
+    }
+  },
+  "categoriesPage": {
+    "breadcrumbCurrent": "Categorieën",
+    "title": "Verken Categorieën",
+    "description": "Blader door de volledige dekking van Virexa op het gebied van technologie, zaken, wetenschap en meer — vind de onderwerpen die voor jou belangrijk zijn."
   },
   "developerHub": {
     "title": "Ontwikkelaarscentrum",
@@ -916,6 +1053,10 @@
     "notFoundTitle": "Pagina niet gevonden",
     "notFoundDescription": "De pagina die je zoekt bestaat niet, of is mogelijk verplaatst.",
     "notFoundBack": "Terug naar Home"
+  },
+  "maintenance": {
+    "title": "We zijn zo terug",
+    "description": "Virexa ondergaat momenteel gepland onderhoud. Kom binnenkort terug."
   },
   "admin": {
     "common": {

@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/layout/Header";
 import { LegalPageLayout } from "@/components/legal/LegalPageLayout";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 export const metadata: Metadata = {
   title: "Cookie Policy | Virexa",
 };
 
-export default function CookiesPage() {
+export default async function CookiesPage() {
+  const { t } = await getServerTranslations();
   return (
     <>
       <Header />
       <LegalPageLayout
-        title="Cookie Policy"
-        description="Last updated July 2026. How Virexa uses cookies and local browser storage."
+        title={t("legal.cookies.title")}
+        description={t("legal.cookies.description")}
       >
         <section>
           <h2 className="text-xl font-bold text-slate-950">What Are Cookies</h2>

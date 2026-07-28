@@ -100,6 +100,44 @@
       "title": "Arama Sonuçları",
       "resultsFor": "Şunun için sonuçlar gösteriliyor:",
       "emptyPrompt": "Makale bulmak için yukarıdaki arama çubuğuna bir anahtar kelime girin veya göz atmak için filtreleri kullanın."
+    },
+    "pages": {
+      "mostRead": {
+        "title": "En Çok Okunanlar",
+        "subtitle": "Virexa'da gerçek okuyucu etkileşimine göre sıralanmış en çok okunan makaleler."
+      },
+      "news": {
+        "title": "Haber Gezgini",
+        "subtitle": "VIREXA'nın topladığı her makaleye göz atın. En yeni makaleler önce gelir."
+      },
+      "cloud": {
+        "title": "Bulut",
+        "subtitle": "Bulut altyapısı, Kubernetes, AWS, Azure, GCP ve DevOps haberleri."
+      },
+      "resources": {
+        "title": "Geliştirici Kaynakları",
+        "subtitle": "Geliştirici sertifikaları, resmi öğrenme kaynakları ve ücretsiz fırsatlar."
+      },
+      "aiCategory": {
+        "title": "Yapay Zeka",
+        "subtitle": "En son yapay zeka haberleri, model sürümleri, araştırmalar ve geliştirici güncellemeleri."
+      },
+      "programmingCategory": {
+        "title": "Programlama",
+        "subtitle": "En son programlama haberleri, framework'ler, diller ve geliştirici araçları."
+      },
+      "securityCategory": {
+        "title": "Güvenlik",
+        "subtitle": "Güvenlik haberleri, CVE'ler, güvenlik açıkları ve sektör tavsiyeleri."
+      },
+      "gamesCategory": {
+        "title": "Oyunlar",
+        "subtitle": "Konsol, PC ve sektör oyun haberleri - çıkışlar, stüdyolar, e-spor ve oyunların arkasındaki teknoloji."
+      },
+      "mobileGamesCategory": {
+        "title": "Mobil Oyunlar",
+        "subtitle": "Mobil oyun haberleri - hit oyunlar, stüdyolar, gelir modeli trendleri ve hareket halindeyken oyunu mümkün kılan platformlar."
+      }
     }
   },
   "profile": {
@@ -313,13 +351,20 @@
     "closeSearch": "Aramayı kapat",
     "home": "Ana Sayfa",
     "accountMenuAria": "Hesap menüsü",
-    "signInAria": "Giriş yap"
+    "signInAria": "Giriş yap",
+    "categoryNavAria": "Kategori gezinmesi",
+    "notifications": {
+      "ariaLabel": "Bildirimler",
+      "emptyTitle": "Her şey güncel",
+      "emptyDescription": "Son dakika haberleri ve Geliştirici Sürüm uyarıları, Ayarlar'dan açtığınızda burada görünecek."
+    }
   },
   "footer": {
     "tagline": "Teknoloji, iş dünyası, yapay zeka, oyunlar ve dünya haberlerini kapsayan modern bir yapay zeka haber toplama ve bülten platformu.",
     "categoriesHeading": "Kategoriler",
     "viewAll": "Tümünü Gör →",
     "resourcesHeading": "Kaynaklar",
+    "rssFeed": "RSS Beslemesi",
     "latestNews": "Son Haberler",
     "search": "Ara",
     "allCategories": "Tüm Kategoriler",
@@ -341,7 +386,12 @@
     "loading": "Yükleniyor...",
     "retry": "Tekrar Dene",
     "close": "Kapat",
-    "readMore": "Devamını Oku"
+    "readMore": "Devamını Oku",
+    "pagination": {
+      "ariaLabel": "Sayfalama",
+      "previousPage": "Önceki sayfa",
+      "nextPage": "Sonraki sayfa"
+    }
   },
   "article": {
     "notFound": {
@@ -385,6 +435,93 @@
       "onLinkedin": "LinkedIn'de Paylaş",
       "onWhatsapp": "Whatsapp'ta Paylaş"
     }
+  },
+  "openSource": {
+    "hero": {
+      "title": "Açık Kaynak",
+      "subtitle": "GitHub'daki trend açık kaynak depoları keşfedin."
+    },
+    "breadcrumb": {
+      "current": "Açık Kaynak"
+    },
+    "filterBar": {
+      "sortAriaLabel": "Depoları sırala",
+      "viewOnGithub": "GitHub'da Görüntüle",
+      "sortTrending": "Trend",
+      "sortNew": "Yeni",
+      "sortMostStarred": "En Çok Yıldızlı",
+      "sortMostForked": "En Çok Forklanan",
+      "sortRecentlyUpdated": "Son Güncellenen"
+    },
+    "resultSingular": "{count} depo",
+    "resultPlural": "{count} depo",
+    "filteredBy": "{topic} ile filtrelendi",
+    "emptyState": "Bu filtreyle eşleşen depo yok.",
+    "card": {
+      "organizationRepository": "Organizasyon deposu",
+      "license": "{license} Lisansı",
+      "updated": "Güncellendi: {date}"
+    },
+    "sidebar": {
+      "exploreTitle": "Keşfet",
+      "exploreSubtitle": "Popüler depo konuları",
+      "noTopics": "Henüz konu yok.",
+      "viewAllTopics": "Tüm konuları görüntüle",
+      "pulseTitle": "Açık Kaynak Nabzı",
+      "pulseSubtitle": "Hızlı ekosistem istatistikleri",
+      "viewFullAnalytics": "Tüm analizleri görüntüle"
+    },
+    "topicsPage": {
+      "breadcrumbCurrent": "Konular",
+      "title": "Depo Konuları",
+      "subtitle": "Virexa'nın takip ettiği depolardaki her konuya göz atın ve doğrudan filtrelenmiş bir listeye geçin.",
+      "searchLabel": "Konu ara",
+      "searchPlaceholder": "Konu ara...",
+      "topicSingular": "{count} konu",
+      "topicPlural": "{count} konu",
+      "matching": "\"{query}\" ile eşleşiyor",
+      "noTopicsMatch": "\"{query}\" ile eşleşen konu yok.",
+      "repoCountSingular": "{count} depo",
+      "repoCountPlural": "{count} depo"
+    }
+  },
+  "category": {
+    "emptyState": {
+      "title": "Henüz makale yok",
+      "subtitle": "Henüz {category} makalesi yayınlanmadı. Yakında tekrar kontrol edin."
+    },
+    "articlesFound": "{count} makale bulundu",
+    "sidebar": {
+      "topSourcesTitle": "En İyi Kaynaklar",
+      "topSourcesSubtitle": "Bu kategoriyi en çok kim kapsıyor",
+      "relatedCategoriesTitle": "İlgili Kategoriler",
+      "relatedCategoriesSubtitle": "Şu anda aktif olan diğer içerikleri keşfedin",
+      "articlesCount": "{count} makale",
+      "recentlyAddedTitle": "Son Eklenenler"
+    }
+  },
+  "legal": {
+    "about": {
+      "title": "Virexa Hakkında",
+      "description": "Her şeyi okumaya vakti olmayan kişiler için derlenmiş, yapay zeka destekli haberler."
+    },
+    "cookies": {
+      "title": "Çerez Politikası",
+      "description": "Son güncelleme Temmuz 2026. Virexa'nın çerezleri ve yerel tarayıcı depolamasını nasıl kullandığı."
+    },
+    "privacy": {
+      "title": "Gizlilik Politikası",
+      "description": "Son güncelleme Temmuz 2026. Bu sayfa Virexa'nın hangi bilgileri nasıl işlediğini açıklar."
+    },
+    "terms": {
+      "title": "Kullanım Şartları",
+      "description": "Son güncelleme Temmuz 2026. Virexa'yı kullanmadan önce lütfen bu şartları okuyun."
+    }
+  },
+  "categoriesPage": {
+    "breadcrumbCurrent": "Kategoriler",
+    "title": "Kategorileri Keşfet",
+    "description": "Virexa'nın teknoloji, iş, bilim ve daha fazlası genelindeki tam kapsamına göz atın — sizin için önemli olan konuları bulun."
   },
   "developerHub": {
     "title": "Geliştirici Merkezi",
@@ -916,6 +1053,10 @@
     "notFoundTitle": "Sayfa bulunamadı",
     "notFoundDescription": "Aradığın sayfa mevcut değil ya da taşınmış olabilir.",
     "notFoundBack": "Anasayfaya Dön"
+  },
+  "maintenance": {
+    "title": "Birazdan döneceğiz",
+    "description": "Virexa şu anda planlı bakımda. Lütfen kısa süre sonra tekrar kontrol edin."
   },
   "admin": {
     "common": {

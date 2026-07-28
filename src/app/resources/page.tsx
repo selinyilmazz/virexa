@@ -1,5 +1,6 @@
 import { ExplorerView } from "@/components/explorer/ExplorerView";
 import type { ExplorerSearchParams } from "@/lib/news-explorer/shared";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 export const metadata = {
   title: "Developer Resources | VIREXA",
@@ -21,11 +22,12 @@ type ResourcesPageProps = {
  */
 export default async function ResourcesPage({ searchParams }: ResourcesPageProps) {
   const params = await searchParams;
+  const { t } = await getServerTranslations();
 
   return (
     <ExplorerView
-      title="Developer Resources"
-      subtitle="Developer certifications, official learning resources and free opportunities."
+      title={t("explorer.pages.resources.title")}
+      subtitle={t("explorer.pages.resources.subtitle")}
       basePath="/resources"
       searchParams={params}
       resourcesOnly

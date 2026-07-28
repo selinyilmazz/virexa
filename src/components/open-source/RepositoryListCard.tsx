@@ -3,6 +3,7 @@ import { resolveBrandVisual } from "@/components/developer-hub/brand-icons";
 import { LANGUAGE_DOT_COLORS } from "@/components/developer-hub/CatalogCard";
 import { RepoBookmarkButton } from "@/components/developer-hub/RepoBookmarkButton";
 import type { OpenSourceRepoItem } from "@/services/open-source/open-source-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 function formatStat(value: number): string {
   return Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(value);
@@ -48,9 +49,9 @@ function ForkIcon({ className = "size-3.5" }: { className?: string }) {
   );
 }
 
-function VerifiedBadge() {
+function VerifiedBadge({ ariaLabel }: { ariaLabel: string }) {
   return (
-    <svg aria-label="Organization repository" className="size-4 shrink-0 text-slate-500" viewBox="0 0 24 24">
+    <svg aria-label={ariaLabel} className="size-4 shrink-0 text-slate-500" viewBox="0 0 24 24">
       <path
         fill="currentColor"
         d="m12 2.5 2.1 1.9 2.8-.4 1 2.6 2.6 1-.4 2.8L22 12l-1.9 2.1.4 2.8-2.6 1-1 2.6-2.8-.4L12 21.5l-2.1-1.9-2.8.4-1-2.6-2.6-1 .4-2.8L2 12l1.9-2.1-.4-2.8 2.6-1 1-2.6 2.8.4Z"
@@ -76,7 +77,8 @@ type RepositoryListCardProps = {
  * on the anchor, same pattern as `NewsExplorerCard`) - the bookmark
  * button sits above it (`z-10`) so it stays independently clickable.
  */
-export function RepositoryListCard({ repo }: RepositoryListCardProps) {
+export async function RepositoryListCard({ repo }: RepositoryListCardProps) {
+  const { t } = await getServerTranslations();
   const visual = resolveBrandVisual(repo.brandKey);
   const isVerified = VERIFIED_OWNERS.has(repo.owner.toLowerCase());
 
@@ -102,7 +104,7 @@ export function RepositoryListCard({ repo }: RepositoryListCardProps) {
               <span className="text-slate-400 dark:text-slate-500">{repo.owner} / </span>
               {repo.repoName}
             </Link>
-            {isVerified && <VerifiedBadge />}
+            {isVerified && <VerifiedBadge ariaLabel={t("openSource.card.organizationRepository")} />}
           </h3>
           <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">{repo.description}</p>
 
@@ -115,7 +117,7 @@ export function RepositoryListCard({ repo }: RepositoryListCardProps) {
             )}
             {repo.license && (
               <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                {repo.license} License
+                {t("openSource.card.license", { license: repo.license })}
               </span>
             )}
           </div>
@@ -152,7 +154,7 @@ export function RepositoryListCard({ repo }: RepositoryListCardProps) {
             {formatStat(repo.forks)}
           </span>
         </div>
-        <span className="whitespace-nowrap text-xs text-slate-400 dark:text-slate-500">Updated {repo.updatedRelative}</span>
+        <span className="whitespace-nowrap text-xs text-slate-400 dark:text-slate-500">{t("openSource.card.updated", { date: repo.updatedRelative })}</span>
       </div>
     </article>
   );

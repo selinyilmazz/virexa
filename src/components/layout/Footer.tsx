@@ -104,7 +104,7 @@ export async function Footer() {
             <ul className="mt-4 space-y-3">
               <li>
                 <a href="#" className="text-sm text-slate-500 transition-colors hover:text-[#2f67e8]">
-                  RSS Feed
+                  {t("footer.rssFeed")}
                 </a>
               </li>
               <li>
