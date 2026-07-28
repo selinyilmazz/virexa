@@ -195,6 +195,11 @@
       "usernameFormat": "Gebruikersnaam mag alleen letters, cijfers, punten en underscores bevatten.",
       "bioMax": "Bio mag maximaal 500 tekens bevatten.",
       "countryMax": "Landnaam mag maximaal 56 tekens bevatten."
+    },
+    "settings": {
+      "languageRequired": "Selecteer een taal.",
+      "timezoneRequired": "Selecteer een tijdzone.",
+      "tooManyCategories": "Te veel categorieën geselecteerd."
     }
   },
   "bookmarks": {

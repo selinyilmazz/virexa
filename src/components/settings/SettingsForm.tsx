@@ -16,7 +16,7 @@ import {
   type UserSettings,
 } from "@/lib/settings";
 import { saveProfile, useProfile } from "@/lib/profile";
-import { settingsSchema } from "@/lib/validation/settings-schema";
+import { createSettingsSchema } from "@/lib/validation/settings-schema";
 import { formatZodError } from "@/lib/validation/format-zod-error";
 import { categories } from "@/data/categories";
 import { countryOptions } from "@/data/countries";
@@ -155,7 +155,7 @@ export function SettingsForm() {
   }
 
   async function handleSave() {
-    const result = settingsSchema.safeParse(settings);
+    const result = createSettingsSchema(t).safeParse(settings);
     if (!result.success) {
       showToast(formatZodError(result.error, t), "error", 4000);
       return;

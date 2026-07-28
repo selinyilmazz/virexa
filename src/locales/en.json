@@ -195,6 +195,11 @@
       "usernameFormat": "Username can only contain letters, numbers, dots and underscores.",
       "bioMax": "Bio must be 500 characters or fewer.",
       "countryMax": "Country name must be 56 characters or fewer."
+    },
+    "settings": {
+      "languageRequired": "Select a language.",
+      "timezoneRequired": "Select a timezone.",
+      "tooManyCategories": "Too many categories selected."
     }
   },
   "bookmarks": {

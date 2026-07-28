@@ -195,6 +195,11 @@
       "usernameFormat": "Kullanıcı adı yalnızca harf, rakam, nokta ve alt çizgi içerebilir.",
       "bioMax": "Biyografi en fazla 500 karakter olmalıdır.",
       "countryMax": "Ülke adı en fazla 56 karakter olmalıdır."
+    },
+    "settings": {
+      "languageRequired": "Bir dil seçin.",
+      "timezoneRequired": "Bir saat dilimi seçin.",
+      "tooManyCategories": "Çok fazla kategori seçildi."
     }
   },
   "bookmarks": {
