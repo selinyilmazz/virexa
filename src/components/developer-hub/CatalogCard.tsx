@@ -194,7 +194,7 @@ export function CatalogCard({ item, t }: CatalogCardProps) {
               <ForkIcon />
               {formatStat(item.forks)}
             </span>
-            <span>{t("developerHub.card.updated", { relative: item.updatedRelative })}</span>
+            {item.updatedRelative && <span>{t("developerHub.card.updated", { relative: item.updatedRelative })}</span>}
           </div>
         ) : (
           <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">

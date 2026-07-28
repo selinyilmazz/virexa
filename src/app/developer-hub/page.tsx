@@ -391,7 +391,9 @@ export default async function DeveloperHubPage() {
                       <div className="flex items-center gap-3 text-xs text-slate-500">
                         <span>⭐ {formatStat(item.stars)}</span>
                         <span>⑂ {formatStat(item.forks)}</span>
-                        <span className="ml-auto">{t("developerHub.card.updated", { relative: item.updatedRelative })}</span>
+                        {item.updatedRelative && (
+                          <span className="ml-auto">{t("developerHub.card.updated", { relative: item.updatedRelative })}</span>
+                        )}
                       </div>
                     </a>
                   );

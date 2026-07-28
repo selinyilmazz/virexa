@@ -140,7 +140,7 @@ export function AdminArticlesTable({ items }: AdminArticlesTableProps) {
             confirmTitle={t("admin.articles.recalculateTitle")}
             confirmDescription={t("admin.articles.recalculateDescription", { count: selectedArray.length })}
             confirmLabel={t("admin.articles.refresh")}
-            successMessage={(json) => t("admin.articles.refreshedSuccess", { count: json.updated ?? selectedArray.length })}
+            successMessage={(json) => t("admin.articles.refreshedSuccess", { count: typeof json.updated === "number" ? json.updated : selectedArray.length })}
             disabled={selectedIds.size === 0}
             className="!px-3 !py-1.5 text-sm"
           />

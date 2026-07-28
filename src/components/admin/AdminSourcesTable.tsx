@@ -107,7 +107,7 @@ export function AdminSourcesTable({ items }: AdminSourcesTableProps) {
             confirmTitle={t("admin.sources.activateConfirmTitle")}
             confirmDescription={t("admin.sources.activateConfirmDescription", { count: selectedArray.length })}
             confirmLabel={t("admin.sources.activate")}
-            successMessage={(json) => t("admin.sources.activatedSuccess", { count: json.updated ?? selectedArray.length })}
+            successMessage={(json) => t("admin.sources.activatedSuccess", { count: typeof json.updated === "number" ? json.updated : selectedArray.length })}
             disabled={selectedIds.size === 0}
             className="!px-3 !py-1.5 text-xs"
           />
@@ -118,7 +118,7 @@ export function AdminSourcesTable({ items }: AdminSourcesTableProps) {
             confirmTitle={t("admin.sources.deactivateConfirmTitle")}
             confirmDescription={t("admin.sources.deactivateConfirmDescription", { count: selectedArray.length })}
             confirmLabel={t("admin.sources.deactivate")}
-            successMessage={(json) => t("admin.sources.deactivatedSuccess", { count: json.updated ?? selectedArray.length })}
+            successMessage={(json) => t("admin.sources.deactivatedSuccess", { count: typeof json.updated === "number" ? json.updated : selectedArray.length })}
             variant="warning"
             disabled={selectedIds.size === 0}
             className="!px-3 !py-1.5 text-xs"
@@ -140,7 +140,7 @@ export function AdminSourcesTable({ items }: AdminSourcesTableProps) {
               confirmTitle={t("admin.sources.updateTrustConfirmTitle")}
               confirmDescription={t("admin.sources.updateTrustConfirmDescription", { count: selectedArray.length, score: trustInput })}
               confirmLabel={t("admin.common.update")}
-              successMessage={(json) => t("admin.sources.updatedSuccess", { count: json.updated ?? selectedArray.length })}
+              successMessage={(json) => t("admin.sources.updatedSuccess", { count: typeof json.updated === "number" ? json.updated : selectedArray.length })}
               disabled={selectedIds.size === 0 || trustInput.trim() === ""}
               className="!px-3 !py-1.5 text-xs"
             />
