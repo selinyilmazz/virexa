@@ -266,6 +266,111 @@
       "onWhatsapp": "Whatsapp'ta Paylaş"
     }
   },
+  "developerHub": {
+    "title": "Geliştirici Merkezi",
+    "resourceType": {
+      "certification": "Sertifikalar",
+      "course": "Kurslar",
+      "learning-path": "Öğrenme Yolları",
+      "github-repo": "GitHub Depoları",
+      "developer-tool": "Geliştirici Araçları",
+      "roadmap": "Yol Haritaları",
+      "cheat-sheet": "Hızlı Başvuru Kartları"
+    },
+    "resourceTypeCta": {
+      "certification": "Sertifikayı Görüntüle",
+      "course": "Kursa Başla",
+      "learning-path": "Yola Başla",
+      "github-repo": "Depoyu Aç",
+      "developer-tool": "Aracı Ziyaret Et",
+      "roadmap": "Yol Haritasını Aç",
+      "cheat-sheet": "Kartı Görüntüle"
+    },
+    "difficulty": {
+      "beginner": "Başlangıç",
+      "intermediate": "Orta",
+      "advanced": "İleri"
+    },
+    "price": {
+      "free": "Ücretsiz",
+      "paid": "Ücretli"
+    },
+    "filters": {
+      "heading": "Filtreler",
+      "clearAll": "Tümünü Temizle",
+      "type": "Tür",
+      "difficulty": "Zorluk",
+      "pricing": "Fiyat"
+    },
+    "sort": {
+      "label": "Sırala",
+      "featured": "Öne Çıkanlar",
+      "nameAz": "İsim (A-Z)"
+    },
+    "bookmark": {
+      "remove": "Yer imlerinden kaldır",
+      "save": "{type} Kaydet"
+    },
+    "card": {
+      "official": "Resmi",
+      "license": "{license} Lisansı",
+      "updated": "{relative} güncellendi"
+    },
+    "results": {
+      "emptyTitle": "Bu filtrelerle eşleşen kaynak yok",
+      "emptyMessage": "Filtrelerinizi genişletin veya aramayı temizleyin."
+    },
+    "explorer": {
+      "eyebrow": "Geliştirici Merkezi",
+      "resultSingular": "{count} sonuç",
+      "resultPlural": "{count} sonuç",
+      "page": "Sayfa {page} / {totalPages}"
+    },
+    "landing": {
+      "breadcrumbCurrent": "Geliştirici Merkezi",
+      "heroDescription": "Derlenmiş geliştirici kaynakları, sertifikalar, GitHub depoları, öğrenme yolları ve araçlarla öğrenin, geliştirin ve büyüyün.",
+      "trustPillUpdated": "Her Gün Güncellenir",
+      "trustPillCurated": "Derlenmiş Kaynaklar",
+      "trustPillFreePremium": "Ücretsiz ve Premium İçerik",
+      "navAllResources": "Tüm Kaynaklar",
+      "navGithubExplorer": "GitHub Gezgini",
+      "navReleases": "Sürümler",
+      "laptopScreenSubtitle": "Bugünün Seçkisi",
+      "popularCategoriesHeading": "Popüler Kategoriler",
+      "categoryCertificationsDescription": "Sektörde tanınan sertifikalar",
+      "categoryCoursesDescription": "Önde gelen sağlayıcılardan çevrimiçi kurslar",
+      "categoryLearningPathsDescription": "Yapılandırılmış, resmi öğrenme yolları",
+      "categoryGithubExplorerTitle": "GitHub Gezgini",
+      "categoryGithubExplorerDescription": "Canlı açık kaynak depo verileri",
+      "categoryDeveloperToolsDescription": "Popüler, ücretsiz geliştirici araçları",
+      "categoryRoadmapsDescription": "Adım adım geliştirici rehberleri",
+      "resourcesCount": "{count} kaynak",
+      "trendingGithubHeading": "Trend GitHub Depoları",
+      "viewAllRepositories": "Tüm depoları görüntüle",
+      "resourceTypeNavAriaLabel": "Kaynak türü",
+      "scrollLeft": "Sola kaydır",
+      "scrollRight": "Sağa kaydır"
+    },
+    "pages": {
+      "certifications": { "title": "Sertifikalar", "subtitle": "AWS, Microsoft, Google Cloud, HashiCorp, GitHub ve daha fazlasından sektörde tanınan sertifikalar." },
+      "courses": { "title": "Kurslar", "subtitle": "freeCodeCamp, Coursera, AWS Skill Builder, Microsoft Learn ve edX'ten yapılandırılmış kurslar." },
+      "learningPaths": { "title": "Öğrenme Yolları", "subtitle": "Microsoft Learn, Google Cloud, AWS ve MDN Web Docs'tan resmi, yapılandırılmış öğrenme yolları." },
+      "tools": { "title": "Geliştirici Araçları", "subtitle": "Günlük geliştirme için gerekli, ücretsiz araçlar - editörler, API istemcileri, terminaller ve daha fazlası." },
+      "roadmaps": { "title": "Yol Haritaları", "subtitle": "roadmap.sh'ten frontend, backend, DevOps, AI veya bulut mühendisi olmak için adım adım rehberler." },
+      "cheatSheets": { "title": "Hızlı Başvuru Kartları", "subtitle": "Her gün kullandığınız araçlar ve diller için hızlı başvuru kartları." }
+    },
+    "continueLearning": {
+      "heading": "Öğrenmeye Devam Et",
+      "subtitle": "Kaldığınız yerden devam edin",
+      "visitedPrefix": "{relative} ziyaret edildi",
+      "resume": "Devam Et",
+      "relativeJustNow": "Az önce",
+      "relativeMinutes": "{minutes}dk önce",
+      "relativeHours": "{hours}sa önce",
+      "relativeDays": "{days}g önce",
+      "relativeWeeks": "{weeks}h önce"
+    }
+  },
   "auth": {
     "signIn": {
       "metaTitle": "Giriş Yap | Virexa",

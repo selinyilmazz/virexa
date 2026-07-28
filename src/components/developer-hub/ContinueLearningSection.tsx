@@ -4,19 +4,21 @@ import { useEffect, useState } from "react";
 import { resolveBrandVisual } from "@/components/developer-hub/brand-icons";
 import { useAuth } from "@/hooks/useAuth";
 import { getContinueLearning, type ContinueLearningEntry } from "@/lib/developer-hub/continue-learning";
+import { useTranslations } from "@/i18n/i18n-provider";
+import type { TFunction } from "@/i18n/translate";
 
 /** Coarse "2h ago" / "3d ago" formatting for a real `visitedAt` ISO timestamp - deliberately relative and vague rather than a fabricated precise claim like "Completed yesterday". */
-function formatVisitedRelative(iso: string): string {
+function formatVisitedRelative(iso: string, t: TFunction): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const minutes = Math.floor(diffMs / 60_000);
-  if (minutes < 1) return "Just now";
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return t("developerHub.continueLearning.relativeJustNow");
+  if (minutes < 60) return t("developerHub.continueLearning.relativeMinutes", { minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t("developerHub.continueLearning.relativeHours", { hours });
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
+  if (days < 7) return t("developerHub.continueLearning.relativeDays", { days });
   const weeks = Math.floor(days / 7);
-  return `${weeks}w ago`;
+  return t("developerHub.continueLearning.relativeWeeks", { weeks });
 }
 
 function ResumeArrowIcon({ className = "size-3.5" }: { className?: string }) {
@@ -44,6 +46,7 @@ function ResumeArrowIcon({ className = "size-3.5" }: { className?: string }) {
  * section would be worse than no section at all.
  */
 export function ContinueLearningSection() {
+  const t = useTranslations();
   const { user, isLoading } = useAuth();
   const [entries, setEntries] = useState<ContinueLearningEntry[]>([]);
 
@@ -61,9 +64,9 @@ export function ContinueLearningSection() {
     <section aria-labelledby="continue-learning-heading" className="mt-10">
       <div className="flex items-center justify-between gap-4">
         <h2 id="continue-learning-heading" className="text-xl font-bold tracking-tight text-slate-950">
-          Continue Learning
+          {t("developerHub.continueLearning.heading")}
         </h2>
-        <span className="text-sm text-slate-500">Picked up where you left off</span>
+        <span className="text-sm text-slate-500">{t("developerHub.continueLearning.subtitle")}</span>
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -86,11 +89,11 @@ export function ContinueLearningSection() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-bold text-slate-950">{entry.title}</p>
                 <p className="truncate text-xs text-slate-500">
-                  {entry.provider} · Visited {formatVisitedRelative(entry.visitedAt)}
+                  {entry.provider} · {t("developerHub.continueLearning.visitedPrefix", { relative: formatVisitedRelative(entry.visitedAt, t) })}
                 </p>
               </div>
               <span className="flex shrink-0 items-center gap-1 text-sm font-semibold text-[#2f67e8] opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                Resume
+                {t("developerHub.continueLearning.resume")}
                 <ResumeArrowIcon />
               </span>
             </a>

@@ -8,6 +8,7 @@ import { ScrollToResultsOnPageChange } from "@/components/news-explorer/ScrollTo
 import type { CatalogDifficulty as Difficulty, CatalogPrice as Price } from "@/types/database";
 import { CATALOG_PAGE_SIZE, type DeveloperHubSearchParams } from "@/lib/developer-hub/shared";
 import { getCatalogItems, type CatalogResourceType, type CatalogSort } from "@/services/developer-hub/developer-hub-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 const RESULTS_ANCHOR_ID = "developer-hub-results";
 
@@ -51,6 +52,7 @@ type CatalogExplorerViewProps = {
  * rather than being forced into this shape.
  */
 export async function CatalogExplorerView({ title, subtitle, basePath, searchParams, defaultResourceType }: CatalogExplorerViewProps) {
+  const { t } = await getServerTranslations();
   const query = searchParams.q?.trim() ?? "";
 
   const typesParam = searchParams.types ?? defaultResourceType;
@@ -90,7 +92,7 @@ export async function CatalogExplorerView({ title, subtitle, basePath, searchPar
       <main className="bg-[#f8fafc] px-5 py-8 sm:px-8">
         <div className="mx-auto max-w-[1820px]">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Developer Hub</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{t("developerHub.explorer.eyebrow")}</p>
             <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{title}</h1>
             <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-500">{subtitle}</p>
           </div>
@@ -103,9 +105,11 @@ export async function CatalogExplorerView({ title, subtitle, basePath, searchPar
             <div id={RESULTS_ANCHOR_ID} className="min-w-0 scroll-mt-28">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm font-medium text-slate-600">
-                  {results.total.toLocaleString("en-US")} result{results.total === 1 ? "" : "s"}
+                  {t(results.total === 1 ? "developerHub.explorer.resultSingular" : "developerHub.explorer.resultPlural", {
+                    count: results.total.toLocaleString("en-US"),
+                  })}
                   <span className="text-slate-400"> • </span>
-                  Page {results.page} of {results.totalPages}
+                  {t("developerHub.explorer.page", { page: results.page, totalPages: results.totalPages })}
                 </p>
                 <CatalogSortControl />
               </div>

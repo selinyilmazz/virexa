@@ -266,6 +266,111 @@
       "onWhatsapp": "Delen op Whatsapp"
     }
   },
+  "developerHub": {
+    "title": "Ontwikkelaarscentrum",
+    "resourceType": {
+      "certification": "Certificeringen",
+      "course": "Cursussen",
+      "learning-path": "Leertrajecten",
+      "github-repo": "GitHub-repositories",
+      "developer-tool": "Ontwikkelaarstools",
+      "roadmap": "Routekaarten",
+      "cheat-sheet": "Spiekbriefjes"
+    },
+    "resourceTypeCta": {
+      "certification": "Bekijk Certificering",
+      "course": "Start Cursus",
+      "learning-path": "Start Traject",
+      "github-repo": "Open Repository",
+      "developer-tool": "Bezoek Tool",
+      "roadmap": "Open Routekaart",
+      "cheat-sheet": "Bekijk Spiekbriefje"
+    },
+    "difficulty": {
+      "beginner": "Beginner",
+      "intermediate": "Gemiddeld",
+      "advanced": "Gevorderd"
+    },
+    "price": {
+      "free": "Gratis",
+      "paid": "Betaald"
+    },
+    "filters": {
+      "heading": "Filters",
+      "clearAll": "Alles wissen",
+      "type": "Type",
+      "difficulty": "Niveau",
+      "pricing": "Prijs"
+    },
+    "sort": {
+      "label": "Sorteren op",
+      "featured": "Uitgelicht",
+      "nameAz": "Naam (A-Z)"
+    },
+    "bookmark": {
+      "remove": "Verwijderen uit bladwijzers",
+      "save": "{type} opslaan"
+    },
+    "card": {
+      "official": "Officieel",
+      "license": "{license}-licentie",
+      "updated": "Bijgewerkt {relative}"
+    },
+    "results": {
+      "emptyTitle": "Geen resultaten voor deze filters",
+      "emptyMessage": "Verruim je filters of wis de zoekopdracht."
+    },
+    "explorer": {
+      "eyebrow": "Developer Hub",
+      "resultSingular": "{count} resultaat",
+      "resultPlural": "{count} resultaten",
+      "page": "Pagina {page} van {totalPages}"
+    },
+    "landing": {
+      "breadcrumbCurrent": "Ontwikkelaarscentrum",
+      "heroDescription": "Leer, bouw en groei met samengestelde ontwikkelaarsbronnen, certificeringen, GitHub-repositories, leertrajecten en tools.",
+      "trustPillUpdated": "Dagelijks bijgewerkt",
+      "trustPillCurated": "Samengestelde bronnen",
+      "trustPillFreePremium": "Gratis & premium content",
+      "navAllResources": "Alle Bronnen",
+      "navGithubExplorer": "GitHub Explorer",
+      "navReleases": "Releases",
+      "laptopScreenSubtitle": "Keuzes van vandaag",
+      "popularCategoriesHeading": "Populaire Categorieën",
+      "categoryCertificationsDescription": "Erkende certificeringen",
+      "categoryCoursesDescription": "Online cursussen van topaanbieders",
+      "categoryLearningPathsDescription": "Gestructureerde, officiële leertrajecten",
+      "categoryGithubExplorerTitle": "GitHub Explorer",
+      "categoryGithubExplorerDescription": "Live open source repository-data",
+      "categoryDeveloperToolsDescription": "Populaire, gratis ontwikkelaarstools",
+      "categoryRoadmapsDescription": "Stapsgewijze ontwikkelaarsgidsen",
+      "resourcesCount": "{count} bronnen",
+      "trendingGithubHeading": "Trending GitHub-repositories",
+      "viewAllRepositories": "Bekijk alle repositories",
+      "resourceTypeNavAriaLabel": "Brontype",
+      "scrollLeft": "Naar links scrollen",
+      "scrollRight": "Naar rechts scrollen"
+    },
+    "pages": {
+      "certifications": { "title": "Certificeringen", "subtitle": "Erkende certificeringen van AWS, Microsoft, Google Cloud, HashiCorp, GitHub en meer." },
+      "courses": { "title": "Cursussen", "subtitle": "Gestructureerde cursussen van freeCodeCamp, Coursera, AWS Skill Builder, Microsoft Learn en edX." },
+      "learningPaths": { "title": "Leertrajecten", "subtitle": "Officiële, gestructureerde leertrajecten van Microsoft Learn, Google Cloud, AWS en MDN Web Docs." },
+      "tools": { "title": "Ontwikkelaarstools", "subtitle": "Essentiële, gratis tools voor dagelijkse ontwikkeling - editors, API-clients, terminals en meer." },
+      "roadmaps": { "title": "Routekaarten", "subtitle": "Stapsgewijze gidsen om frontend-, backend-, DevOps-, AI- of cloud engineer te worden, van roadmap.sh." },
+      "cheatSheets": { "title": "Spiekbriefjes", "subtitle": "Snelle naslagkaarten voor de tools en talen die je dagelijks gebruikt." }
+    },
+    "continueLearning": {
+      "heading": "Verder Leren",
+      "subtitle": "Waar je gebleven was",
+      "visitedPrefix": "Bezocht {relative}",
+      "resume": "Hervatten",
+      "relativeJustNow": "Zojuist",
+      "relativeMinutes": "{minutes}m geleden",
+      "relativeHours": "{hours}u geleden",
+      "relativeDays": "{days}d geleden",
+      "relativeWeeks": "{weeks}w geleden"
+    }
+  },
   "auth": {
     "signIn": {
       "metaTitle": "Inloggen | Virexa",

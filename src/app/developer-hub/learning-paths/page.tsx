@@ -1,5 +1,6 @@
 import { CatalogExplorerView } from "@/components/developer-hub/CatalogExplorerView";
 import type { DeveloperHubSearchParams } from "@/lib/developer-hub/shared";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 // Stabilization pass: same force-dynamic reasoning as `/developer-hub/page.tsx`.
 export const dynamic = "force-dynamic";
@@ -13,10 +14,11 @@ type PageProps = { searchParams: Promise<DeveloperHubSearchParams> };
 
 export default async function LearningPathsPage({ searchParams }: PageProps) {
   const params = await searchParams;
+  const { t } = await getServerTranslations();
   return (
     <CatalogExplorerView
-      title="Learning Paths"
-      subtitle="Official, structured learning paths from Microsoft Learn, Google Cloud, AWS and MDN Web Docs."
+      title={t("developerHub.pages.learningPaths.title")}
+      subtitle={t("developerHub.pages.learningPaths.subtitle")}
       basePath="/developer-hub/learning-paths"
       searchParams={params}
       defaultResourceType="learning-path"

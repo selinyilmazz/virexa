@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { FeaturedResourceCard } from "@/components/developer-hub/FeaturedResourceCard";
 import type { CatalogItem } from "@/services/developer-hub/developer-hub-service";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 type FeaturedResourcesCarouselProps = { items: CatalogItem[] };
 
@@ -20,6 +21,7 @@ const SCROLL_AMOUNT = 320;
  * keeps cards aligned to the row's left edge after any scroll gesture.
  */
 export function FeaturedResourcesCarousel({ items }: FeaturedResourcesCarouselProps) {
+  const t = useTranslations();
   const trackRef = useRef<HTMLDivElement>(null);
 
   function scrollByAmount(delta: number) {
@@ -40,7 +42,7 @@ export function FeaturedResourcesCarousel({ items }: FeaturedResourcesCarouselPr
 
       <button
         type="button"
-        aria-label="Scroll left"
+        aria-label={t("developerHub.landing.scrollLeft")}
         onClick={() => scrollByAmount(-SCROLL_AMOUNT)}
         className="absolute left-0 top-[40%] hidden -translate-x-3 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white p-2 text-slate-600 shadow-md opacity-0 transition-all duration-200 hover:bg-slate-50 group-hover/carousel:opacity-100 lg:flex"
       >
@@ -48,7 +50,7 @@ export function FeaturedResourcesCarousel({ items }: FeaturedResourcesCarouselPr
       </button>
       <button
         type="button"
-        aria-label="Scroll right"
+        aria-label={t("developerHub.landing.scrollRight")}
         onClick={() => scrollByAmount(SCROLL_AMOUNT)}
         className="absolute right-0 top-[40%] hidden -translate-y-1/2 translate-x-3 items-center justify-center rounded-full border border-slate-200 bg-white p-2 text-slate-600 shadow-md opacity-0 transition-all duration-200 hover:bg-slate-50 group-hover/carousel:opacity-100 lg:flex"
       >

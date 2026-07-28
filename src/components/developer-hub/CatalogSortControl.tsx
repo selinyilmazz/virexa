@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 /**
  * Adapted from the mockup's "Most Popular / Newest / Highest Rated" -
@@ -10,12 +11,10 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
  * equivalents: "Featured" (the curated highlight order) and "Name (A-Z)".
  * Same instant-apply convention as `NewsExplorerSortControl`.
  */
-const SORT_OPTIONS = [
-  { value: "featured", label: "Featured" },
-  { value: "az", label: "Name (A-Z)" },
-];
+const SORT_VALUES = ["featured", "az"] as const;
 
 export function CatalogSortControl() {
+  const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -30,15 +29,15 @@ export function CatalogSortControl() {
 
   return (
     <label className="flex items-center gap-2 text-sm text-slate-600">
-      Sort by
+      {t("developerHub.sort.label")}
       <select
         value={currentSort}
         onChange={(event) => handleChange(event.target.value)}
         className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 outline-none transition-colors duration-200 focus:border-[#2f67e8]"
       >
-        {SORT_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
+        {SORT_VALUES.map((value) => (
+          <option key={value} value={value}>
+            {t(value === "featured" ? "developerHub.sort.featured" : "developerHub.sort.nameAz")}
           </option>
         ))}
       </select>

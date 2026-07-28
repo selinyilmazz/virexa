@@ -1,5 +1,6 @@
 import { CatalogExplorerView } from "@/components/developer-hub/CatalogExplorerView";
 import type { DeveloperHubSearchParams } from "@/lib/developer-hub/shared";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 // Stabilization pass: same force-dynamic reasoning as `/developer-hub/page.tsx`.
 export const dynamic = "force-dynamic";
@@ -13,10 +14,11 @@ type PageProps = { searchParams: Promise<DeveloperHubSearchParams> };
 
 export default async function DeveloperToolsPage({ searchParams }: PageProps) {
   const params = await searchParams;
+  const { t } = await getServerTranslations();
   return (
     <CatalogExplorerView
-      title="Developer Tools"
-      subtitle="Essential, free tools for everyday development - editors, API clients, terminals and more."
+      title={t("developerHub.pages.tools.title")}
+      subtitle={t("developerHub.pages.tools.subtitle")}
       basePath="/developer-hub/tools"
       searchParams={params}
       defaultResourceType="developer-tool"

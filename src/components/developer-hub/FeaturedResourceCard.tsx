@@ -1,15 +1,17 @@
-import { DIFFICULTY_CLASSES, DIFFICULTY_LABELS, PRICE_CLASSES, PRICE_LABELS } from "@/components/developer-hub/CatalogCard";
+"use client";
+
+import { DIFFICULTY_CLASSES, PRICE_CLASSES } from "@/components/developer-hub/CatalogCard";
 import { resolveBrandVisual } from "@/components/developer-hub/brand-icons";
 import { TrackedResourceLink } from "@/components/developer-hub/TrackedResourceLink";
 // This card is rendered inside the Client Component
-// `FeaturedResourcesCarousel` (`FeaturedResourceCard` itself has no
-// "use client", but importing/rendering it from a Client Component still
-// pulls it into the client bundle), so `RESOURCE_TYPE_BADGE_CLASSES`/
-// `RESOURCE_TYPE_LABELS`/`RESOURCE_TYPE_CTA_LABELS` must come from the
-// dependency-free `shared.ts`, never from `developer-hub-service.ts` -
-// see that file's doc comment.
-import { RESOURCE_TYPE_BADGE_CLASSES, RESOURCE_TYPE_CTA_LABELS, RESOURCE_TYPE_LABELS } from "@/lib/developer-hub/shared";
+// `FeaturedResourcesCarousel` (`FeaturedResourceCard` is itself now a
+// Client Component too), so `RESOURCE_TYPE_BADGE_CLASSES` must come from
+// the dependency-free `shared.ts`, never from `developer-hub-service.ts` -
+// see that file's doc comment. Labels/CTA copy come from `useTranslations()`
+// instead of the old static English maps.
+import { RESOURCE_TYPE_BADGE_CLASSES } from "@/lib/developer-hub/shared";
 import type { CatalogItem } from "@/services/developer-hub/developer-hub-service";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 function ArrowRightIcon({ className = "size-3.5" }: { className?: string }) {
   return (
@@ -39,14 +41,15 @@ type FeaturedResourceCardProps = { item: CatalogItem };
  *
  * Hover interaction pass: instead of a generic label, the cover now
  * reveals a contextual CTA keyed off the resource's real type ("View
- * Certification", "Start Course", "Open Repository", etc. - see
- * `RESOURCE_TYPE_CTA_LABELS`) under a subtle dark scrim, plus a slight
+ * Certification", "Start Course", "Open Repository", etc. - see the
+ * `developerHub.resourceTypeCta.*` translation keys) under a subtle dark scrim, plus a slight
  * zoom on the cover's brand mark. The card's single click target stays
  * the stretched link on the title (`TrackedResourceLink`) - the CTA pill
  * is presentational, so this reveal never introduces a second, competing
  * click target.
  */
 export function FeaturedResourceCard({ item }: FeaturedResourceCardProps) {
+  const t = useTranslations();
   const visual = resolveBrandVisual(item.brandKey);
 
   return (
@@ -62,12 +65,12 @@ export function FeaturedResourceCard({ item }: FeaturedResourceCardProps) {
         </span>
         <div className="relative ml-3 min-w-0 transition-transform duration-300 ease-out group-hover:scale-[1.03]">
           <p className="truncate text-sm font-bold tracking-tight">{item.provider}</p>
-          <p className="truncate text-xs font-medium opacity-75">{RESOURCE_TYPE_LABELS[item.resourceType]}</p>
+          <p className="truncate text-xs font-medium opacity-75">{t(`developerHub.resourceType.${item.resourceType}`)}</p>
         </div>
 
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-slate-950/0 opacity-0 transition-all duration-300 ease-out group-hover:bg-slate-950/55 group-hover:opacity-100">
           <span className="flex translate-y-1 items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-950 shadow-md transition-transform duration-300 ease-out group-hover:translate-y-0">
-            {RESOURCE_TYPE_CTA_LABELS[item.resourceType]}
+            {t(`developerHub.resourceTypeCta.${item.resourceType}`)}
             <ArrowRightIcon className="size-3.5" />
           </span>
         </div>
@@ -77,7 +80,7 @@ export function FeaturedResourceCard({ item }: FeaturedResourceCardProps) {
         <span
           className={`w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${RESOURCE_TYPE_BADGE_CLASSES[item.resourceType]}`}
         >
-          {RESOURCE_TYPE_LABELS[item.resourceType]}
+          {t(`developerHub.resourceType.${item.resourceType}`)}
         </span>
         <h3 className="line-clamp-2 min-h-[3.25rem] text-lg font-bold leading-snug tracking-tight text-slate-950">
           <TrackedResourceLink
@@ -99,11 +102,11 @@ export function FeaturedResourceCard({ item }: FeaturedResourceCardProps) {
           <span className="font-semibold text-slate-700">{item.provider}</span>
           {item.difficulty && (
             <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${DIFFICULTY_CLASSES[item.difficulty]}`}>
-              {DIFFICULTY_LABELS[item.difficulty]}
+              {t(`developerHub.difficulty.${item.difficulty}`)}
             </span>
           )}
           {item.price && (
-            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${PRICE_CLASSES[item.price]}`}>{PRICE_LABELS[item.price]}</span>
+            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${PRICE_CLASSES[item.price]}`}>{t(`developerHub.price.${item.price}`)}</span>
           )}
         </div>
       </div>

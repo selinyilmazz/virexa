@@ -25,6 +25,7 @@ import {
   resolveBrandVisual,
 } from "@/components/developer-hub/brand-icons";
 import { getCatalogItems, getDeveloperHubStats } from "@/services/developer-hub/developer-hub-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 function CheckIcon({ className = "size-3" }: { className?: string }) {
   return (
@@ -57,11 +58,8 @@ const HERO_BADGES = [
   { Icon: CloudIcon, top: 24.3, left: 83.7, className: "z-0 size-9 bg-sky-50 text-sky-600 opacity-90" },
 ];
 
-/** Minimalist "dashboard" chips shown on the Hero laptop screen - purely decorative, not a real live preview. */
+/** Minimalist "dashboard" chips shown on the Hero laptop screen - purely decorative, not a real live preview. Real brand/tech names, not translated. */
 const HERO_SCREEN_CHIPS = ["React", "Docker", "AWS", "TypeScript"];
-
-/** Trust-signal pills shown under the Hero's CTAs. */
-const HERO_TRUST_PILLS = ["Updated Daily", "Curated Resources", "Free & Premium Content"];
 
 // Stabilization pass: force-dynamic (never statically cached) so an
 // admin-added/edited/deleted catalog item (`/admin/catalog-items`) shows
@@ -72,18 +70,6 @@ export const metadata = {
   title: "Developer Hub | VIREXA",
   description: "Certifications, courses, learning paths, GitHub repositories, developer tools and roadmaps - all in one place.",
 };
-
-const RESOURCE_NAV_ITEMS = [
-  { label: "All Resources", href: "/developer-hub", Icon: GridIcon },
-  { label: "Certifications", href: "/developer-hub/certifications", Icon: BadgeCheckIcon },
-  { label: "Courses", href: "/developer-hub/courses", Icon: BookOpenIcon },
-  { label: "Learning Paths", href: "/developer-hub/learning-paths", Icon: RouteIcon },
-  { label: "GitHub Explorer", href: "/developer-hub/github", Icon: GithubMarkIcon },
-  { label: "Developer Tools", href: "/developer-hub/tools", Icon: WrenchIcon },
-  { label: "Roadmaps", href: "/developer-hub/roadmaps", Icon: CompassIcon },
-  { label: "Releases", href: "/developer-hub/releases", Icon: RocketIcon },
-  { label: "Cheat Sheets", href: "/developer-hub/cheat-sheets", Icon: FileTextIcon },
-];
 
 /**
  * Developer Hub landing page (Developer Hub redesign, renamed from
@@ -100,10 +86,29 @@ const RESOURCE_NAV_ITEMS = [
  * comment.
  */
 export default async function DeveloperHubPage() {
+  const { t } = await getServerTranslations();
   const [stats, githubPreview] = await Promise.all([
     getDeveloperHubStats(),
     getCatalogItems({ resourceTypes: ["github-repo"], sort: "featured", pageSize: 5 }),
   ]);
+
+  const heroTrustPills = [
+    t("developerHub.landing.trustPillUpdated"),
+    t("developerHub.landing.trustPillCurated"),
+    t("developerHub.landing.trustPillFreePremium"),
+  ];
+
+  const resourceNavItems = [
+    { label: t("developerHub.landing.navAllResources"), href: "/developer-hub", Icon: GridIcon },
+    { label: t("developerHub.resourceType.certification"), href: "/developer-hub/certifications", Icon: BadgeCheckIcon },
+    { label: t("developerHub.resourceType.course"), href: "/developer-hub/courses", Icon: BookOpenIcon },
+    { label: t("developerHub.resourceType.learning-path"), href: "/developer-hub/learning-paths", Icon: RouteIcon },
+    { label: t("developerHub.landing.navGithubExplorer"), href: "/developer-hub/github", Icon: GithubMarkIcon },
+    { label: t("developerHub.resourceType.developer-tool"), href: "/developer-hub/tools", Icon: WrenchIcon },
+    { label: t("developerHub.resourceType.roadmap"), href: "/developer-hub/roadmaps", Icon: CompassIcon },
+    { label: t("developerHub.landing.navReleases"), href: "/developer-hub/releases", Icon: RocketIcon },
+    { label: t("developerHub.resourceType.cheat-sheet"), href: "/developer-hub/cheat-sheets", Icon: FileTextIcon },
+  ];
 
   // Card-quality pass: professional line-art icons (matching `CategoryNav`'s
   // existing stroke-icon convention) instead of emoji - see `CategoryIcons.tsx`.
@@ -115,8 +120,8 @@ export default async function DeveloperHubPage() {
   const popularCategories = [
     {
       Icon: BadgeCheckIcon,
-      title: "Certifications",
-      description: "Industry-recognized certifications",
+      title: t("developerHub.resourceType.certification"),
+      description: t("developerHub.landing.categoryCertificationsDescription"),
       count: stats.certificationsCount,
       href: "/developer-hub/certifications",
       gradient: "from-emerald-400 to-emerald-600",
@@ -125,8 +130,8 @@ export default async function DeveloperHubPage() {
     },
     {
       Icon: BookOpenIcon,
-      title: "Courses",
-      description: "Online courses from top providers",
+      title: t("developerHub.resourceType.course"),
+      description: t("developerHub.landing.categoryCoursesDescription"),
       count: stats.coursesCount,
       href: "/developer-hub/courses",
       gradient: "from-indigo-400 to-indigo-600",
@@ -135,8 +140,8 @@ export default async function DeveloperHubPage() {
     },
     {
       Icon: RouteIcon,
-      title: "Learning Paths",
-      description: "Structured, official learning paths",
+      title: t("developerHub.resourceType.learning-path"),
+      description: t("developerHub.landing.categoryLearningPathsDescription"),
       count: stats.learningPathsCount,
       href: "/developer-hub/learning-paths",
       gradient: "from-violet-400 to-violet-600",
@@ -145,8 +150,8 @@ export default async function DeveloperHubPage() {
     },
     {
       Icon: GithubMarkIcon,
-      title: "GitHub Explorer",
-      description: "Live open source repository data",
+      title: t("developerHub.landing.categoryGithubExplorerTitle"),
+      description: t("developerHub.landing.categoryGithubExplorerDescription"),
       count: stats.githubReposCount,
       href: "/developer-hub/github",
       gradient: "from-slate-700 to-slate-900",
@@ -161,8 +166,8 @@ export default async function DeveloperHubPage() {
     },
     {
       Icon: WrenchIcon,
-      title: "Developer Tools",
-      description: "Popular, free developer tools",
+      title: t("developerHub.resourceType.developer-tool"),
+      description: t("developerHub.landing.categoryDeveloperToolsDescription"),
       count: stats.developerToolsCount,
       href: "/developer-hub/tools",
       gradient: "from-amber-400 to-amber-600",
@@ -171,8 +176,8 @@ export default async function DeveloperHubPage() {
     },
     {
       Icon: CompassIcon,
-      title: "Roadmaps",
-      description: "Step-by-step developer guides",
+      title: t("developerHub.resourceType.roadmap"),
+      description: t("developerHub.landing.categoryRoadmapsDescription"),
       count: stats.roadmapsCount,
       href: "/developer-hub/roadmaps",
       gradient: "from-rose-400 to-rose-600",
@@ -186,12 +191,12 @@ export default async function DeveloperHubPage() {
       <Header />
       <main className="bg-[#f8fafc] px-5 py-8 sm:px-8">
         <div className="mx-auto max-w-[1820px]">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-slate-500">
+          <nav aria-label={t("article.breadcrumb.ariaLabel")} className="flex items-center gap-2 text-sm text-slate-500">
             <Link href="/" className="transition-colors duration-200 hover:text-slate-700">
-              Home
+              {t("common.home")}
             </Link>
             <span aria-hidden="true">›</span>
-            <span className="font-medium text-slate-950">Developer Hub</span>
+            <span className="font-medium text-slate-950">{t("developerHub.landing.breadcrumbCurrent")}</span>
           </nav>
 
           <div className="relative mt-6 grid gap-8 overflow-hidden rounded-2xl border border-slate-200 bg-white/90 p-8 shadow-sm backdrop-blur-xl sm:p-10 lg:grid-cols-[1.4fr_1fr] lg:items-center lg:p-14">
@@ -202,13 +207,13 @@ export default async function DeveloperHubPage() {
             </div>
 
             <div className="relative">
-              <h1 className="font-serif text-4xl font-bold leading-[1.15] tracking-tight text-slate-950 sm:text-5xl">Developer Hub</h1>
+              <h1 className="font-serif text-4xl font-bold leading-[1.15] tracking-tight text-slate-950 sm:text-5xl">{t("developerHub.title")}</h1>
               <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-500">
-                Learn, build and grow with curated developer resources, certifications, GitHub repositories, learning paths and tools.
+                {t("developerHub.landing.heroDescription")}
               </p>
 
               <div className="mt-7 flex flex-wrap items-center gap-2">
-                {HERO_TRUST_PILLS.map((label) => (
+                {heroTrustPills.map((label) => (
                   <span
                     key={label}
                     className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200"
@@ -227,8 +232,8 @@ export default async function DeveloperHubPage() {
                 <div className="relative z-10 flex -rotate-2 flex-col items-center drop-shadow-2xl">
                   <div className="flex h-28 w-44 flex-col overflow-hidden rounded-lg border-[3px] border-slate-800 bg-slate-900 p-2 shadow-xl">
                     <div className="flex size-full flex-col rounded-sm bg-gradient-to-br from-[#2f67e8]/60 via-violet-500/40 to-fuchsia-500/15 p-2">
-                      <p className="text-[7px] font-bold uppercase tracking-wide text-white/95">Developer Hub</p>
-                      <p className="text-[6px] font-medium text-white/60">Today&apos;s Picks</p>
+                      <p className="text-[7px] font-bold uppercase tracking-wide text-white/95">{t("developerHub.title")}</p>
+                      <p className="text-[6px] font-medium text-white/60">{t("developerHub.landing.laptopScreenSubtitle")}</p>
                       <div className="mt-1.5 grid grid-cols-2 gap-1">
                         {HERO_SCREEN_CHIPS.map((chip) => (
                           <span key={chip} className="truncate rounded bg-white/15 px-1 py-0.5 text-center text-[6px] font-semibold text-white/85">
@@ -256,8 +261,8 @@ export default async function DeveloperHubPage() {
             </div>
           </div>
 
-          <nav aria-label="Resource type" className="mt-6 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
-            {RESOURCE_NAV_ITEMS.map((item) => (
+          <nav aria-label={t("developerHub.landing.resourceTypeNavAriaLabel")} className="mt-6 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+            {resourceNavItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -275,7 +280,7 @@ export default async function DeveloperHubPage() {
           <ContinueLearningSection />
 
           <section id="popular-categories" className="mt-10 scroll-mt-24">
-            <h2 className="text-xl font-bold tracking-tight text-slate-950">Popular Categories</h2>
+            <h2 className="text-xl font-bold tracking-tight text-slate-950">{t("developerHub.landing.popularCategoriesHeading")}</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {popularCategories.map((category) => {
                 const iconTileSize = category.highlight ? "size-14" : "size-12";
@@ -322,7 +327,9 @@ export default async function DeveloperHubPage() {
                     )}
 
                     <div className="mt-auto flex items-center justify-between pt-2">
-                      <span className="text-base font-bold text-slate-950">{category.count.toLocaleString("en-US")} resources</span>
+                      <span className="text-base font-bold text-slate-950">
+                        {t("developerHub.landing.resourcesCount", { count: category.count.toLocaleString("en-US") })}
+                      </span>
                       <span aria-hidden="true" className="text-slate-500 transition-transform duration-200 group-hover:translate-x-1.5">
                         →
                       </span>
@@ -336,12 +343,12 @@ export default async function DeveloperHubPage() {
           {githubPreview.items.length > 0 && (
             <section id="trending-github" className="mt-10 scroll-mt-24">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold tracking-tight text-slate-950">Trending GitHub Repositories</h2>
+                <h2 className="text-xl font-bold tracking-tight text-slate-950">{t("developerHub.landing.trendingGithubHeading")}</h2>
                 <Link
                   href="/developer-hub/github"
                   className="text-sm font-medium text-[#2f67e8] transition-colors duration-200 hover:text-[#2556c9]"
                 >
-                  View all repositories
+                  {t("developerHub.landing.viewAllRepositories")}
                 </Link>
               </div>
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -384,7 +391,7 @@ export default async function DeveloperHubPage() {
                       <div className="flex items-center gap-3 text-xs text-slate-500">
                         <span>⭐ {formatStat(item.stars)}</span>
                         <span>⑂ {formatStat(item.forks)}</span>
-                        <span className="ml-auto">Updated {item.updatedRelative}</span>
+                        <span className="ml-auto">{t("developerHub.card.updated", { relative: item.updatedRelative })}</span>
                       </div>
                     </a>
                   );

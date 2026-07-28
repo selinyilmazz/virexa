@@ -3,6 +3,7 @@
 import { useBookmarkAction } from "@/hooks/useBookmarkAction";
 import { AuthToast } from "@/components/auth/AuthToast";
 import type { BookmarkItem } from "@/lib/bookmarks";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 export type CatalogBookmarkInput = {
   /** `catalog_items.id` - stable regardless of edits, same role `RepoBookmarkButton` gives `owner/repo`. */
@@ -45,6 +46,7 @@ function toBookmarkItem(item: CatalogBookmarkInput): BookmarkItem {
  * other bookmark - no separate storage system.
  */
 export function CatalogBookmarkButton({ item }: { item: CatalogBookmarkInput }) {
+  const t = useTranslations();
   const bookmarkItem = toBookmarkItem(item);
   const { bookmarked, trigger, error } = useBookmarkAction(bookmarkItem);
 
@@ -55,7 +57,11 @@ export function CatalogBookmarkButton({ item }: { item: CatalogBookmarkInput }) 
         type="button"
         onClick={trigger}
         aria-pressed={bookmarked}
-        aria-label={bookmarked ? "Remove from bookmarks" : `Save ${item.resourceType}`}
+        aria-label={
+          bookmarked
+            ? t("developerHub.bookmark.remove")
+            : t("developerHub.bookmark.save", { type: t(`developerHub.resourceType.${item.resourceType}`) })
+        }
         className={`absolute right-4 top-4 z-10 flex size-9 items-center justify-center rounded-full shadow-sm backdrop-blur-sm transition-colors sm:right-5 sm:top-5 ${
           bookmarked ? "bg-[#2f67e8] text-white" : "bg-white/95 text-slate-400 hover:bg-white hover:text-slate-600"
         }`}

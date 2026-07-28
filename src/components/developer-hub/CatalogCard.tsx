@@ -1,15 +1,16 @@
 import { TrackedResourceLink } from "@/components/developer-hub/TrackedResourceLink";
 import { CatalogBookmarkButton } from "@/components/developer-hub/CatalogBookmarkButton";
 import { resolveBrandVisual } from "@/components/developer-hub/brand-icons";
-// `RESOURCE_TYPE_LABELS` comes from the plain, dependency-free
+// `RESOURCE_TYPE_BADGE_CLASSES` comes from the plain, dependency-free
 // `shared.ts` (not `developer-hub-service.ts`, which transitively
-// imports the Supabase *server* client) - this card is rendered both
-// from Server Components (`CatalogResults`) and, via
-// `FeaturedResourceCard`, from a Client Component boundary
-// (`FeaturedResourcesCarousel`), so nothing it imports can depend on
-// `next/headers`. See `shared.ts`'s doc comment.
-import { RESOURCE_TYPE_BADGE_CLASSES, RESOURCE_TYPE_LABELS } from "@/lib/developer-hub/shared";
+// imports the Supabase *server* client) - this module is also pulled
+// into client bundles (e.g. `GithubHero.tsx` imports `LANGUAGE_DOT_COLORS`/
+// `formatStat` from here), so nothing it imports can depend on
+// `next/headers`. Labels themselves now come from `t()` (passed in as a
+// prop), never a static English map. See `shared.ts`'s doc comment.
+import { RESOURCE_TYPE_BADGE_CLASSES } from "@/lib/developer-hub/shared";
 import type { CatalogItem } from "@/services/developer-hub/developer-hub-service";
+import type { TFunction } from "@/i18n/translate";
 
 /** Exported for reuse by `FeaturedResourceCard` on the Developer Hub landing page, so both cards render identical badge styling. */
 export const DIFFICULTY_CLASSES: Record<string, string> = {
@@ -18,20 +19,9 @@ export const DIFFICULTY_CLASSES: Record<string, string> = {
   advanced: "bg-violet-50 text-violet-700",
 };
 
-export const DIFFICULTY_LABELS: Record<string, string> = {
-  beginner: "Beginner",
-  intermediate: "Intermediate",
-  advanced: "Advanced",
-};
-
 export const PRICE_CLASSES: Record<string, string> = {
   free: "bg-emerald-50 text-emerald-700",
   paid: "bg-slate-100 text-slate-600",
-};
-
-export const PRICE_LABELS: Record<string, string> = {
-  free: "Free",
-  paid: "Paid",
 };
 
 /** A rough but real, recognizable color per common GitHub language - matches how GitHub itself shows a language dot on repo cards. Exported for reuse by the Developer Hub landing page's Trending GitHub Repositories preview cards. */
@@ -85,7 +75,7 @@ function OfficialBadgeIcon({ className = "size-3.5" }: { className?: string }) {
   );
 }
 
-type CatalogCardProps = { item: CatalogItem };
+type CatalogCardProps = { item: CatalogItem; t: TFunction };
 
 /**
  * Developer Hub's catalog item card (card-quality pass) - same shell
@@ -100,7 +90,7 @@ type CatalogCardProps = { item: CatalogItem };
  * certifications show a small "Official" badge, and roadmaps show a
  * tiny step-chain preview of their real subject sequence.
  */
-export function CatalogCard({ item }: CatalogCardProps) {
+export function CatalogCard({ item, t }: CatalogCardProps) {
   const visual = resolveBrandVisual(item.brandKey);
   const isGithubRepo = item.resourceType === "github-repo" && item.owner && item.repoName;
 
@@ -131,21 +121,21 @@ export function CatalogCard({ item }: CatalogCardProps) {
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className={`rounded-full px-2.5 py-1 font-semibold ${RESOURCE_TYPE_BADGE_CLASSES[item.resourceType]}`}>
-            {RESOURCE_TYPE_LABELS[item.resourceType]}
+            {t(`developerHub.resourceType.${item.resourceType}`)}
           </span>
           {item.official && (
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700">
               <OfficialBadgeIcon className="size-3" />
-              Official
+              {t("developerHub.card.official")}
             </span>
           )}
           {item.difficulty && (
             <span className={`rounded-full px-2.5 py-1 font-medium ${DIFFICULTY_CLASSES[item.difficulty]}`}>
-              {DIFFICULTY_LABELS[item.difficulty]}
+              {t(`developerHub.difficulty.${item.difficulty}`)}
             </span>
           )}
           {item.price && (
-            <span className={`rounded-full px-2.5 py-1 font-medium ${PRICE_CLASSES[item.price]}`}>{PRICE_LABELS[item.price]}</span>
+            <span className={`rounded-full px-2.5 py-1 font-medium ${PRICE_CLASSES[item.price]}`}>{t(`developerHub.price.${item.price}`)}</span>
           )}
           {item.tag && !isGithubRepo && <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">{item.tag}</span>}
         </div>
@@ -193,7 +183,7 @@ export function CatalogCard({ item }: CatalogCardProps) {
             )}
             {item.license && (
               <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-600">
-                {item.license} License
+                {t("developerHub.card.license", { license: item.license })}
               </span>
             )}
             <span className="inline-flex items-center gap-1">
@@ -204,7 +194,7 @@ export function CatalogCard({ item }: CatalogCardProps) {
               <ForkIcon />
               {formatStat(item.forks)}
             </span>
-            <span>Updated {item.updatedRelative}</span>
+            <span>{t("developerHub.card.updated", { relative: item.updatedRelative })}</span>
           </div>
         ) : (
           <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">

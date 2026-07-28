@@ -266,6 +266,111 @@
       "onWhatsapp": "Share on Whatsapp"
     }
   },
+  "developerHub": {
+    "title": "Developer Hub",
+    "resourceType": {
+      "certification": "Certifications",
+      "course": "Courses",
+      "learning-path": "Learning Paths",
+      "github-repo": "GitHub Repositories",
+      "developer-tool": "Developer Tools",
+      "roadmap": "Roadmaps",
+      "cheat-sheet": "Cheat Sheets"
+    },
+    "resourceTypeCta": {
+      "certification": "View Certification",
+      "course": "Start Course",
+      "learning-path": "Start Path",
+      "github-repo": "Open Repository",
+      "developer-tool": "Visit Tool",
+      "roadmap": "Open Roadmap",
+      "cheat-sheet": "View Cheat Sheet"
+    },
+    "difficulty": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "price": {
+      "free": "Free",
+      "paid": "Paid"
+    },
+    "filters": {
+      "heading": "Filters",
+      "clearAll": "Clear all",
+      "type": "Type",
+      "difficulty": "Difficulty",
+      "pricing": "Pricing"
+    },
+    "sort": {
+      "label": "Sort by",
+      "featured": "Featured",
+      "nameAz": "Name (A-Z)"
+    },
+    "bookmark": {
+      "remove": "Remove from bookmarks",
+      "save": "Save {type}"
+    },
+    "card": {
+      "official": "Official",
+      "license": "{license} License",
+      "updated": "Updated {relative}"
+    },
+    "results": {
+      "emptyTitle": "No resources match these filters",
+      "emptyMessage": "Try widening your filters or clearing the search."
+    },
+    "explorer": {
+      "eyebrow": "Developer Hub",
+      "resultSingular": "{count} result",
+      "resultPlural": "{count} results",
+      "page": "Page {page} of {totalPages}"
+    },
+    "landing": {
+      "breadcrumbCurrent": "Developer Hub",
+      "heroDescription": "Learn, build and grow with curated developer resources, certifications, GitHub repositories, learning paths and tools.",
+      "trustPillUpdated": "Updated Daily",
+      "trustPillCurated": "Curated Resources",
+      "trustPillFreePremium": "Free & Premium Content",
+      "navAllResources": "All Resources",
+      "navGithubExplorer": "GitHub Explorer",
+      "navReleases": "Releases",
+      "laptopScreenSubtitle": "Today's Picks",
+      "popularCategoriesHeading": "Popular Categories",
+      "categoryCertificationsDescription": "Industry-recognized certifications",
+      "categoryCoursesDescription": "Online courses from top providers",
+      "categoryLearningPathsDescription": "Structured, official learning paths",
+      "categoryGithubExplorerTitle": "GitHub Explorer",
+      "categoryGithubExplorerDescription": "Live open source repository data",
+      "categoryDeveloperToolsDescription": "Popular, free developer tools",
+      "categoryRoadmapsDescription": "Step-by-step developer guides",
+      "resourcesCount": "{count} resources",
+      "trendingGithubHeading": "Trending GitHub Repositories",
+      "viewAllRepositories": "View all repositories",
+      "resourceTypeNavAriaLabel": "Resource type",
+      "scrollLeft": "Scroll left",
+      "scrollRight": "Scroll right"
+    },
+    "pages": {
+      "certifications": { "title": "Certifications", "subtitle": "Industry-recognized certifications from AWS, Microsoft, Google Cloud, HashiCorp, GitHub and more." },
+      "courses": { "title": "Courses", "subtitle": "Structured courses from freeCodeCamp, Coursera, AWS Skill Builder, Microsoft Learn and edX." },
+      "learningPaths": { "title": "Learning Paths", "subtitle": "Official, structured learning paths from Microsoft Learn, Google Cloud, AWS and MDN Web Docs." },
+      "tools": { "title": "Developer Tools", "subtitle": "Essential, free tools for everyday development - editors, API clients, terminals and more." },
+      "roadmaps": { "title": "Roadmaps", "subtitle": "Step-by-step guides to becoming a frontend, backend, DevOps, AI or cloud engineer, from roadmap.sh." },
+      "cheatSheets": { "title": "Cheat Sheets", "subtitle": "Quick-reference cheat sheets for the tools and languages you use every day." }
+    },
+    "continueLearning": {
+      "heading": "Continue Learning",
+      "subtitle": "Picked up where you left off",
+      "visitedPrefix": "Visited {relative}",
+      "resume": "Resume",
+      "relativeJustNow": "Just now",
+      "relativeMinutes": "{minutes}m ago",
+      "relativeHours": "{hours}h ago",
+      "relativeDays": "{days}d ago",
+      "relativeWeeks": "{weeks}w ago"
+    }
+  },
   "auth": {
     "signIn": {
       "metaTitle": "Sign In | Virexa",
