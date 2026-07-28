@@ -2,15 +2,13 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 const DEBOUNCE_MS = 400;
 
-/** Premium-navbar search placeholder (Linear/GitHub style) - see `Header.tsx`'s matching constant for the SSR fallback `<input>` shown before this client component hydrates. */
-const SEARCH_PLACEHOLDER = "Search articles, releases, repositories, technologies...";
-
-/** Per-page placeholder override - text only, same input/box/behavior everywhere (no navbar redesign). Falls back to `SEARCH_PLACEHOLDER` for every page not listed. */
-const PATH_PLACEHOLDER_OVERRIDES: Record<string, string> = {
-  "/open-source": "Search repositories, developers, organizations...",
+/** Per-page placeholder override key - same input/box/behavior everywhere (no navbar redesign). Falls back to `nav.searchPlaceholder` for every page not listed. */
+const PATH_PLACEHOLDER_OVERRIDE_KEYS: Record<string, string> = {
+  "/open-source": "nav.searchPlaceholderOpenSource",
 };
 
 /**
@@ -92,12 +90,13 @@ type HeaderSearchInputProps = {
  * back/forward). This avoids syncing state via a `useEffect`.
  */
 export function HeaderSearchInput({ initialQuery, id = "site-search", autoFocus }: HeaderSearchInputProps) {
+  const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isInPlaceSearchPage = IN_PLACE_SEARCH_PATHS.includes(pathname);
   const currentQuery = isInPlaceSearchPage ? (searchParams.get("q") ?? initialQuery ?? "") : "";
-  const placeholder = PATH_PLACEHOLDER_OVERRIDES[pathname] ?? SEARCH_PLACEHOLDER;
+  const placeholder = t(PATH_PLACEHOLDER_OVERRIDE_KEYS[pathname] ?? "nav.searchPlaceholder");
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 

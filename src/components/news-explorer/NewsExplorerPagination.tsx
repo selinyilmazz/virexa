@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 type NewsExplorerPaginationProps = {
   page: number;
@@ -51,8 +52,9 @@ function buildPageWindow(current: number, total: number): (number | "ellipsis")[
  * of the article list instead of Next's default instant jump to the
  * top of the whole page.
  */
-export function NewsExplorerPagination({ page, totalPages, buildHref }: NewsExplorerPaginationProps) {
+export async function NewsExplorerPagination({ page, totalPages, buildHref }: NewsExplorerPaginationProps) {
   if (totalPages <= 1) return null;
+  const { t } = await getServerTranslations();
 
   const items = buildPageWindow(page, totalPages);
   const isFirst = page <= 1;
@@ -67,14 +69,14 @@ export function NewsExplorerPagination({ page, totalPages, buildHref }: NewsExpl
     "flex h-11 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-300 opacity-50 cursor-not-allowed";
 
   return (
-    <nav aria-label="Pagination" className="mt-8 flex flex-wrap items-center justify-center gap-2">
+    <nav aria-label={t("explorer.pagination.ariaLabel")} className="mt-8 flex flex-wrap items-center justify-center gap-2">
       {isFirst ? (
         <span aria-hidden="true" className={navButtonDisabledClass}>
-          ← Previous
+          ← {t("explorer.pagination.previous")}
         </span>
       ) : (
         <Link href={buildHref(page - 1)} scroll={false} className={navButtonClass}>
-          ← Previous
+          ← {t("explorer.pagination.previous")}
         </Link>
       )}
 
@@ -98,11 +100,11 @@ export function NewsExplorerPagination({ page, totalPages, buildHref }: NewsExpl
 
       {isLast ? (
         <span aria-hidden="true" className={navButtonDisabledClass}>
-          Next →
+          {t("explorer.pagination.next")} →
         </span>
       ) : (
         <Link href={buildHref(page + 1)} scroll={false} className={navButtonClass}>
-          Next →
+          {t("explorer.pagination.next")} →
         </Link>
       )}
     </nav>

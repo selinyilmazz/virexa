@@ -70,7 +70,36 @@
         "security-advisory": "Security Advisory",
         "certification": "Certification",
         "open-source": "Open Source"
-      }
+      },
+      "closeAria": "Close filters"
+    },
+    "noResults": {
+      "title": "No articles match these filters",
+      "subtitle": "Try widening your filters or clearing the search."
+    },
+    "pagination": {
+      "ariaLabel": "Pagination",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "sort": {
+      "label": "Sort by",
+      "newest": "Newest",
+      "mostRead": "Most Read",
+      "trending": "Trending",
+      "oldest": "Oldest"
+    },
+    "developerPulse": {
+      "heading": "Developer Pulse",
+      "subheading": "What developers are discussing today",
+      "topDiscussion": "Top Discussion",
+      "comments": "{count} comments",
+      "viewDiscussion": "View discussion"
+    },
+    "search": {
+      "title": "Search Results",
+      "resultsFor": "Showing results for:",
+      "emptyPrompt": "Enter a keyword in the search bar above to find articles, or use the filters to browse."
     }
   },
   "profile": {
@@ -170,7 +199,8 @@
   "nav": {
     "logoAria": "Virexa home",
     "searchAria": "Search news, topics or sources",
-    "searchPlaceholder": "Search news, technologies, companies, repositories...",
+    "searchPlaceholder": "Search articles, releases, repositories, technologies...",
+    "searchPlaceholderOpenSource": "Search repositories, developers, organizations...",
     "searchButtonAria": "Search",
     "categories": {
       "technology": "Technology",

@@ -9,9 +9,6 @@ import { HeaderSearchInput } from "@/components/layout/HeaderSearchInput";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { getServerTranslations } from "@/i18n/get-server-translations";
 
-/** Authenticated navbar redesign - premium Linear/GitHub-style search placeholder. Ctrl/Cmd+K still focuses this field (see `HeaderSearchInput`'s doc comment) - only the visible "Ctrl K" badge was removed (Search Bar UX update), replaced by a trailing search icon. */
-const SEARCH_PLACEHOLDER = "Search articles, releases, repositories, technologies...";
-
 /**
  * Header alignment redesign: a true 3-zone grid (`grid-cols-[1fr_auto_1fr]`)
  * instead of a `flex` row, specifically so the search bar is mathematically
@@ -122,7 +119,7 @@ export async function Header({ initialSearchQuery }: HeaderProps = {}) {
                     name="q"
                     type="search"
                     defaultValue={initialSearchQuery}
-                    placeholder={SEARCH_PLACEHOLDER}
+                    placeholder={t("nav.searchPlaceholder")}
                     className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-900 outline-none placeholder:text-slate-500 dark:text-slate-100 dark:placeholder:text-slate-500"
                   />
                 }

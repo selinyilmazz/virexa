@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 function FilterIcon({ className = "size-4" }: { className?: string }) {
   return (
@@ -28,6 +29,7 @@ type FiltersDrawerProps = { children: ReactNode };
  * matter which breakpoint rendered them.
  */
 export function FiltersDrawer({ children }: FiltersDrawerProps) {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
 
   return (
@@ -38,7 +40,7 @@ export function FiltersDrawer({ children }: FiltersDrawerProps) {
         className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors duration-200 hover:border-slate-300 xl:hidden"
       >
         <FilterIcon />
-        Filters
+        {t("explorer.filters.title")}
       </button>
 
       {/* Backdrop - mobile/tablet only. */}
@@ -57,11 +59,11 @@ export function FiltersDrawer({ children }: FiltersDrawerProps) {
         }`}
       >
         <div className="mb-3 flex items-center justify-between xl:hidden">
-          <span className="text-sm font-bold text-slate-950">Filters</span>
+          <span className="text-sm font-bold text-slate-950">{t("explorer.filters.title")}</span>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            aria-label="Close filters"
+            aria-label={t("explorer.filters.closeAria")}
             className="flex size-8 items-center justify-center rounded-lg text-slate-500 transition-colors duration-200 hover:bg-slate-100"
           >
             ✕

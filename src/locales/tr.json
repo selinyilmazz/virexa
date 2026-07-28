@@ -70,7 +70,36 @@
         "security-advisory": "Güvenlik Bildirimi",
         "certification": "Sertifika",
         "open-source": "Açık Kaynak"
-      }
+      },
+      "closeAria": "Filtreleri kapat"
+    },
+    "noResults": {
+      "title": "Bu filtrelerle eşleşen makale yok",
+      "subtitle": "Filtrelerinizi genişletin veya aramayı temizleyin."
+    },
+    "pagination": {
+      "ariaLabel": "Sayfalama",
+      "previous": "Önceki",
+      "next": "Sonraki"
+    },
+    "sort": {
+      "label": "Sırala",
+      "newest": "En Yeni",
+      "mostRead": "En Çok Okunan",
+      "trending": "Trend",
+      "oldest": "En Eski"
+    },
+    "developerPulse": {
+      "heading": "Geliştirici Nabzı",
+      "subheading": "Geliştiricilerin bugün konuştuğu konular",
+      "topDiscussion": "En Popüler Tartışma",
+      "comments": "{count} yorum",
+      "viewDiscussion": "Tartışmayı görüntüle"
+    },
+    "search": {
+      "title": "Arama Sonuçları",
+      "resultsFor": "Şunun için sonuçlar gösteriliyor:",
+      "emptyPrompt": "Makale bulmak için yukarıdaki arama çubuğuna bir anahtar kelime girin veya göz atmak için filtreleri kullanın."
     }
   },
   "profile": {
@@ -170,7 +199,8 @@
   "nav": {
     "logoAria": "Virexa ana sayfa",
     "searchAria": "Haber, konu veya kaynak ara",
-    "searchPlaceholder": "Haber, teknoloji, şirket veya repo ara...",
+    "searchPlaceholder": "Makale, sürüm, depo veya teknoloji ara...",
+    "searchPlaceholderOpenSource": "Depo, geliştirici veya organizasyon ara...",
     "searchButtonAria": "Ara",
     "categories": {
       "technology": "Teknoloji",

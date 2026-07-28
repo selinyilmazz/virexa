@@ -5,8 +5,6 @@ import { usePathname } from "next/navigation";
 import { HeaderSearchInput } from "@/components/layout/HeaderSearchInput";
 import { useTranslations } from "@/i18n/i18n-provider";
 
-const SEARCH_PLACEHOLDER = "Search articles, releases, repositories, technologies...";
-
 type HeaderMobileSearchProps = {
   initialSearchQuery?: string;
 };
@@ -93,7 +91,7 @@ export function HeaderMobileSearch({ initialSearchQuery }: HeaderMobileSearchPro
                     name="q"
                     type="search"
                     defaultValue={initialSearchQuery}
-                    placeholder={SEARCH_PLACEHOLDER}
+                    placeholder={t("nav.searchPlaceholder")}
                     className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-900 outline-none placeholder:text-slate-500 dark:text-slate-100 dark:placeholder:text-slate-500"
                   />
                 }

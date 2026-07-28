@@ -1,5 +1,6 @@
 import { ExplorerView } from "@/components/explorer/ExplorerView";
 import type { ExplorerSearchParams } from "@/lib/news-explorer/shared";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 export const metadata = {
   title: "Search Results | VIREXA",
@@ -26,19 +27,20 @@ type SearchPageProps = {
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
+  const { t } = await getServerTranslations();
 
   return (
     <ExplorerView
-      title="Search Results"
+      title={t("explorer.search.title")}
       subtitle={
         query ? (
           <>
-            Showing results for:
+            {t("explorer.search.resultsFor")}
             <br />
             <span className="font-semibold text-slate-950">&quot;{query}&quot;</span>
           </>
         ) : (
-          "Enter a keyword in the search bar above to find articles, or use the filters to browse."
+          t("explorer.search.emptyPrompt")
         )
       }
       basePath="/search"

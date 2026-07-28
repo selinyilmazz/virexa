@@ -70,7 +70,36 @@
         "security-advisory": "Beveiligingsadvies",
         "certification": "Certificaat",
         "open-source": "Open source"
-      }
+      },
+      "closeAria": "Filters sluiten"
+    },
+    "noResults": {
+      "title": "Geen artikelen komen overeen met deze filters",
+      "subtitle": "Verruim je filters of wis de zoekopdracht."
+    },
+    "pagination": {
+      "ariaLabel": "Paginering",
+      "previous": "Vorige",
+      "next": "Volgende"
+    },
+    "sort": {
+      "label": "Sorteren op",
+      "newest": "Nieuwste",
+      "mostRead": "Meest gelezen",
+      "trending": "Trending",
+      "oldest": "Oudste"
+    },
+    "developerPulse": {
+      "heading": "Developer Pulse",
+      "subheading": "Waar ontwikkelaars het vandaag over hebben",
+      "topDiscussion": "Populairste Discussie",
+      "comments": "{count} reacties",
+      "viewDiscussion": "Bekijk discussie"
+    },
+    "search": {
+      "title": "Zoekresultaten",
+      "resultsFor": "Resultaten voor:",
+      "emptyPrompt": "Voer een trefwoord in de zoekbalk hierboven in om artikelen te vinden, of gebruik de filters om te bladeren."
     }
   },
   "profile": {
@@ -170,7 +199,8 @@
   "nav": {
     "logoAria": "Virexa startpagina",
     "searchAria": "Zoek nieuws, onderwerpen of bronnen",
-    "searchPlaceholder": "Zoek nieuws, technologieën, bedrijven of repositories...",
+    "searchPlaceholder": "Zoek artikelen, releases, repositories, technologieën...",
+    "searchPlaceholderOpenSource": "Zoek repositories, ontwikkelaars, organisaties...",
     "searchButtonAria": "Zoeken",
     "categories": {
       "technology": "Technologie",

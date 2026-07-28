@@ -1,4 +1,5 @@
 import { DEVELOPER_PULSE_DATA, type PulseTopicKey, type PulseTrend } from "@/lib/explorer/developer-pulse-data";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 function formatCount(value: number): string {
   return Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(value);
@@ -39,8 +40,9 @@ type DeveloperPulseProps = { topic: PulseTopicKey };
  * data rather than a real social-listening integration (none exists yet)
  * or a fabricated "real" source.
  */
-export function DeveloperPulse({ topic }: DeveloperPulseProps) {
+export async function DeveloperPulse({ topic }: DeveloperPulseProps) {
   const data = DEVELOPER_PULSE_DATA[topic];
+  const { t } = await getServerTranslations();
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md">
@@ -48,9 +50,9 @@ export function DeveloperPulse({ topic }: DeveloperPulseProps) {
         <span aria-hidden="true" className="text-base leading-none">
           🔥
         </span>
-        <h2 className="text-base font-bold tracking-tight text-slate-950">Developer Pulse</h2>
+        <h2 className="text-base font-bold tracking-tight text-slate-950">{t("explorer.developerPulse.heading")}</h2>
       </div>
-      <p className="mt-1 text-xs text-slate-500">What developers are discussing today</p>
+      <p className="mt-1 text-xs text-slate-500">{t("explorer.developerPulse.subheading")}</p>
 
       <ul className="mt-4 space-y-0.5">
         {data.topics.map((item) => {
@@ -78,7 +80,7 @@ export function DeveloperPulse({ topic }: DeveloperPulseProps) {
           <span aria-hidden="true" className="text-sm leading-none">
             💬
           </span>
-          <h3 className="text-sm font-bold tracking-tight text-slate-950">Top Discussion</h3>
+          <h3 className="text-sm font-bold tracking-tight text-slate-950">{t("explorer.developerPulse.topDiscussion")}</h3>
         </div>
 
         <div className="group mt-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 transition-all duration-200 hover:border-slate-200 hover:bg-slate-50 hover:shadow-sm">
@@ -102,7 +104,7 @@ export function DeveloperPulse({ topic }: DeveloperPulseProps) {
             </span>
             <span className="inline-flex items-center gap-1.5">
               <CommentIcon className="size-3.5 text-slate-400" />
-              {data.discussion.comments.toLocaleString("en-US")} comments
+              {t("explorer.developerPulse.comments", { count: data.discussion.comments.toLocaleString("en-US") })}
             </span>
           </div>
 
@@ -112,7 +114,7 @@ export function DeveloperPulse({ topic }: DeveloperPulseProps) {
             rel="noopener noreferrer"
             className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-[#2f67e8] transition-colors duration-150 hover:text-[#2556c9]"
           >
-            View discussion
+            {t("explorer.developerPulse.viewDiscussion")}
             <span aria-hidden="true" className="transition-transform duration-150 group-hover:translate-x-1">
               →
             </span>
