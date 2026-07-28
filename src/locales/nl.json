@@ -39,6 +39,18 @@
     "releases": {
       "heading": "Ontwikkelaarsreleases",
       "viewAll": "Alles bekijken"
+    },
+    "newsletter": {
+      "heading": "📬 Blijf op de hoogte van AI- en ontwikkelaarsnieuws",
+      "description": "Ontvang het belangrijkste AI-, programmeer-, cloud-, beveiligings- en ontwikkelaarsnieuws in je inbox.",
+      "emailLabel": "E-mailadres",
+      "emailPlaceholder": "E-mailadres",
+      "submit": "Abonneren",
+      "submitting": "Abonneren…",
+      "successToast": "Je bent geabonneerd! Bedankt voor je aanmelding.",
+      "alreadySubscribedToast": "Je bent al geabonneerd.",
+      "errorToast": "Abonneren is nu niet gelukt. Probeer het opnieuw.",
+      "disclaimer": "Geen spam. Voor altijd gratis. Altijd op te zeggen."
     }
   },
   "explorer": {
@@ -238,6 +250,11 @@
       "languageRequired": "Selecteer een taal.",
       "timezoneRequired": "Selecteer een tijdzone.",
       "tooManyCategories": "Te veel categorieën geselecteerd."
+    },
+    "newsletter": {
+      "emailRequired": "E-mailadres is verplicht.",
+      "emailMax": "E-mailadres is te lang.",
+      "emailInvalid": "Voer een geldig e-mailadres in."
     }
   },
   "bookmarks": {
@@ -1078,7 +1095,8 @@
       "working": "Bezig…",
       "confirm": "Bevestigen",
       "actionFailed": "Actie mislukt.",
-      "done": "Klaar."
+      "done": "Klaar.",
+      "clearAll": "Alles wissen"
     },
     "notifications": {
       "title": "Meldingen",
@@ -1211,6 +1229,34 @@
       "updateTrustConfirmDescription": "{count} bron(nen) krijgen vertrouwensscore {score}.",
       "updatedSuccess": "{count} bron(nen) bijgewerkt."
     },
+    "newsletter": {
+      "title": "Nieuwsbrief",
+      "subtitle": "Beheer de abonnees van de nieuwsbrief op de homepage.",
+      "statTotal": "Totaal aantal abonnees",
+      "statActive": "Actieve abonnees",
+      "statNewest": "Nieuw deze week",
+      "statNewestHint": "Aangemeld in de afgelopen 7 dagen",
+      "allSubscribersTitle": "Alle abonnees",
+      "searchPlaceholder": "Zoeken op e-mail...",
+      "sortLabel": "Sorteren",
+      "sortNewest": "Nieuwste eerst",
+      "sortOldest": "Oudste eerst",
+      "columnEmail": "E-mail",
+      "columnSubscribed": "Aanmelddatum",
+      "active": "Actief",
+      "inactive": "Inactief",
+      "deactivate": "Deactiveren",
+      "reactivate": "Heractiveren",
+      "deactivatedSuccess": "Abonnee gedeactiveerd.",
+      "reactivatedSuccess": "Abonnee heractiveerd.",
+      "deleteConfirmTitle": "{email} verwijderen?",
+      "deleteConfirmDescription": "Hiermee wordt deze abonnee permanent verwijderd. Dit kan niet ongedaan worden gemaakt.",
+      "deletedSuccess": "Abonnee verwijderd.",
+      "emptyTitle": "Geen abonnees gevonden",
+      "emptyDescription": "Geen abonnees komen overeen met de huidige zoekopdracht, of niemand heeft zich nog aangemeld.",
+      "emptyMessage": "Geen abonnees gevonden.",
+      "itemLabel": "abonnees"
+    },
     "runtime": {
       "noRunsRecorded": "Nog geen runs geregistreerd",
       "columnJobType": "Taaktype",
@@ -1272,6 +1318,7 @@
       "dashboard": "Dashboard",
       "articles": "Artikelen",
       "sources": "Bronnen",
+      "newsletter": "Nieuwsbrief",
       "repositories": "Repositories",
       "developerReleases": "Ontwikkelaarsreleases",
       "githubCollections": "GitHub-collecties",

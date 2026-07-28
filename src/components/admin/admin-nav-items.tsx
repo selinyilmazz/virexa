@@ -82,6 +82,17 @@ const SOURCES_ITEM: AdminNavItem = {
   ),
 };
 
+const NEWSLETTER_ITEM: AdminNavItem = {
+  href: "/admin/newsletter",
+  labelKey: "admin.nav.newsletter",
+  icon: (
+    <svg {...ICON_PROPS}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m4 6.5 8 6 8-6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+};
+
 const REPOSITORIES_ITEM: AdminNavItem = {
   href: "/admin/repositories",
   labelKey: "admin.nav.repositories",
@@ -199,7 +210,7 @@ const SETTINGS_ITEM: AdminNavItem = {
  */
 export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   { id: null, labelKey: null, items: [DASHBOARD_ITEM] },
-  { id: "content", labelKey: "admin.nav.groupContent", items: [ARTICLES_ITEM, SOURCES_ITEM] },
+  { id: "content", labelKey: "admin.nav.groupContent", items: [ARTICLES_ITEM, SOURCES_ITEM, NEWSLETTER_ITEM] },
   { id: "developer-hub", labelKey: "admin.nav.groupDeveloperHub", items: [REPOSITORIES_ITEM, COLLECTIONS_ITEM, RELEASES_ITEM, CATALOG_ITEM] },
   { id: "users", labelKey: "admin.nav.groupUsers", items: [USERS_ITEM] },
   { id: "operations", labelKey: "admin.nav.groupOperations", items: [ANALYTICS_ITEM, RUNTIME_ITEM, AUDIT_ITEM] },

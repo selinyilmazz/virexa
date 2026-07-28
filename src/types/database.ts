@@ -581,6 +581,27 @@ export type CatalogItemInsert = Partial<Omit<CatalogItemRow, "id" | "created_at"
 
 export type CatalogItemUpdate = Partial<Omit<CatalogItemRow, "id" | "created_at" | "updated_at">>;
 
+// ============================================================================
+// Newsletter subscribers (supabase/migrations/0033_newsletter_subscribers.sql)
+//
+// MVP: subscriber collection/management only - see
+// `src/services/newsletter/newsletter-service.ts` for the disclosed Phase 2
+// scope boundary (no email-sending fields exist yet on purpose).
+// ============================================================================
+
+export type NewsletterSubscriberRow = {
+  id: string;
+  /** Always trimmed + lowercased by the repository before it's ever read or written - see the migration's column comment. */
+  email: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NewsletterSubscriberInsert = { email: string; is_active?: boolean };
+
+export type NewsletterSubscriberUpdate = Partial<Omit<NewsletterSubscriberRow, "id" | "email" | "created_at" | "updated_at">>;
+
 export type Database = {
   public: {
     Tables: {
@@ -663,6 +684,11 @@ export type Database = {
         Row: CollectionRepositoryRow;
         Insert: CollectionRepositoryInsert;
         Update: never;
+      };
+      newsletter_subscribers: {
+        Row: NewsletterSubscriberRow;
+        Insert: NewsletterSubscriberInsert;
+        Update: NewsletterSubscriberUpdate;
       };
     };
   };

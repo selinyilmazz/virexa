@@ -39,6 +39,18 @@
     "releases": {
       "heading": "Geliştirici Sürümleri",
       "viewAll": "Tümünü Gör"
+    },
+    "newsletter": {
+      "heading": "📬 Yapay Zeka ve Geliştirici Haberlerinden Haberdar Olun",
+      "description": "En önemli yapay zeka, yazılım, bulut, güvenlik ve geliştirici haberlerini gelen kutunuza alın.",
+      "emailLabel": "E-posta adresi",
+      "emailPlaceholder": "E-posta adresi",
+      "submit": "Abone Ol",
+      "submitting": "Abone olunuyor…",
+      "successToast": "Abone oldunuz! Katıldığınız için teşekkürler.",
+      "alreadySubscribedToast": "Zaten abonesiniz.",
+      "errorToast": "Şu anda abone olunamadı. Lütfen tekrar deneyin.",
+      "disclaimer": "Spam yok. Sonsuza kadar ücretsiz. İstediğiniz zaman abonelikten çıkın."
     }
   },
   "explorer": {
@@ -238,6 +250,11 @@
       "languageRequired": "Bir dil seçin.",
       "timezoneRequired": "Bir saat dilimi seçin.",
       "tooManyCategories": "Çok fazla kategori seçildi."
+    },
+    "newsletter": {
+      "emailRequired": "E-posta adresi gereklidir.",
+      "emailMax": "E-posta adresi çok uzun.",
+      "emailInvalid": "Geçerli bir e-posta adresi girin."
     }
   },
   "bookmarks": {
@@ -1078,7 +1095,8 @@
       "working": "İşleniyor…",
       "confirm": "Onayla",
       "actionFailed": "İşlem başarısız oldu.",
-      "done": "Tamamlandı."
+      "done": "Tamamlandı.",
+      "clearAll": "Tümünü Temizle"
     },
     "notifications": {
       "title": "Bildirimler",
@@ -1211,6 +1229,34 @@
       "updateTrustConfirmDescription": "{count} kaynağın güven puanı {score} olarak ayarlanacak.",
       "updatedSuccess": "{count} kaynak güncellendi."
     },
+    "newsletter": {
+      "title": "Bülten",
+      "subtitle": "Ana sayfa bülten abonelerini yönetin.",
+      "statTotal": "Toplam Abone",
+      "statActive": "Aktif Abone",
+      "statNewest": "Bu Hafta Yeni",
+      "statNewestHint": "Son 7 günde kaydoldu",
+      "allSubscribersTitle": "Tüm Aboneler",
+      "searchPlaceholder": "E-posta ile ara...",
+      "sortLabel": "Sırala",
+      "sortNewest": "En yeni",
+      "sortOldest": "En eski",
+      "columnEmail": "E-posta",
+      "columnSubscribed": "Abonelik tarihi",
+      "active": "Aktif",
+      "inactive": "Pasif",
+      "deactivate": "Devre Dışı Bırak",
+      "reactivate": "Yeniden Etkinleştir",
+      "deactivatedSuccess": "Abone devre dışı bırakıldı.",
+      "reactivatedSuccess": "Abone yeniden etkinleştirildi.",
+      "deleteConfirmTitle": "{email} silinsin mi?",
+      "deleteConfirmDescription": "Bu, aboneyi kalıcı olarak kaldırır. Bu işlem geri alınamaz.",
+      "deletedSuccess": "Abone silindi.",
+      "emptyTitle": "Abone bulunamadı",
+      "emptyDescription": "Mevcut aramayla eşleşen abone yok veya henüz kimse kaydolmadı.",
+      "emptyMessage": "Abone bulunamadı.",
+      "itemLabel": "abone"
+    },
     "runtime": {
       "noRunsRecorded": "Henüz çalıştırma kaydı yok",
       "columnJobType": "İş Türü",
@@ -1272,6 +1318,7 @@
       "dashboard": "Panel",
       "articles": "Makaleler",
       "sources": "Kaynaklar",
+      "newsletter": "Bülten",
       "repositories": "Depolar",
       "developerReleases": "Geliştirici Sürümleri",
       "githubCollections": "GitHub Koleksiyonları",

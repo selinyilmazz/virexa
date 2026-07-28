@@ -39,6 +39,18 @@
     "releases": {
       "heading": "Developer Releases",
       "viewAll": "View All"
+    },
+    "newsletter": {
+      "heading": "📬 Stay updated with AI & Developer News",
+      "description": "Get the most important AI, programming, cloud, security and developer news delivered to your inbox.",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "Email address",
+      "submit": "Subscribe",
+      "submitting": "Subscribing…",
+      "successToast": "You're subscribed! Thanks for joining.",
+      "alreadySubscribedToast": "You're already subscribed.",
+      "errorToast": "Couldn't subscribe right now. Please try again.",
+      "disclaimer": "No spam. Free forever. Unsubscribe anytime."
     }
   },
   "explorer": {
@@ -238,6 +250,11 @@
       "languageRequired": "Select a language.",
       "timezoneRequired": "Select a timezone.",
       "tooManyCategories": "Too many categories selected."
+    },
+    "newsletter": {
+      "emailRequired": "Email address is required.",
+      "emailMax": "Email address is too long.",
+      "emailInvalid": "Enter a valid email address."
     }
   },
   "bookmarks": {
@@ -1078,7 +1095,8 @@
       "working": "Working…",
       "confirm": "Confirm",
       "actionFailed": "Action failed.",
-      "done": "Done."
+      "done": "Done.",
+      "clearAll": "Clear All"
     },
     "notifications": {
       "title": "Notifications",
@@ -1211,6 +1229,34 @@
       "updateTrustConfirmDescription": "{count} source(s) will be set to trust score {score}.",
       "updatedSuccess": "{count} source(s) updated."
     },
+    "newsletter": {
+      "title": "Newsletter",
+      "subtitle": "Manage homepage newsletter subscribers.",
+      "statTotal": "Total Subscribers",
+      "statActive": "Active Subscribers",
+      "statNewest": "New This Week",
+      "statNewestHint": "Signed up in the last 7 days",
+      "allSubscribersTitle": "All Subscribers",
+      "searchPlaceholder": "Search by email...",
+      "sortLabel": "Sort",
+      "sortNewest": "Newest first",
+      "sortOldest": "Oldest first",
+      "columnEmail": "Email",
+      "columnSubscribed": "Subscribed date",
+      "active": "Active",
+      "inactive": "Inactive",
+      "deactivate": "Deactivate",
+      "reactivate": "Reactivate",
+      "deactivatedSuccess": "Subscriber deactivated.",
+      "reactivatedSuccess": "Subscriber reactivated.",
+      "deleteConfirmTitle": "Delete {email}?",
+      "deleteConfirmDescription": "This permanently removes this subscriber. This can't be undone.",
+      "deletedSuccess": "Subscriber deleted.",
+      "emptyTitle": "No subscribers found",
+      "emptyDescription": "No subscribers match the current search, or nobody has signed up yet.",
+      "emptyMessage": "No subscribers found.",
+      "itemLabel": "subscribers"
+    },
     "runtime": {
       "noRunsRecorded": "No runs recorded yet",
       "columnJobType": "Job Type",
@@ -1272,6 +1318,7 @@
       "dashboard": "Dashboard",
       "articles": "Articles",
       "sources": "Sources",
+      "newsletter": "Newsletter",
       "repositories": "Repositories",
       "developerReleases": "Developer Releases",
       "githubCollections": "GitHub Collections",

@@ -3,6 +3,7 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { LatestNews } from "@/components/home/LatestNews";
 import { LatestReleases } from "@/components/home/LatestReleases";
 import { MostRead } from "@/components/home/MostRead";
+import { NewsletterSection } from "@/components/home/NewsletterSection";
 
 /**
  * Homepage redesign (recreating a provided reference layout, improving
@@ -20,6 +21,12 @@ import { MostRead } from "@/components/home/MostRead";
  * clutter without real value) - their component files are untouched in
  * case they're reused elsewhere. Below `xl` every section just stacks in
  * document order; Footer is global (root layout).
+ *
+ * Newsletter MVP: `NewsletterSection` is the last block inside `<main>`,
+ * directly above the two content rows' own bottom edge - since `Footer`
+ * itself renders just after `{children}` in the root layout (not here),
+ * this placement satisfies "near the bottom of the homepage, before the
+ * footer" without this page needing to reach into the footer at all.
  */
 export default function Home() {
   return (
@@ -44,6 +51,8 @@ export default function Home() {
               <LatestReleases />
             </aside>
           </div>
+
+          <NewsletterSection />
         </div>
       </main>
     </>
