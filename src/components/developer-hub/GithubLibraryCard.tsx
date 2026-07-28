@@ -4,6 +4,7 @@ import { RepoBookmarkButton } from "@/components/developer-hub/RepoBookmarkButto
 import { RepoShareButton } from "@/components/developer-hub/RepoShareButton";
 import { REPOSITORY_CATEGORY_LABELS, type RepositoryCategorySlug } from "@/lib/developer-hub/shared";
 import type { GithubRepoCardData } from "@/services/developer-hub/github-explorer-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 function StarIcon({ className = "size-3.5" }: { className?: string }) {
   return (
@@ -85,7 +86,8 @@ type GithubLibraryCardProps = { repo: GithubRepoCardData };
  * shape) - this one reads the new `GithubRepoCardData` shape from
  * `github-explorer-service.ts`, the real `repositories` table data.
  */
-export function GithubLibraryCard({ repo }: GithubLibraryCardProps) {
+export async function GithubLibraryCard({ repo }: GithubLibraryCardProps) {
+  const { t } = await getServerTranslations();
   const category = repo.category ? REPOSITORY_CATEGORY_LABELS[repo.category as RepositoryCategorySlug] : null;
   const detailUrl = `/developer-hub/github/${repo.slug}`;
 
@@ -108,15 +110,15 @@ export function GithubLibraryCard({ repo }: GithubLibraryCardProps) {
               {repo.repoName}
             </Link>
             {repo.verified && (
-              <span title="Verified" className="text-[#2f67e8]">
+              <span title={t("developerHub.github.card.verified")} className="text-[#2f67e8]">
                 <VerifiedIcon />
               </span>
             )}
             {repo.editorPick && (
-              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Editor&apos;s Pick</span>
+              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">{t("developerHub.github.explorer.editorsPickBadge")}</span>
             )}
             {repo.hiddenGem && (
-              <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700">Hidden Gem</span>
+              <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700">{t("developerHub.github.card.hiddenGem")}</span>
             )}
           </div>
           {repo.description && <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-500">{repo.description}</p>}
@@ -170,16 +172,16 @@ export function GithubLibraryCard({ repo }: GithubLibraryCardProps) {
             {formatStat(repo.watchers)}
           </span>
         )}
-        {repo.openIssuesCount > 0 && <span>{formatStat(repo.openIssuesCount)} open issues</span>}
+        {repo.openIssuesCount > 0 && <span>{t("developerHub.github.card.openIssues", { count: formatStat(repo.openIssuesCount) })}</span>}
         {typeof repo.contributorsCount === "number" && repo.contributorsCount > 0 && (
-          <span>{formatStat(repo.contributorsCount)} contributors</span>
+          <span>{t("developerHub.github.card.contributors", { count: formatStat(repo.contributorsCount) })}</span>
         )}
-        <span>Updated {repo.updatedRelative}</span>
+        <span>{t("developerHub.card.updated", { relative: repo.updatedRelative })}</span>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-1.5">
-          <span className="text-[11px] font-medium text-slate-500">Health</span>
+          <span className="text-[11px] font-medium text-slate-500">{t("developerHub.github.card.health")}</span>
           <span className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100">
             <span className={`block h-full rounded-full ${healthColor(repo.healthScore)}`} style={{ width: `${repo.healthScore}%` }} />
           </span>
@@ -187,17 +189,17 @@ export function GithubLibraryCard({ repo }: GithubLibraryCardProps) {
         </div>
         {repo.communityScore > 0 && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-medium text-slate-500">Community</span>
+            <span className="text-[11px] font-medium text-slate-500">{t("developerHub.github.card.community")}</span>
             <span className="text-[11px] font-semibold text-slate-600">{repo.communityScore}</span>
           </div>
         )}
         {category && (
           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
-            {category.emoji} {category.label}
+            {category.emoji} {t(`developerHub.github.categoryLabel.${repo.category}`)}
           </span>
         )}
         {typeof repo.bookmarkCount === "number" && repo.bookmarkCount > 0 && (
-          <span className="text-[11px] font-medium text-slate-400">{formatStat(repo.bookmarkCount)} saved</span>
+          <span className="text-[11px] font-medium text-slate-400">{t("developerHub.github.card.saved", { count: formatStat(repo.bookmarkCount) })}</span>
         )}
       </div>
 
@@ -220,7 +222,7 @@ export function GithubLibraryCard({ repo }: GithubLibraryCardProps) {
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors duration-200 hover:border-[#2f67e8] hover:text-[#2f67e8]"
           >
             <DocsIcon className="size-3.5" />
-            Docs
+            {t("developerHub.github.card.docs")}
           </a>
         )}
         {repo.websiteUrl && (
@@ -231,7 +233,7 @@ export function GithubLibraryCard({ repo }: GithubLibraryCardProps) {
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors duration-200 hover:border-[#2f67e8] hover:text-[#2f67e8]"
           >
             <GlobeIcon className="size-3.5" />
-            Website
+            {t("developerHub.github.card.website")}
           </a>
         )}
         <a
@@ -240,7 +242,7 @@ export function GithubLibraryCard({ repo }: GithubLibraryCardProps) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors duration-200 hover:border-[#2f67e8] hover:text-[#2f67e8]"
         >
-          Visit GitHub
+          {t("developerHub.github.card.visitGithub")}
           <ExternalLinkIcon className="size-3" />
         </a>
       </div>

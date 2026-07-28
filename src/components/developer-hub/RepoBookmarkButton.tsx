@@ -3,6 +3,7 @@
 import { useBookmarkAction } from "@/hooks/useBookmarkAction";
 import { AuthToast } from "@/components/auth/AuthToast";
 import type { BookmarkItem } from "@/lib/bookmarks";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 export type RepoBookmarkInput = {
   /** `owner/repo`, e.g. "vercel/next.js" - unique and stable, used as the bookmark slug. */
@@ -52,6 +53,7 @@ function toBookmarkItem(repo: RepoBookmarkInput): BookmarkItem {
  * and survives logout/login like every other bookmark.
  */
 export function RepoBookmarkButton({ repo }: RepoBookmarkButtonProps) {
+  const t = useTranslations();
   const item = toBookmarkItem(repo);
   const { bookmarked, trigger, error } = useBookmarkAction(item);
 
@@ -62,7 +64,7 @@ export function RepoBookmarkButton({ repo }: RepoBookmarkButtonProps) {
         type="button"
         onClick={trigger}
         aria-pressed={bookmarked}
-        aria-label={bookmarked ? "Remove from bookmarks" : "Save repository"}
+        aria-label={bookmarked ? t("developerHub.bookmark.remove") : t("developerHub.github.bookmark.save")}
         className={`flex size-8 shrink-0 items-center justify-center rounded-lg border transition-colors ${
           bookmarked ? "border-[#2f67e8] bg-blue-50 text-[#2f67e8]" : "border-slate-200 bg-white text-slate-400 hover:text-slate-600"
         }`}

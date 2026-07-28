@@ -1,4 +1,5 @@
 import type { GithubQuickStats as GithubQuickStatsData } from "@/services/developer-hub/github-explorer-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 function formatCount(value: number): string {
   return value.toLocaleString("en-US");
@@ -19,10 +20,11 @@ type GithubQuickStatsProps = { stats: GithubQuickStatsData };
  * computed off the `repositories` table by `getGithubQuickStats()` -
  * never hardcoded.
  */
-export function GithubQuickStats({ stats }: GithubQuickStatsProps) {
+export async function GithubQuickStats({ stats }: GithubQuickStatsProps) {
+  const { t } = await getServerTranslations();
   const metrics = [
-    { icon: "📚", label: "Curated Repositories", value: stats.curatedRepositoriesCount },
-    { icon: "💎", label: "Hidden Gems", value: stats.hiddenGemsCount },
+    { icon: "📚", label: t("developerHub.github.explorer.curatedRepositories"), value: stats.curatedRepositoriesCount },
+    { icon: "💎", label: t("developerHub.github.explorer.hiddenGems"), value: stats.hiddenGemsCount },
   ].filter((metric) => metric.value > 0);
 
   // Owns its own heading/section wrapper (rather than the parent page
@@ -34,7 +36,7 @@ export function GithubQuickStats({ stats }: GithubQuickStatsProps) {
 
   return (
     <section>
-      <h2 className="text-xl font-bold tracking-tight text-slate-950">Quick Stats</h2>
+      <h2 className="text-xl font-bold tracking-tight text-slate-950">{t("developerHub.github.explorer.quickStatsHeading")}</h2>
       <div className="mt-4 grid max-w-md grid-cols-2 gap-3">
         {metrics.map((metric) => (
           <div key={metric.label} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">

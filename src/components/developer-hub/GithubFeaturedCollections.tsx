@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { REPOSITORY_CATEGORY_LABELS, REPOSITORY_CATEGORY_ORDER } from "@/lib/developer-hub/shared";
 import type { GithubFeaturedCollection } from "@/services/developer-hub/github-explorer-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 type GithubFeaturedCollectionsProps = {
   categories: GithubFeaturedCollection[];
@@ -25,14 +26,15 @@ type GithubFeaturedCollectionsProps = {
  * `GithubLibraryFiltersPanel.tsx`). Every count here is real
  * (`getFeaturedCategoryCollections`), never fabricated.
  */
-export function GithubFeaturedCollections({ categories, activeCategory }: GithubFeaturedCollectionsProps) {
+export async function GithubFeaturedCollections({ categories, activeCategory }: GithubFeaturedCollectionsProps) {
+  const { t } = await getServerTranslations();
   const byCategory = new Map(categories.map((c) => [c.categorySlug, c.repoCount]));
 
   return (
     <section id="featured-collections" className="scroll-mt-28">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-xl font-bold tracking-tight text-slate-950">Featured Collections</h2>
-        <p className="text-sm text-slate-500">Jump straight to the category you care about</p>
+        <h2 className="text-xl font-bold tracking-tight text-slate-950">{t("developerHub.github.explorer.featuredCollectionsHeading")}</h2>
+        <p className="text-sm text-slate-500">{t("developerHub.github.explorer.featuredCollectionsSubtitle")}</p>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
@@ -52,8 +54,8 @@ export function GithubFeaturedCollections({ categories, activeCategory }: Github
               <span aria-hidden="true" className="text-2xl">
                 {meta.emoji}
               </span>
-              <span className="text-xs font-semibold leading-tight text-slate-900">{meta.label}</span>
-              <span className="text-[11px] font-medium text-slate-500">{count.toLocaleString("en-US")} repos</span>
+              <span className="text-xs font-semibold leading-tight text-slate-900">{t(`developerHub.github.categoryLabel.${slug}`)}</span>
+              <span className="text-[11px] font-medium text-slate-500">{t("developerHub.github.explorer.reposCount", { count: count.toLocaleString("en-US") })}</span>
             </Link>
           );
         })}

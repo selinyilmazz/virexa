@@ -18,6 +18,7 @@ import {
   parseGithubLibrarySearchParams,
   GITHUB_LIBRARY_PAGE_SIZE,
 } from "@/services/developer-hub/github-explorer-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 const RESULTS_ANCHOR_ID = "github-library-results";
 
@@ -46,6 +47,7 @@ const RESULTS_ANCHOR_ID = "github-library-results";
  * `?category=` param).
  */
 export async function GithubExplorerView({ searchParams }: { searchParams: GithubLibrarySearchParams }) {
+  const { t } = await getServerTranslations();
   const filters = parseGithubLibrarySearchParams(searchParams);
   const currentPage = filters.page && filters.page > 0 ? Math.floor(filters.page) : 1;
 
@@ -88,9 +90,11 @@ export async function GithubExplorerView({ searchParams }: { searchParams: Githu
             <div id={RESULTS_ANCHOR_ID} className="min-w-0 scroll-mt-28">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm font-medium text-slate-600">
-                  {results.total.toLocaleString("en-US")} repositor{results.total === 1 ? "y" : "ies"}
+                  {t(results.total === 1 ? "developerHub.github.explorer.resultSingular" : "developerHub.github.explorer.resultPlural", {
+                    count: results.total.toLocaleString("en-US"),
+                  })}
                   <span className="text-slate-400"> • </span>
-                  Page {results.page} of {results.totalPages}
+                  {t("developerHub.explorer.page", { page: results.page, totalPages: results.totalPages })}
                 </p>
                 <GithubLibrarySortControl />
               </div>
@@ -100,9 +104,9 @@ export async function GithubExplorerView({ searchParams }: { searchParams: Githu
                   <span aria-hidden="true" className="flex size-16 items-center justify-center rounded-full bg-red-100 text-3xl">
                     ⚠️
                   </span>
-                  <h3 className="mt-6 text-xl font-bold tracking-tight text-slate-950">Something went wrong loading repositories</h3>
+                  <h3 className="mt-6 text-xl font-bold tracking-tight text-slate-950">{t("developerHub.github.explorer.errorTitle")}</h3>
                   <p className="mt-2 max-w-md text-base leading-relaxed text-slate-500">
-                    We couldn&apos;t reach the repository library right now. Please try again in a moment.
+                    {t("developerHub.github.explorer.errorMessage")}
                   </p>
                 </div>
               ) : results.items.length === 0 ? (
@@ -110,8 +114,8 @@ export async function GithubExplorerView({ searchParams }: { searchParams: Githu
                   <span aria-hidden="true" className="flex size-16 items-center justify-center rounded-full bg-slate-100 text-3xl">
                     🔍
                   </span>
-                  <h3 className="mt-6 text-xl font-bold tracking-tight text-slate-950">No repositories match these filters</h3>
-                  <p className="mt-2 max-w-md text-base leading-relaxed text-slate-500">Try widening your filters or clearing the search.</p>
+                  <h3 className="mt-6 text-xl font-bold tracking-tight text-slate-950">{t("developerHub.github.explorer.emptyTitle")}</h3>
+                  <p className="mt-2 max-w-md text-base leading-relaxed text-slate-500">{t("developerHub.results.emptyMessage")}</p>
                 </div>
               ) : (
                 <div className="mt-6 grid gap-4 lg:grid-cols-2">

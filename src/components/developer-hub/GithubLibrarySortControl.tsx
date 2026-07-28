@@ -2,9 +2,11 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { GITHUB_LIBRARY_SORT_OPTIONS } from "@/lib/developer-hub/shared";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 /** GitHub Library's 8-option sort control (Editor's Pick default, Most Stars/Forks/Watchers, Newest, Recently Updated, Best Health Score, Most Bookmarked) - same instant-apply, URL-driven convention as every other sort control in the app. */
 export function GithubLibrarySortControl() {
+  const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -19,7 +21,7 @@ export function GithubLibrarySortControl() {
 
   return (
     <label className="flex items-center gap-2 text-sm text-slate-600">
-      Sort by
+      {t("developerHub.sort.label")}
       <select
         value={currentSort}
         onChange={(event) => handleChange(event.target.value)}
@@ -27,7 +29,7 @@ export function GithubLibrarySortControl() {
       >
         {GITHUB_LIBRARY_SORT_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>
-            {option.label}
+            {t(`developerHub.github.sortOptions.${option.value}`)}
           </option>
         ))}
       </select>

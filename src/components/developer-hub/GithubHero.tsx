@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LANGUAGE_DOT_COLORS, formatStat } from "@/components/developer-hub/CatalogCard";
-import { REPOSITORY_CATEGORY_LABELS, type RepositoryCategorySlug } from "@/lib/developer-hub/shared";
 import type { GithubRepoCardData } from "@/services/developer-hub/github-explorer-service";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 type GithubHeroProps = {
   repos: GithubRepoCardData[];
@@ -58,6 +58,7 @@ function ArrowIcon({ direction, className = "size-5" }: { direction: "left" | "r
  * dots for an empty/singleton pool.
  */
 export function GithubHero({ repos, totalCurated }: GithubHeroProps) {
+  const t = useTranslations();
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const touchStartX = useRef<number | null>(null);
@@ -106,15 +107,13 @@ export function GithubHero({ repos, totalCurated }: GithubHeroProps) {
         {/* Left column - headline, positioning statement, CTAs. */}
         <div>
           <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-200">
-            Developer Knowledge Library
+            {t("developerHub.github.explorer.eyebrowBadge")}
           </span>
           <h1 className="mt-5 text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-[2.75rem]">
-            Repositories every developer should know about — not just what&apos;s trending today.
+            {t("developerHub.github.explorer.heroHeadline")}
           </h1>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-300">
-            A hand-curated library of {totalCurated.toLocaleString("en-US")}+ repositories — AI agents, developer
-            productivity, system design, security, mobile, and more — picked by editors for lasting value, not a
-            24-hour trending snapshot.
+            {t("developerHub.github.explorer.heroDescription", { count: totalCurated.toLocaleString("en-US") })}
           </p>
         </div>
 
@@ -128,7 +127,7 @@ export function GithubHero({ repos, totalCurated }: GithubHeroProps) {
         >
           {!active ? (
             <div className="flex h-64 items-center justify-center rounded-2xl border border-dashed border-white/20 text-sm text-slate-400">
-              No curated repositories yet.
+              {t("developerHub.github.explorer.noCuratedRepos")}
             </div>
           ) : (
             <>
@@ -151,7 +150,7 @@ export function GithubHero({ repos, totalCurated }: GithubHeroProps) {
                       </h3>
                       {active.editorPick && (
                         <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[11px] font-semibold text-amber-300">
-                          Editor&apos;s Pick
+                          {t("developerHub.github.explorer.editorsPickBadge")}
                         </span>
                       )}
                     </div>
@@ -188,8 +187,7 @@ export function GithubHero({ repos, totalCurated }: GithubHeroProps) {
                   )}
                   {active.category && (
                     <span className="rounded-full bg-white/10 px-2 py-0.5 font-medium">
-                      {REPOSITORY_CATEGORY_LABELS[active.category as RepositoryCategorySlug]?.emoji}{" "}
-                      {REPOSITORY_CATEGORY_LABELS[active.category as RepositoryCategorySlug]?.label}
+                      {t(`developerHub.github.categoryLabel.${active.category}`)}
                     </span>
                   )}
                 </div>
@@ -200,7 +198,7 @@ export function GithubHero({ repos, totalCurated }: GithubHeroProps) {
                   <button
                     type="button"
                     onClick={goPrev}
-                    aria-label="Previous repository"
+                    aria-label={t("developerHub.github.explorer.prevRepo")}
                     className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 flex size-9 items-center justify-center rounded-full border border-white/20 bg-slate-950/70 text-white transition-colors duration-200 hover:bg-slate-900"
                   >
                     <ArrowIcon direction="left" />
@@ -208,7 +206,7 @@ export function GithubHero({ repos, totalCurated }: GithubHeroProps) {
                   <button
                     type="button"
                     onClick={goNext}
-                    aria-label="Next repository"
+                    aria-label={t("developerHub.github.explorer.nextRepo")}
                     className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 flex size-9 items-center justify-center rounded-full border border-white/20 bg-slate-950/70 text-white transition-colors duration-200 hover:bg-slate-900"
                   >
                     <ArrowIcon direction="right" />
@@ -220,7 +218,7 @@ export function GithubHero({ repos, totalCurated }: GithubHeroProps) {
                         key={repo.id}
                         type="button"
                         onClick={() => goTo(dotIndex)}
-                        aria-label={`Show ${repo.fullName}`}
+                        aria-label={t("developerHub.github.explorer.showRepo", { name: repo.fullName })}
                         aria-current={dotIndex === index}
                         className={`h-1.5 rounded-full transition-all duration-200 ${
                           dotIndex === index ? "w-6 bg-white" : "w-1.5 bg-white/30 hover:bg-white/50"

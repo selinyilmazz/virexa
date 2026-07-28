@@ -14,6 +14,7 @@ import {
   getRepositoryAISummary,
   getYouMayAlsoLike,
 } from "@/services/developer-hub/github-explorer-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,10 @@ type PageProps = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const repo = await getGithubRepoBySlug(slug);
-  if (!repo) return { title: "Repository Not Found | Developer Hub | VIREXA" };
+  if (!repo) {
+    const { t } = await getServerTranslations();
+    return { title: t("developerHub.github.notFoundMetaTitle") };
+  }
   return {
     title: `${repo.owner}/${repo.repoName} | GitHub Explorer | VIREXA`,
     description: repo.description || `${repo.owner}/${repo.repoName} on Virexa's Developer Knowledge Library.`,

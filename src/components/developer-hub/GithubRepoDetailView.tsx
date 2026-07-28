@@ -5,9 +5,10 @@ import { GithubLibraryCard } from "@/components/developer-hub/GithubLibraryCard"
 import { RepoBookmarkButton } from "@/components/developer-hub/RepoBookmarkButton";
 import { RepoShareButton } from "@/components/developer-hub/RepoShareButton";
 import type { GithubRelease } from "@/lib/developer-hub/github";
-import { REPOSITORY_CATEGORY_LABELS, REPOSITORY_DIFFICULTY_LABELS, type RepositoryCategorySlug, type RepositoryDifficultySlug } from "@/lib/developer-hub/shared";
+import { REPOSITORY_CATEGORY_LABELS, type RepositoryCategorySlug, type RepositoryDifficultySlug } from "@/lib/developer-hub/shared";
 import type { GithubRepoCardData, GithubSidebarWidgets } from "@/services/developer-hub/github-explorer-service";
 import type { ArticleRow, CollectionRow, DeveloperReleaseRow } from "@/types/database";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 function StarIcon({ className = "size-4" }: { className?: string }) {
   return (
@@ -71,7 +72,7 @@ type GithubRepoDetailViewProps = {
  * than showing a fabricated placeholder (same "never invent data"
  * constraint as the rest of this redesign).
  */
-export function GithubRepoDetailView({
+export async function GithubRepoDetailView({
   repo,
   readmeExcerpt,
   releases,
@@ -84,19 +85,20 @@ export function GithubRepoDetailView({
   relatedArticles,
   relatedReleases,
 }: GithubRepoDetailViewProps) {
+  const { t } = await getServerTranslations();
   const category = repo.category ? REPOSITORY_CATEGORY_LABELS[repo.category as RepositoryCategorySlug] : null;
   const canonicalUrl = `/developer-hub/github/${repo.slug}`;
   const useCaseTags = [...repo.tags, ...repo.topics.slice(0, 6)];
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-8">
-      <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+      <nav aria-label={t("article.breadcrumb.ariaLabel")} className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
         <Link href="/" className="transition-colors duration-200 hover:text-slate-700">
-          Home
+          {t("common.home")}
         </Link>
         <span aria-hidden="true">›</span>
         <Link href="/developer-hub/github" className="transition-colors duration-200 hover:text-slate-700">
-          GitHub Explorer
+          {t("developerHub.landing.navGithubExplorer")}
         </Link>
         <span aria-hidden="true">›</span>
         <span className="font-medium text-slate-950">{repo.repoName}</span>
@@ -112,9 +114,9 @@ export function GithubRepoDetailView({
                 <span className="text-slate-400">{repo.owner}/</span>
                 {repo.repoName}
               </h1>
-              {repo.verified && <span className="rounded-full bg-blue-400/15 px-2.5 py-1 text-xs font-semibold text-blue-300">Verified</span>}
-              {repo.editorPick && <span className="rounded-full bg-amber-400/15 px-2.5 py-1 text-xs font-semibold text-amber-300">Editor&apos;s Pick</span>}
-              {repo.hiddenGem && <span className="rounded-full bg-violet-400/15 px-2.5 py-1 text-xs font-semibold text-violet-300">Hidden Gem</span>}
+              {repo.verified && <span className="rounded-full bg-blue-400/15 px-2.5 py-1 text-xs font-semibold text-blue-300">{t("developerHub.github.card.verified")}</span>}
+              {repo.editorPick && <span className="rounded-full bg-amber-400/15 px-2.5 py-1 text-xs font-semibold text-amber-300">{t("developerHub.github.explorer.editorsPickBadge")}</span>}
+              {repo.hiddenGem && <span className="rounded-full bg-violet-400/15 px-2.5 py-1 text-xs font-semibold text-violet-300">{t("developerHub.github.card.hiddenGem")}</span>}
             </div>
             {repo.description && <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-300">{repo.description}</p>}
 
@@ -128,23 +130,23 @@ export function GithubRepoDetailView({
               {repo.stars > 0 && (
                 <span className="inline-flex items-center gap-1.5">
                   <StarIcon />
-                  {formatStat(repo.stars)} stars
+                  {t("developerHub.github.detail.stars", { count: formatStat(repo.stars) })}
                 </span>
               )}
               {repo.forks > 0 && (
                 <span className="inline-flex items-center gap-1.5">
                   <ForkIcon />
-                  {formatStat(repo.forks)} forks
+                  {t("developerHub.github.detail.forks", { count: formatStat(repo.forks) })}
                 </span>
               )}
               {repo.watchers > 0 && (
                 <span className="inline-flex items-center gap-1.5">
                   <EyeIcon />
-                  {formatStat(repo.watchers)} watchers
+                  {t("developerHub.github.detail.watchers", { count: formatStat(repo.watchers) })}
                 </span>
               )}
-              {repo.license && <span>{repo.license} License</span>}
-              <span>Updated {repo.updatedRelative}</span>
+              {repo.license && <span>{t("developerHub.card.license", { license: repo.license })}</span>}
+              <span>{t("developerHub.card.updated", { relative: repo.updatedRelative })}</span>
             </div>
           </div>
 
@@ -170,7 +172,7 @@ export function GithubRepoDetailView({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-white/10"
               >
-                Docs
+                {t("developerHub.github.card.docs")}
               </a>
             )}
             {repo.websiteUrl && (
@@ -180,7 +182,7 @@ export function GithubRepoDetailView({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-white/10"
               >
-                Website
+                {t("developerHub.github.card.website")}
               </a>
             )}
             <a
@@ -189,7 +191,7 @@ export function GithubRepoDetailView({
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition-transform duration-200 hover:-translate-y-0.5"
             >
-              Visit GitHub
+              {t("developerHub.github.card.visitGithub")}
             </a>
           </div>
         </div>
@@ -202,7 +204,7 @@ export function GithubRepoDetailView({
             <section className="rounded-3xl border border-amber-200 bg-amber-50/60 p-6 sm:p-8">
               <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight text-slate-950">
                 <span aria-hidden="true">✨</span>
-                Why Learn This Repository
+                {t("developerHub.github.detail.whyLearn")}
               </h2>
               <p className="mt-3 text-base leading-relaxed text-slate-700">{repo.editorNotes}</p>
             </section>
@@ -213,7 +215,7 @@ export function GithubRepoDetailView({
             <section className="rounded-3xl border border-blue-200 bg-blue-50/50 p-6 sm:p-8">
               <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight text-slate-950">
                 <span aria-hidden="true">🧠</span>
-                AI Summary
+                {t("developerHub.github.detail.aiSummary")}
               </h2>
               <p className="mt-3 text-base leading-relaxed text-slate-700">{aiSummary}</p>
             </section>
@@ -222,7 +224,7 @@ export function GithubRepoDetailView({
           {/* Learning Roadmap */}
           {repo.learningRoadmap.length > 0 && (
             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-              <h2 className="text-lg font-bold tracking-tight text-slate-950">Learning Roadmap</h2>
+              <h2 className="text-lg font-bold tracking-tight text-slate-950">{t("developerHub.github.detail.learningRoadmap")}</h2>
               <ol className="mt-4 space-y-3">
                 {repo.learningRoadmap.map((step, index) => (
                   <li key={index} className="flex items-start gap-3">
@@ -239,8 +241,8 @@ export function GithubRepoDetailView({
           {/* Use Cases */}
           {useCaseTags.length > 0 && (
             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-              <h2 className="text-lg font-bold tracking-tight text-slate-950">Use Cases</h2>
-              <p className="mt-2 text-sm text-slate-500">Where {repo.repoName} fits, based on its real tags and topics.</p>
+              <h2 className="text-lg font-bold tracking-tight text-slate-950">{t("developerHub.github.detail.useCases")}</h2>
+              <p className="mt-2 text-sm text-slate-500">{t("developerHub.github.detail.useCasesSubtitle", { repo: repo.repoName })}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {Array.from(new Set(useCaseTags)).map((tag) => (
                   <span key={tag} className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700">
@@ -253,23 +255,30 @@ export function GithubRepoDetailView({
 
           {/* Installation */}
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <h2 className="text-lg font-bold tracking-tight text-slate-950">Installation</h2>
+            <h2 className="text-lg font-bold tracking-tight text-slate-950">{t("developerHub.github.detail.installation")}</h2>
             <div className="mt-3 rounded-2xl bg-slate-950 px-4 py-3.5">
               <code className="block overflow-x-auto whitespace-pre text-sm text-slate-100">git clone {repo.githubUrl}.git</code>
             </div>
             <p className="mt-3 text-sm text-slate-500">
-              See the{" "}
-              <a href={`${repo.githubUrl}#readme`} target="_blank" rel="noopener noreferrer" className="font-medium text-[#2f67e8] hover:underline">
-                repository&apos;s README
-              </a>{" "}
-              for language-specific setup steps.
+              {t("developerHub.github.detail.installationHelp")
+                .split("{readme}")
+                .map((part, index, arr) => (
+                  <span key={index}>
+                    {part}
+                    {index < arr.length - 1 && (
+                      <a href={`${repo.githubUrl}#readme`} target="_blank" rel="noopener noreferrer" className="font-medium text-[#2f67e8] hover:underline">
+                        {t("developerHub.github.detail.installationReadmeLink")}
+                      </a>
+                    )}
+                  </span>
+                ))}
             </p>
           </section>
 
           {/* README Summary */}
           {readmeExcerpt && (
             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-              <h2 className="text-lg font-bold tracking-tight text-slate-950">README Summary</h2>
+              <h2 className="text-lg font-bold tracking-tight text-slate-950">{t("developerHub.github.detail.readmeSummary")}</h2>
               <div className="mt-3 space-y-3 text-base leading-relaxed text-slate-600">
                 {readmeExcerpt.split("\n\n").map((paragraph, index) => (
                   <p key={index}>{paragraph}</p>
@@ -280,17 +289,17 @@ export function GithubRepoDetailView({
 
           {/* GitHub Stats */}
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <h2 className="text-lg font-bold tracking-tight text-slate-950">GitHub Stats</h2>
+            <h2 className="text-lg font-bold tracking-tight text-slate-950">{t("developerHub.github.detail.githubStats")}</h2>
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
-                repo.stars > 0 ? { label: "Stars", value: formatStat(repo.stars) } : null,
-                repo.forks > 0 ? { label: "Forks", value: formatStat(repo.forks) } : null,
-                repo.watchers > 0 ? { label: "Watchers", value: formatStat(repo.watchers) } : null,
-                repo.openIssuesCount > 0 ? { label: "Open Issues", value: formatStat(repo.openIssuesCount) } : null,
+                repo.stars > 0 ? { label: t("developerHub.github.detail.statStars"), value: formatStat(repo.stars) } : null,
+                repo.forks > 0 ? { label: t("developerHub.github.detail.statForks"), value: formatStat(repo.forks) } : null,
+                repo.watchers > 0 ? { label: t("developerHub.github.detail.statWatchers"), value: formatStat(repo.watchers) } : null,
+                repo.openIssuesCount > 0 ? { label: t("developerHub.github.detail.statOpenIssues"), value: formatStat(repo.openIssuesCount) } : null,
                 typeof repo.contributorsCount === "number" && repo.contributorsCount > 0
-                  ? { label: "Contributors", value: formatStat(repo.contributorsCount) }
+                  ? { label: t("developerHub.github.detail.statContributors"), value: formatStat(repo.contributorsCount) }
                   : null,
-                repo.topics.length > 0 ? { label: "Topics", value: String(repo.topics.length) } : null,
+                repo.topics.length > 0 ? { label: t("developerHub.github.detail.statTopics"), value: String(repo.topics.length) } : null,
               ]
                 .filter((stat): stat is { label: string; value: string } => stat !== null)
                 .map((stat) => (
@@ -302,7 +311,7 @@ export function GithubRepoDetailView({
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
               <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-slate-500">Health Score</span>
+                <span className="text-sm font-medium text-slate-500">{t("developerHub.github.detail.healthScoreLabel")}</span>
                 <span className="h-2 w-32 overflow-hidden rounded-full bg-slate-100">
                   <span className={`block h-full rounded-full ${healthColor(repo.healthScore)}`} style={{ width: `${repo.healthScore}%` }} />
                 </span>
@@ -310,7 +319,7 @@ export function GithubRepoDetailView({
               </div>
               {repo.communityScore > 0 && (
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-slate-500">Community Score</span>
+                  <span className="text-sm font-medium text-slate-500">{t("developerHub.github.detail.communityScoreLabel")}</span>
                   <span className="h-2 w-32 overflow-hidden rounded-full bg-slate-100">
                     <span className={`block h-full rounded-full ${healthColor(repo.communityScore)}`} style={{ width: `${repo.communityScore}%` }} />
                   </span>
@@ -320,17 +329,19 @@ export function GithubRepoDetailView({
             </div>
             {category && (
               <p className="mt-3 text-sm text-slate-500">
-                Category: <span className="font-medium text-slate-700">{category.emoji} {category.label}</span>
+                {t("developerHub.github.detail.categoryPrefix")}{" "}
+                <span className="font-medium text-slate-700">{category.emoji} {t(`developerHub.github.categoryLabel.${repo.category}`)}</span>
               </p>
             )}
             {repo.difficulty && (
               <p className="mt-1 text-sm text-slate-500">
-                Difficulty: <span className="font-medium text-slate-700">{REPOSITORY_DIFFICULTY_LABELS[repo.difficulty as RepositoryDifficultySlug]}</span>
+                {t("developerHub.github.detail.difficultyPrefix")}{" "}
+                <span className="font-medium text-slate-700">{t(`developerHub.difficulty.${repo.difficulty as RepositoryDifficultySlug}`)}</span>
               </p>
             )}
             {collections.length > 0 && (
               <p className="mt-1 text-sm text-slate-500">
-                Part of:{" "}
+                {t("developerHub.github.detail.partOfPrefix")}{" "}
                 {collections.map((c, i) => (
                   <span key={c.id}>
                     <Link href={`/developer-hub/github?collection=${c.slug}`} className="font-medium text-[#2f67e8] hover:underline">
@@ -346,7 +357,7 @@ export function GithubRepoDetailView({
           {/* Recent Releases */}
           {releases.length > 0 && (
             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-              <h2 className="text-lg font-bold tracking-tight text-slate-950">Recent Releases</h2>
+              <h2 className="text-lg font-bold tracking-tight text-slate-950">{t("developerHub.github.detail.recentReleases")}</h2>
               <ul className="mt-4 space-y-3">
                 {releases.map((release) => (
                   <li key={release.tag} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3">
@@ -361,7 +372,7 @@ export function GithubRepoDetailView({
           {/* Related Articles - real Virexa news coverage mentioning this repository. */}
           {relatedArticles.length > 0 && (
             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-              <h2 className="text-lg font-bold tracking-tight text-slate-950">Related Articles</h2>
+              <h2 className="text-lg font-bold tracking-tight text-slate-950">{t("developerHub.github.detail.relatedArticles")}</h2>
               <ul className="mt-4 space-y-3">
                 {relatedArticles.map((article) => (
                   <li key={article.id}>
@@ -381,7 +392,7 @@ export function GithubRepoDetailView({
           {/* Related Releases - real Developer Releases entries for this product/platform. */}
           {relatedReleases.length > 0 && (
             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-              <h2 className="text-lg font-bold tracking-tight text-slate-950">Related Releases</h2>
+              <h2 className="text-lg font-bold tracking-tight text-slate-950">{t("developerHub.github.detail.relatedReleases")}</h2>
               <ul className="mt-4 space-y-3">
                 {relatedReleases.map((release) => (
                   <li key={release.id}>
@@ -403,7 +414,7 @@ export function GithubRepoDetailView({
           {/* Alternatives */}
           {alternatives.length > 0 && (
             <section>
-              <h2 className="text-lg font-bold tracking-tight text-slate-950">Alternatives</h2>
+              <h2 className="text-lg font-bold tracking-tight text-slate-950">{t("developerHub.github.detail.alternatives")}</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 {alternatives.map((alt) => (
                   <GithubLibraryCard key={alt.id} repo={alt} />
@@ -415,7 +426,7 @@ export function GithubRepoDetailView({
           {/* Related Repositories */}
           {related.length > 0 && (
             <section>
-              <h2 className="text-lg font-bold tracking-tight text-slate-950">Related Repositories</h2>
+              <h2 className="text-lg font-bold tracking-tight text-slate-950">{t("developerHub.github.detail.relatedRepositories")}</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 {related.map((rel) => (
                   <GithubLibraryCard key={rel.id} repo={rel} />
@@ -427,7 +438,7 @@ export function GithubRepoDetailView({
           {/* You May Also Like */}
           {youMayAlsoLike.length > 0 && (
             <section>
-              <h2 className="text-lg font-bold tracking-tight text-slate-950">You May Also Like</h2>
+              <h2 className="text-lg font-bold tracking-tight text-slate-950">{t("developerHub.github.detail.youMayAlsoLike")}</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {youMayAlsoLike.map((item) => (
                   <GithubLibraryCard key={item.id} repo={item} />

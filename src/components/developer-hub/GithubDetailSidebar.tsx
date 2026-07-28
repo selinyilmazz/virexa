@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatStat } from "@/components/developer-hub/CatalogCard";
 import type { GithubRepoCardData, GithubSidebarWidgets } from "@/services/developer-hub/github-explorer-service";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 function MiniRepoRow({ repo, metric }: { repo: GithubRepoCardData; metric: string }) {
   return (
@@ -49,13 +50,38 @@ type GithubDetailSidebarProps = { widgets: GithubSidebarWidgets };
  * All 4 lists come from one batched `getGithubSidebarWidgets()` call,
  * real curated data throughout.
  */
-export function GithubDetailSidebar({ widgets }: GithubDetailSidebarProps) {
+export async function GithubDetailSidebar({ widgets }: GithubDetailSidebarProps) {
+  const { t } = await getServerTranslations();
   return (
     <div className="space-y-4">
-      <Widget icon="🔥" title="Editor's Picks" repos={widgets.editorsPicks} metricOf={(r) => `Score ${r.recommendationScore}/100`} />
-      <Widget icon="🚀" title="Recently Added" repos={widgets.recentlyAdded} metricOf={(r) => `Added ${r.updatedRelative}`} />
-      <Widget icon="⭐" title="Most Bookmarked" repos={widgets.mostBookmarked} metricOf={(r) => `${formatStat(r.bookmarkCount ?? 0)} saves`} />
-      <Widget icon="💎" title="Hidden Gems" repos={widgets.hiddenGems} metricOf={(r) => (r.stars > 0 ? `${formatStat(r.stars)} stars` : "Editor's curated pick")} />
+      <Widget
+        icon="🔥"
+        title={t("developerHub.github.sidebar.editorsPicks")}
+        repos={widgets.editorsPicks}
+        metricOf={(r) => t("developerHub.github.sidebar.scoreMetric", { score: r.recommendationScore })}
+      />
+      <Widget
+        icon="🚀"
+        title={t("developerHub.github.sidebar.recentlyAdded")}
+        repos={widgets.recentlyAdded}
+        metricOf={(r) => t("developerHub.github.sidebar.addedMetric", { relative: r.updatedRelative })}
+      />
+      <Widget
+        icon="⭐"
+        title={t("developerHub.github.sidebar.mostBookmarked")}
+        repos={widgets.mostBookmarked}
+        metricOf={(r) => t("developerHub.github.sidebar.savesMetric", { count: formatStat(r.bookmarkCount ?? 0) })}
+      />
+      <Widget
+        icon="💎"
+        title={t("developerHub.github.explorer.hiddenGems")}
+        repos={widgets.hiddenGems}
+        metricOf={(r) =>
+          r.stars > 0
+            ? t("developerHub.github.sidebar.starsMetric", { count: formatStat(r.stars) })
+            : t("developerHub.github.sidebar.curatedPick")
+        }
+      />
     </div>
   );
 }

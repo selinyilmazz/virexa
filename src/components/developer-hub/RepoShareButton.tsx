@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AuthToast, type AuthToastVariant } from "@/components/auth/AuthToast";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 type RepoShareButtonProps = {
   title: string;
@@ -61,6 +62,7 @@ const redditIcon = (
  * which apply to a repository share.
  */
 export function RepoShareButton({ title, url, iconOnly }: RepoShareButtonProps) {
+  const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; variant: AuthToastVariant } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -94,17 +96,17 @@ export function RepoShareButton({ title, url, iconOnly }: RepoShareButtonProps) 
   async function handleCopyLink() {
     try {
       await navigator.clipboard.writeText(url);
-      showToast("Link copied");
+      showToast(t("article.share.linkCopied"));
     } catch {
-      showToast("Couldn't copy link", "error");
+      showToast(t("article.share.copyFailed"), "error");
     }
     setIsOpen(false);
   }
 
   const shareLinks = [
-    { label: "Share on X", href: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, icon: xIcon },
-    { label: "Share on LinkedIn", href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, icon: linkedinIcon },
-    { label: "Share on Reddit", href: `https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`, icon: redditIcon },
+    { label: t("article.share.onX"), href: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, icon: xIcon },
+    { label: t("article.share.onLinkedin"), href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, icon: linkedinIcon },
+    { label: t("developerHub.github.share.onReddit"), href: `https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`, icon: redditIcon },
   ];
 
   return (
@@ -115,7 +117,7 @@ export function RepoShareButton({ title, url, iconOnly }: RepoShareButtonProps) 
         onClick={() => void handleClick()}
         aria-expanded={isOpen}
         aria-haspopup="true"
-        aria-label="Share this repository"
+        aria-label={t("developerHub.github.share.ariaLabel")}
         className={
           iconOnly
             ? "flex size-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors duration-200 hover:text-slate-700"
@@ -123,7 +125,7 @@ export function RepoShareButton({ title, url, iconOnly }: RepoShareButtonProps) 
         }
       >
         {shareIcon}
-        {!iconOnly && "Share"}
+        {!iconOnly && t("article.share.button")}
       </button>
 
       {isOpen && (
@@ -134,7 +136,7 @@ export function RepoShareButton({ title, url, iconOnly }: RepoShareButtonProps) 
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-slate-50"
           >
             {copyLinkIcon}
-            Copy Link
+            {t("article.share.copyLink")}
           </button>
           <div className="my-1 h-px bg-slate-100" />
           {shareLinks.map((link) => (

@@ -4,12 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   REPOSITORY_CATEGORY_LABELS,
-  REPOSITORY_DIFFICULTY_LABELS,
   type RepositoryCategorySlug,
   type RepositoryDifficultySlug,
 } from "@/lib/developer-hub/shared";
 import type { GithubLibraryFacets } from "@/services/developer-hub/github-explorer-service";
 import type { CollectionRow } from "@/types/database";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 const SEARCH_DEBOUNCE_MS = 350;
 
@@ -20,37 +20,39 @@ const STAR_THRESHOLDS = [
   { value: "50000", label: "50,000+" },
 ];
 
-const UPDATED_OPTIONS = [
-  { value: "day", label: "Today" },
-  { value: "week", label: "This week" },
-  { value: "month", label: "This month" },
-  { value: "year", label: "This year" },
+const UPDATED_VALUES = ["day", "week", "month", "year"] as const;
+const UPDATED_LABEL_KEYS: Record<(typeof UPDATED_VALUES)[number], string> = {
+  day: "developerHub.github.filters.updatedToday",
+  week: "developerHub.github.filters.updatedWeek",
+  month: "developerHub.github.filters.updatedMonth",
+  year: "developerHub.github.filters.updatedYear",
+};
+
+const HEALTH_VALUES = ["80", "60", "40"] as const;
+const HEALTH_LABEL_KEYS: Record<(typeof HEALTH_VALUES)[number], string> = {
+  "80": "developerHub.github.filters.healthExcellent",
+  "60": "developerHub.github.filters.healthGood",
+  "40": "developerHub.github.filters.healthFair",
+};
+
+const TAG_TOGGLES: { param: string; labelKey: string }[] = [
+  { param: "aiRelated", labelKey: "developerHub.github.filters.tagAiRelated" },
+  { param: "devTool", labelKey: "developerHub.github.filters.tagDevTool" },
+  { param: "cli", labelKey: "developerHub.github.filters.tagCli" },
+  { param: "library", labelKey: "developerHub.github.filters.tagLibrary" },
+  { param: "framework", labelKey: "developerHub.github.filters.tagFramework" },
+  { param: "template", labelKey: "developerHub.github.filters.tagTemplate" },
+  { param: "tutorial", labelKey: "developerHub.github.filters.tagTutorial" },
 ];
 
-const HEALTH_THRESHOLDS = [
-  { value: "80", label: "80+ (Excellent)" },
-  { value: "60", label: "60+ (Good)" },
-  { value: "40", label: "40+ (Fair)" },
-];
-
-const TAG_TOGGLES: { param: string; label: string }[] = [
-  { param: "aiRelated", label: "AI Related" },
-  { param: "devTool", label: "Dev Tool" },
-  { param: "cli", label: "CLI" },
-  { param: "library", label: "Library" },
-  { param: "framework", label: "Framework" },
-  { param: "template", label: "Template" },
-  { param: "tutorial", label: "Tutorial" },
-];
-
-const BOOLEAN_TOGGLES: { param: string; label: string }[] = [
-  { param: "maintained", label: "Actively Maintained" },
-  { param: "verified", label: "Verified" },
-  { param: "editorPick", label: "Editor's Pick" },
-  { param: "featured", label: "Featured" },
-  { param: "hiddenGem", label: "Hidden Gems" },
-  { param: "beginnerFriendly", label: "Beginner Friendly" },
-  { param: "onlyTrending", label: "Only Trending" },
+const BOOLEAN_TOGGLES: { param: string; labelKey: string }[] = [
+  { param: "maintained", labelKey: "developerHub.github.filters.toggleMaintained" },
+  { param: "verified", labelKey: "developerHub.github.filters.toggleVerified" },
+  { param: "editorPick", labelKey: "developerHub.github.filters.toggleEditorPick" },
+  { param: "featured", labelKey: "developerHub.github.filters.toggleFeatured" },
+  { param: "hiddenGem", labelKey: "developerHub.github.filters.toggleHiddenGem" },
+  { param: "beginnerFriendly", labelKey: "developerHub.github.filters.toggleBeginnerFriendly" },
+  { param: "onlyTrending", labelKey: "developerHub.github.filters.toggleOnlyTrending" },
 ];
 
 type GithubLibraryFiltersPanelProps = {
@@ -73,6 +75,7 @@ type GithubLibraryFiltersPanelProps = {
  * pool) so a filter never offers an option with zero possible matches.
  */
 export function GithubLibraryFiltersPanel({ facets, collections }: GithubLibraryFiltersPanelProps) {
+  const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -144,10 +147,10 @@ export function GithubLibraryFiltersPanel({ facets, collections }: GithubLibrary
   return (
     <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold tracking-tight text-slate-950">Filters</h2>
+        <h2 className="text-base font-bold tracking-tight text-slate-950">{t("developerHub.filters.heading")}</h2>
         {hasActiveFilters && (
           <button type="button" onClick={clearAll} className="text-xs font-medium text-slate-500 transition-colors duration-200 hover:text-slate-700">
-            Clear all
+            {t("developerHub.filters.clearAll")}
           </button>
         )}
       </div>
@@ -161,18 +164,18 @@ export function GithubLibraryFiltersPanel({ facets, collections }: GithubLibrary
           type="search"
           value={search}
           onChange={(event) => handleSearchChange(event.target.value)}
-          placeholder="Search repositories..."
+          placeholder={t("developerHub.github.filters.searchPlaceholder")}
           className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-950 placeholder:text-slate-400 focus:border-[#2f67e8] focus:outline-none focus:ring-2 focus:ring-[#2f67e8]/20"
         />
       </div>
 
       <fieldset>
-        <legend className={legendClass}>Category</legend>
+        <legend className={legendClass}>{t("developerHub.github.filters.category")}</legend>
         <div className="mt-2 space-y-1">
           {facets.categories.map((slug) => (
             <label key={slug} className={labelClass}>
               <input type="radio" name="category" checked={category === slug} onChange={() => toggleRadio("category", slug)} className={radioClass} />
-              {REPOSITORY_CATEGORY_LABELS[slug as RepositoryCategorySlug].emoji} {REPOSITORY_CATEGORY_LABELS[slug as RepositoryCategorySlug].label}
+              {REPOSITORY_CATEGORY_LABELS[slug as RepositoryCategorySlug].emoji} {t(`developerHub.github.categoryLabel.${slug}`)}
             </label>
           ))}
         </div>
@@ -180,7 +183,7 @@ export function GithubLibraryFiltersPanel({ facets, collections }: GithubLibrary
 
       {collections.length > 0 && (
         <fieldset>
-          <legend className={legendClass}>Collection</legend>
+          <legend className={legendClass}>{t("developerHub.github.filters.collection")}</legend>
           <div className="mt-2 space-y-1">
             {collections.map((c) => (
               <label key={c.id} className={labelClass}>
@@ -194,13 +197,13 @@ export function GithubLibraryFiltersPanel({ facets, collections }: GithubLibrary
 
       {facets.languages.length > 0 && (
         <fieldset>
-          <legend className={legendClass}>Language</legend>
+          <legend className={legendClass}>{t("developerHub.github.filters.language")}</legend>
           <select
             value={language}
             onChange={(event) => setParam("lang", event.target.value || undefined)}
             className="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-950 focus:border-[#2f67e8] focus:outline-none"
           >
-            <option value="">All Languages</option>
+            <option value="">{t("developerHub.github.filters.allLanguages")}</option>
             {facets.languages.map((lang) => (
               <option key={lang} value={lang}>
                 {lang}
@@ -212,13 +215,13 @@ export function GithubLibraryFiltersPanel({ facets, collections }: GithubLibrary
 
       {facets.licenses.length > 0 && (
         <fieldset>
-          <legend className={legendClass}>License</legend>
+          <legend className={legendClass}>{t("developerHub.github.filters.license")}</legend>
           <select
             value={license}
             onChange={(event) => setParam("license", event.target.value || undefined)}
             className="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-950 focus:border-[#2f67e8] focus:outline-none"
           >
-            <option value="">Any License</option>
+            <option value="">{t("developerHub.github.filters.anyLicense")}</option>
             {facets.licenses.map((lic) => (
               <option key={lic} value={lic}>
                 {lic}
@@ -229,7 +232,7 @@ export function GithubLibraryFiltersPanel({ facets, collections }: GithubLibrary
       )}
 
       <fieldset>
-        <legend className={legendClass}>Stars</legend>
+        <legend className={legendClass}>{t("developerHub.github.filters.stars")}</legend>
         <div className="mt-2 space-y-1">
           {STAR_THRESHOLDS.map((option) => (
             <label key={option.value} className={labelClass}>
@@ -241,55 +244,55 @@ export function GithubLibraryFiltersPanel({ facets, collections }: GithubLibrary
       </fieldset>
 
       <fieldset>
-        <legend className={legendClass}>Updated</legend>
+        <legend className={legendClass}>{t("developerHub.github.filters.updated")}</legend>
         <div className="mt-2 space-y-1">
-          {UPDATED_OPTIONS.map((option) => (
-            <label key={option.value} className={labelClass}>
-              <input type="radio" name="updated" checked={updated === option.value} onChange={() => toggleRadio("updated", option.value)} className={radioClass} />
-              {option.label}
+          {UPDATED_VALUES.map((value) => (
+            <label key={value} className={labelClass}>
+              <input type="radio" name="updated" checked={updated === value} onChange={() => toggleRadio("updated", value)} className={radioClass} />
+              {t(UPDATED_LABEL_KEYS[value])}
             </label>
           ))}
         </div>
       </fieldset>
 
       <fieldset>
-        <legend className={legendClass}>Health Score</legend>
+        <legend className={legendClass}>{t("developerHub.github.filters.healthScore")}</legend>
         <div className="mt-2 space-y-1">
-          {HEALTH_THRESHOLDS.map((option) => (
-            <label key={option.value} className={labelClass}>
-              <input type="radio" name="minHealth" checked={minHealth === option.value} onChange={() => toggleRadio("minHealth", option.value)} className={radioClass} />
-              {option.label}
+          {HEALTH_VALUES.map((value) => (
+            <label key={value} className={labelClass}>
+              <input type="radio" name="minHealth" checked={minHealth === value} onChange={() => toggleRadio("minHealth", value)} className={radioClass} />
+              {t(HEALTH_LABEL_KEYS[value])}
             </label>
           ))}
         </div>
       </fieldset>
 
       <fieldset>
-        <legend className={legendClass}>Difficulty</legend>
+        <legend className={legendClass}>{t("developerHub.filters.difficulty")}</legend>
         <div className="mt-2 space-y-1">
-          {(Object.keys(REPOSITORY_DIFFICULTY_LABELS) as RepositoryDifficultySlug[]).map((slug) => (
+          {(["beginner", "intermediate", "advanced"] as RepositoryDifficultySlug[]).map((slug) => (
             <label key={slug} className={labelClass}>
               <input type="radio" name="difficulty" checked={difficulty === slug} onChange={() => toggleRadio("difficulty", slug)} className={radioClass} />
-              {REPOSITORY_DIFFICULTY_LABELS[slug]}
+              {t(`developerHub.difficulty.${slug}`)}
             </label>
           ))}
         </div>
       </fieldset>
 
       <fieldset>
-        <legend className={legendClass}>Curation</legend>
+        <legend className={legendClass}>{t("developerHub.github.filters.curation")}</legend>
         <div className="mt-2 space-y-1">
           {BOOLEAN_TOGGLES.map((toggle) => (
             <label key={toggle.param} className={labelClass}>
               <input type="checkbox" checked={searchParams.get(toggle.param) === "1"} onChange={() => toggleFlag(toggle.param)} className={checkboxClass} />
-              {toggle.label}
+              {t(toggle.labelKey)}
             </label>
           ))}
         </div>
       </fieldset>
 
       <fieldset>
-        <legend className={legendClass}>Tags</legend>
+        <legend className={legendClass}>{t("developerHub.github.filters.tags")}</legend>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {TAG_TOGGLES.map((tag) => {
             const active = searchParams.get(tag.param) === "1";
@@ -302,7 +305,7 @@ export function GithubLibraryFiltersPanel({ facets, collections }: GithubLibrary
                   active ? "border-[#2f67e8] bg-[#2f67e8]/10 text-[#2f67e8]" : "border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
               >
-                {tag.label}
+                {t(tag.labelKey)}
               </button>
             );
           })}
