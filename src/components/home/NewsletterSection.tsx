@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { Spinner } from "@/components/auth/Spinner";
 import { AuthToast, type AuthToastVariant } from "@/components/auth/AuthToast";
 import { createNewsletterSubscribeSchema } from "@/lib/validation/newsletter-schema";
@@ -32,6 +33,14 @@ type SubscribeApiResponse = { ok: boolean; status?: "subscribed" | "already-subs
  * `ForgotPasswordForm.tsx`, `CatalogBookmarkButton.tsx`), with its own
  * auto-dismiss timer since, unlike those flows, the visitor stays on this
  * page afterward.
+ *
+ * Double-submit guard (production readiness audit): `isSubmitting` state
+ * alone isn't quite enough to rule out a genuine double-click - React
+ * batches the `setIsSubmitting(true)` update, and a fast enough second
+ * `click`/`submit` event could in principle read the pre-update value of
+ * `isSubmitting` before that render commits. `submittingRef` is a plain
+ * ref, updated synchronously as the very first thing `handleSubmit` does,
+ * so the guard itself can never race with React's render cycle.
  */
 export function NewsletterSection() {
   const t = useTranslations();
@@ -40,6 +49,7 @@ export function NewsletterSection() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; variant: AuthToastVariant } | null>(null);
   const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -55,7 +65,7 @@ export function NewsletterSection() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isSubmitting) return;
+    if (submittingRef.current) return;
 
     const schema = createNewsletterSubscribeSchema(t);
     const parsed = schema.safeParse({ email });
@@ -65,6 +75,7 @@ export function NewsletterSection() {
     }
     setFieldError(null);
 
+    submittingRef.current = true;
     setIsSubmitting(true);
     try {
       const response = await fetch("/api/newsletter/subscribe", {
@@ -73,6 +84,11 @@ export function NewsletterSection() {
         body: JSON.stringify({ email: parsed.data.email }),
       });
       const json = (await response.json().catch(() => ({}))) as SubscribeApiResponse;
+
+      if (response.status === 429) {
+        showToast(t("home.newsletter.rateLimitedToast"), "error");
+        return;
+      }
 
       if (!response.ok || !json.ok) {
         showToast(t("home.newsletter.errorToast"), "error");
@@ -88,9 +104,13 @@ export function NewsletterSection() {
     } catch {
       showToast(t("home.newsletter.errorToast"), "error");
     } finally {
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   }
+
+  const privacyTemplate = t("home.newsletter.privacyNotice");
+  const [beforePrivacyLink, afterPrivacyLink] = privacyTemplate.split("{privacy}");
 
   return (
     <section
@@ -142,6 +162,14 @@ export function NewsletterSection() {
             {fieldError}
           </p>
         )}
+
+        <p className="mt-3 text-xs text-slate-500">
+          {beforePrivacyLink}
+          <Link href="/privacy" className="font-medium text-[#2f67e8] hover:text-[#2556c9]">
+            {t("auth.privacyPolicy")}
+          </Link>
+          {afterPrivacyLink}
+        </p>
       </form>
 
       <p className="mt-5 text-xs text-slate-500">{t("home.newsletter.disclaimer")}</p>

@@ -50,7 +50,9 @@
       "successToast": "Abone oldunuz! Katıldığınız için teşekkürler.",
       "alreadySubscribedToast": "Zaten abonesiniz.",
       "errorToast": "Şu anda abone olunamadı. Lütfen tekrar deneyin.",
-      "disclaimer": "Spam yok. Sonsuza kadar ücretsiz. İstediğiniz zaman abonelikten çıkın."
+      "disclaimer": "Spam yok. Sonsuza kadar ücretsiz. İstediğiniz zaman abonelikten çıkın.",
+      "privacyNotice": "Abone olarak {privacy} kabul etmiş olursunuz.",
+      "rateLimitedToast": "Çok fazla deneme yaptınız. Lütfen birkaç dakika sonra tekrar deneyin."
     }
   },
   "explorer": {

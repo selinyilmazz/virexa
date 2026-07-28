@@ -50,7 +50,9 @@
       "successToast": "You're subscribed! Thanks for joining.",
       "alreadySubscribedToast": "You're already subscribed.",
       "errorToast": "Couldn't subscribe right now. Please try again.",
-      "disclaimer": "No spam. Free forever. Unsubscribe anytime."
+      "disclaimer": "No spam. Free forever. Unsubscribe anytime.",
+      "privacyNotice": "By subscribing, you agree to our {privacy}.",
+      "rateLimitedToast": "Too many attempts. Please try again in a few minutes."
     }
   },
   "explorer": {

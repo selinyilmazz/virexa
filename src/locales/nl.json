@@ -50,7 +50,9 @@
       "successToast": "Je bent geabonneerd! Bedankt voor je aanmelding.",
       "alreadySubscribedToast": "Je bent al geabonneerd.",
       "errorToast": "Abonneren is nu niet gelukt. Probeer het opnieuw.",
-      "disclaimer": "Geen spam. Voor altijd gratis. Altijd op te zeggen."
+      "disclaimer": "Geen spam. Voor altijd gratis. Altijd op te zeggen.",
+      "privacyNotice": "Door je te abonneren, ga je akkoord met ons {privacy}.",
+      "rateLimitedToast": "Te veel pogingen. Probeer het over een paar minuten opnieuw."
     }
   },
   "explorer": {
