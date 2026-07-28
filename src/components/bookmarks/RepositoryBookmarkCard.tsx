@@ -2,6 +2,7 @@
 
 import { resolveBrandVisual } from "@/components/developer-hub/brand-icons";
 import { removeBookmark, type BookmarkItem } from "@/lib/bookmarks";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 function formatStat(value: number): string {
   if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
@@ -22,6 +23,7 @@ type RepositoryBookmarkCardProps = {
  * (see migration 0015's `item_meta` column).
  */
 export function RepositoryBookmarkCard({ repo }: RepositoryBookmarkCardProps) {
+  const t = useTranslations();
   const meta = repo.meta ?? {};
   const owner = meta.owner || repo.source;
   const repoName = meta.repoName || repo.title;
@@ -67,7 +69,7 @@ export function RepositoryBookmarkCard({ repo }: RepositoryBookmarkCardProps) {
         <button
           type="button"
           onClick={handleRemove}
-          aria-label="Remove from bookmarks"
+          aria-label={t("bookmarks.card.removeAria")}
           className="flex size-9 items-center justify-center rounded-full border border-slate-200 dark:border-slate-800 text-[#2f67e8] transition-colors hover:bg-blue-50"
         >
           <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4" fill="currentColor">
@@ -80,7 +82,7 @@ export function RepositoryBookmarkCard({ repo }: RepositoryBookmarkCardProps) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
         >
-          View Repository
+          {t("bookmarks.card.viewRepository")}
           <span aria-hidden="true">→</span>
         </a>
       </div>

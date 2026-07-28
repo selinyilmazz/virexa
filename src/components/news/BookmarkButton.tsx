@@ -3,6 +3,7 @@
 import { useBookmarkAction } from "@/hooks/useBookmarkAction";
 import { AuthToast } from "@/components/auth/AuthToast";
 import type { BookmarkItem } from "@/lib/bookmarks";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 type BookmarkButtonProps = {
   item: BookmarkItem;
@@ -19,6 +20,7 @@ type BookmarkButtonProps = {
 };
 
 export function BookmarkButton({ item, variant = "icon", className = "", onError }: BookmarkButtonProps) {
+  const t = useTranslations();
   const { bookmarked, trigger, error } = useBookmarkAction(item, { onError });
 
   function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
@@ -53,7 +55,7 @@ export function BookmarkButton({ item, variant = "icon", className = "", onError
           } ${className}`}
         >
           {icon}
-          {bookmarked ? "Bookmarked" : "Bookmark"}
+          {bookmarked ? t("bookmarks.button.bookmarked") : t("bookmarks.button.bookmark")}
         </button>
       </>
     );
@@ -83,7 +85,7 @@ export function BookmarkButton({ item, variant = "icon", className = "", onError
         type="button"
         onClick={handleClick}
         aria-pressed={bookmarked}
-        aria-label={bookmarked ? "Remove bookmark" : "Add bookmark"}
+        aria-label={bookmarked ? t("bookmarks.button.removeAria") : t("bookmarks.button.addAria")}
         className={`z-10 transition-all duration-150 hover:scale-110 active:scale-95 ${
           bookmarked ? "text-[#2f67e8]" : "text-slate-400 hover:text-slate-600"
         } ${className}`}

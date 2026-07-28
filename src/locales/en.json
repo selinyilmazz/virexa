@@ -194,6 +194,20 @@
       "saved": "Saved",
       "read": "Read",
       "unread": "Unread"
+    },
+    "card": {
+      "removeAria": "Remove from bookmarks",
+      "viewCourse": "Start Course",
+      "viewCertification": "View Certification",
+      "viewDefault": "View",
+      "viewRelease": "View Release",
+      "viewRepository": "View Repository"
+    },
+    "button": {
+      "bookmarked": "Bookmarked",
+      "bookmark": "Bookmark",
+      "addAria": "Add bookmark",
+      "removeAria": "Remove bookmark"
     }
   },
   "nav": {

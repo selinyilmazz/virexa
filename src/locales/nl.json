@@ -194,6 +194,20 @@
       "saved": "Opgeslagen",
       "read": "Gelezen",
       "unread": "Ongelezen"
+    },
+    "card": {
+      "removeAria": "Verwijderen uit bladwijzers",
+      "viewCourse": "Start Cursus",
+      "viewCertification": "Bekijk Certificering",
+      "viewDefault": "Bekijken",
+      "viewRelease": "Bekijk Release",
+      "viewRepository": "Bekijk Repository"
+    },
+    "button": {
+      "bookmarked": "Opgeslagen",
+      "bookmark": "Opslaan",
+      "addAria": "Bladwijzer toevoegen",
+      "removeAria": "Bladwijzer verwijderen"
     }
   },
   "nav": {

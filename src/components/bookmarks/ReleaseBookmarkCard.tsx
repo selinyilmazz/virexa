@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { removeBookmark, type BookmarkItem } from "@/lib/bookmarks";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -28,6 +29,7 @@ type ReleaseBookmarkCardProps = {
  * a `ReactNode` in `item_meta` (which is a plain string bag).
  */
 export function ReleaseBookmarkCard({ release }: ReleaseBookmarkCardProps) {
+  const t = useTranslations();
   const meta = release.meta ?? {};
   const version = meta.version || "";
   const bg = meta.bg || "bg-slate-100";
@@ -59,7 +61,7 @@ export function ReleaseBookmarkCard({ release }: ReleaseBookmarkCardProps) {
         <button
           type="button"
           onClick={handleRemove}
-          aria-label="Remove from bookmarks"
+          aria-label={t("bookmarks.card.removeAria")}
           className="flex size-9 items-center justify-center rounded-full border border-slate-200 dark:border-slate-800 text-[#2f67e8] transition-colors hover:bg-blue-50"
         >
           <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4" fill="currentColor">
@@ -70,7 +72,7 @@ export function ReleaseBookmarkCard({ release }: ReleaseBookmarkCardProps) {
           href={`/developer-hub/releases/${release.slug}`}
           className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
         >
-          View Release
+          {t("bookmarks.card.viewRelease")}
           <span aria-hidden="true">→</span>
         </Link>
       </div>

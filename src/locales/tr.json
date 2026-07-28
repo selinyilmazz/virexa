@@ -194,6 +194,20 @@
       "saved": "Kaydedilen",
       "read": "Okunan",
       "unread": "Okunmayan"
+    },
+    "card": {
+      "removeAria": "Yer imlerinden kaldır",
+      "viewCourse": "Kursa Başla",
+      "viewCertification": "Sertifikayı Görüntüle",
+      "viewDefault": "Görüntüle",
+      "viewRelease": "Sürümü Görüntüle",
+      "viewRepository": "Depoyu Görüntüle"
+    },
+    "button": {
+      "bookmarked": "Kaydedildi",
+      "bookmark": "Kaydet",
+      "addAria": "Yer imi ekle",
+      "removeAria": "Yer imini kaldır"
     }
   },
   "nav": {

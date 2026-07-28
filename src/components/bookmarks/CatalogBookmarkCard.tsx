@@ -2,15 +2,16 @@
 
 import { resolveBrandVisual } from "@/components/developer-hub/brand-icons";
 import { removeBookmark, type BookmarkItem, type BookmarkItemType } from "@/lib/bookmarks";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 type CatalogBookmarkCardProps = {
   /** A `BookmarkItem` with `type: "course"` or `type: "certification"` - see `CatalogBookmarkButton`'s `toBookmarkItem`. */
   item: BookmarkItem;
 };
 
-const VIEW_LABEL: Record<string, string> = {
-  course: "Start Course",
-  certification: "View Certification",
+const VIEW_LABEL_KEYS: Record<string, string> = {
+  course: "bookmarks.card.viewCourse",
+  certification: "bookmarks.card.viewCertification",
 };
 
 /**
@@ -25,6 +26,7 @@ const VIEW_LABEL: Record<string, string> = {
  * `certification` item types).
  */
 export function CatalogBookmarkCard({ item }: CatalogBookmarkCardProps) {
+  const t = useTranslations();
   const meta = item.meta ?? {};
   const provider = meta.provider || item.source;
   const url = meta.url || "#";
@@ -68,7 +70,7 @@ export function CatalogBookmarkCard({ item }: CatalogBookmarkCardProps) {
         <button
           type="button"
           onClick={handleRemove}
-          aria-label="Remove from bookmarks"
+          aria-label={t("bookmarks.card.removeAria")}
           className="flex size-9 items-center justify-center rounded-full border border-slate-200 dark:border-slate-800 text-[#2f67e8] transition-colors hover:bg-blue-50"
         >
           <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4" fill="currentColor">
@@ -81,7 +83,7 @@ export function CatalogBookmarkCard({ item }: CatalogBookmarkCardProps) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
         >
-          {VIEW_LABEL[type] ?? "View"}
+          {t(VIEW_LABEL_KEYS[type] ?? "bookmarks.card.viewDefault")}
           <span aria-hidden="true">→</span>
         </a>
       </div>
