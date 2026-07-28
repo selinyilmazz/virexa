@@ -124,6 +124,77 @@
       "favoriteCategoriesEmpty": "Read a few articles to see your favorite categories here.",
       "recentTimeline": "Recent Reading Timeline",
       "timelineEmpty": "Articles you open will appear here."
+    },
+    "editForm": {
+      "heading": "Edit Profile",
+      "subtitle": "Update your personal information.",
+      "fullName": "Full Name",
+      "username": "Username",
+      "email": "Email",
+      "country": "Country",
+      "bio": "Bio",
+      "saving": "Saving...",
+      "save": "Save Changes",
+      "successToast": "Profile updated successfully!",
+      "errorToast": "Couldn't save your profile. Please try again."
+    },
+    "security": {
+      "heading": "Security",
+      "subtitle": "Change your password to keep your account secure.",
+      "currentPassword": "Current Password",
+      "currentPasswordPlaceholder": "Enter current password",
+      "newPassword": "New Password",
+      "newPasswordPlaceholder": "At least 8 characters",
+      "newPasswordHelper": "At least 8 characters",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Re-enter new password",
+      "changing": "Changing...",
+      "change": "Change Password",
+      "successToast": "Password changed successfully!",
+      "sessionExpiredToast": "Your session looks signed out. Please sign in again.",
+      "networkErrorToast": "Network error. Please check your connection and try again.",
+      "errors": {
+        "currentPasswordRequired": "Current password is required.",
+        "newPasswordRequired": "New password is required.",
+        "newPasswordTooShort": "Password must be at least 8 characters.",
+        "confirmPasswordRequired": "Please confirm your new password.",
+        "passwordsMismatch": "Passwords do not match.",
+        "currentPasswordIncorrect": "Current password is incorrect."
+      }
+    },
+    "avatar": {
+      "changePhoto": "Change Photo",
+      "uploadAria": "Upload profile photo",
+      "invalidType": "Please choose an image file.",
+      "tooLarge": "Image must be smaller than 2MB.",
+      "saveError": "Couldn't save your new photo. Please try again."
+    },
+    "readingHistory": {
+      "pageTitle": "Reading History",
+      "pageSubtitle": "Articles you've opened, most recent first.",
+      "loading": "Loading your reading history...",
+      "loadError": "Couldn't load your reading history.",
+      "emptyTitle": "No reading history yet.",
+      "emptySubtitle": "Articles you open will show up here so you can find your way back to them.",
+      "lastViewed": "Last viewed {date}",
+      "continueReading": "Continue Reading"
+    },
+    "dangerZone": {
+      "heading": "Danger Zone",
+      "description": "Deleting your account permanently clears your saved articles, profile and preferences from this device.",
+      "confirmDelete": "Click again to confirm delete",
+      "delete": "Delete Account"
+    }
+  },
+  "validation": {
+    "genericError": "Please check the highlighted fields and try again.",
+    "profile": {
+      "fullNameRequired": "Full name is required.",
+      "fullNameMax": "Full name must be 80 characters or fewer.",
+      "usernameMax": "Username must be 32 characters or fewer.",
+      "usernameFormat": "Username can only contain letters, numbers, dots and underscores.",
+      "bioMax": "Bio must be 500 characters or fewer.",
+      "countryMax": "Country name must be 56 characters or fewer."
     }
   },
   "bookmarks": {

@@ -157,7 +157,7 @@ export function SettingsForm() {
   async function handleSave() {
     const result = settingsSchema.safeParse(settings);
     if (!result.success) {
-      showToast(formatZodError(result.error), "error", 4000);
+      showToast(formatZodError(result.error, t), "error", 4000);
       return;
     }
 

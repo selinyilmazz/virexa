@@ -124,6 +124,77 @@
       "favoriteCategoriesEmpty": "Favori kategorilerini burada görmek için birkaç makale oku.",
       "recentTimeline": "Son Okuma Zaman Çizelgesi",
       "timelineEmpty": "Açtığın makaleler burada görünecek."
+    },
+    "editForm": {
+      "heading": "Profili Düzenle",
+      "subtitle": "Kişisel bilgilerinizi güncelleyin.",
+      "fullName": "Ad Soyad",
+      "username": "Kullanıcı Adı",
+      "email": "E-posta",
+      "country": "Ülke",
+      "bio": "Biyografi",
+      "saving": "Kaydediliyor...",
+      "save": "Değişiklikleri Kaydet",
+      "successToast": "Profil başarıyla güncellendi!",
+      "errorToast": "Profiliniz kaydedilemedi. Lütfen tekrar deneyin."
+    },
+    "security": {
+      "heading": "Güvenlik",
+      "subtitle": "Hesabınızı güvende tutmak için şifrenizi değiştirin.",
+      "currentPassword": "Mevcut Şifre",
+      "currentPasswordPlaceholder": "Mevcut şifrenizi girin",
+      "newPassword": "Yeni Şifre",
+      "newPasswordPlaceholder": "En az 8 karakter",
+      "newPasswordHelper": "En az 8 karakter",
+      "confirmPassword": "Şifreyi Onayla",
+      "confirmPasswordPlaceholder": "Yeni şifrenizi tekrar girin",
+      "changing": "Değiştiriliyor...",
+      "change": "Şifreyi Değiştir",
+      "successToast": "Şifre başarıyla değiştirildi!",
+      "sessionExpiredToast": "Oturumunuz kapanmış görünüyor. Lütfen tekrar giriş yapın.",
+      "networkErrorToast": "Ağ hatası. Bağlantınızı kontrol edip tekrar deneyin.",
+      "errors": {
+        "currentPasswordRequired": "Mevcut şifre gereklidir.",
+        "newPasswordRequired": "Yeni şifre gereklidir.",
+        "newPasswordTooShort": "Şifre en az 8 karakter olmalıdır.",
+        "confirmPasswordRequired": "Lütfen yeni şifrenizi onaylayın.",
+        "passwordsMismatch": "Şifreler eşleşmiyor.",
+        "currentPasswordIncorrect": "Mevcut şifre yanlış."
+      }
+    },
+    "avatar": {
+      "changePhoto": "Fotoğrafı Değiştir",
+      "uploadAria": "Profil fotoğrafı yükle",
+      "invalidType": "Lütfen bir resim dosyası seçin.",
+      "tooLarge": "Resim 2MB'den küçük olmalıdır.",
+      "saveError": "Yeni fotoğrafınız kaydedilemedi. Lütfen tekrar deneyin."
+    },
+    "readingHistory": {
+      "pageTitle": "Okuma Geçmişi",
+      "pageSubtitle": "Açtığınız makaleler, en yeniden en eskiye.",
+      "loading": "Okuma geçmişiniz yükleniyor...",
+      "loadError": "Okuma geçmişiniz yüklenemedi.",
+      "emptyTitle": "Henüz okuma geçmişi yok.",
+      "emptySubtitle": "Açtığınız makaleler burada görünecek, böylece onlara kolayca geri dönebilirsiniz.",
+      "lastViewed": "Son görüntüleme {date}",
+      "continueReading": "Okumaya Devam Et"
+    },
+    "dangerZone": {
+      "heading": "Tehlikeli Bölge",
+      "description": "Hesabınızı silmek, kaydedilmiş makalelerinizi, profilinizi ve tercihlerinizi bu cihazdan kalıcı olarak temizler.",
+      "confirmDelete": "Silmeyi onaylamak için tekrar tıklayın",
+      "delete": "Hesabı Sil"
+    }
+  },
+  "validation": {
+    "genericError": "İşaretli alanları kontrol edip tekrar deneyin.",
+    "profile": {
+      "fullNameRequired": "Ad soyad gereklidir.",
+      "fullNameMax": "Ad soyad en fazla 80 karakter olmalıdır.",
+      "usernameMax": "Kullanıcı adı en fazla 32 karakter olmalıdır.",
+      "usernameFormat": "Kullanıcı adı yalnızca harf, rakam, nokta ve alt çizgi içerebilir.",
+      "bioMax": "Biyografi en fazla 500 karakter olmalıdır.",
+      "countryMax": "Ülke adı en fazla 56 karakter olmalıdır."
     }
   },
   "bookmarks": {

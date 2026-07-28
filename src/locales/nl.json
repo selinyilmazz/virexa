@@ -124,6 +124,77 @@
       "favoriteCategoriesEmpty": "Lees een paar artikelen om hier je favoriete categorieën te zien.",
       "recentTimeline": "Recente leestijdlijn",
       "timelineEmpty": "Artikelen die je opent, verschijnen hier."
+    },
+    "editForm": {
+      "heading": "Profiel bewerken",
+      "subtitle": "Werk je persoonlijke gegevens bij.",
+      "fullName": "Volledige naam",
+      "username": "Gebruikersnaam",
+      "email": "E-mail",
+      "country": "Land",
+      "bio": "Bio",
+      "saving": "Opslaan...",
+      "save": "Wijzigingen opslaan",
+      "successToast": "Profiel succesvol bijgewerkt!",
+      "errorToast": "Kon je profiel niet opslaan. Probeer het opnieuw."
+    },
+    "security": {
+      "heading": "Beveiliging",
+      "subtitle": "Wijzig je wachtwoord om je account veilig te houden.",
+      "currentPassword": "Huidig wachtwoord",
+      "currentPasswordPlaceholder": "Voer huidig wachtwoord in",
+      "newPassword": "Nieuw wachtwoord",
+      "newPasswordPlaceholder": "Minimaal 8 tekens",
+      "newPasswordHelper": "Minimaal 8 tekens",
+      "confirmPassword": "Bevestig wachtwoord",
+      "confirmPasswordPlaceholder": "Voer nieuw wachtwoord opnieuw in",
+      "changing": "Bezig met wijzigen...",
+      "change": "Wachtwoord wijzigen",
+      "successToast": "Wachtwoord succesvol gewijzigd!",
+      "sessionExpiredToast": "Het lijkt erop dat je bent uitgelogd. Log opnieuw in.",
+      "networkErrorToast": "Netwerkfout. Controleer je verbinding en probeer het opnieuw.",
+      "errors": {
+        "currentPasswordRequired": "Huidig wachtwoord is verplicht.",
+        "newPasswordRequired": "Nieuw wachtwoord is verplicht.",
+        "newPasswordTooShort": "Wachtwoord moet minimaal 8 tekens bevatten.",
+        "confirmPasswordRequired": "Bevestig je nieuwe wachtwoord.",
+        "passwordsMismatch": "Wachtwoorden komen niet overeen.",
+        "currentPasswordIncorrect": "Huidig wachtwoord is onjuist."
+      }
+    },
+    "avatar": {
+      "changePhoto": "Foto wijzigen",
+      "uploadAria": "Profielfoto uploaden",
+      "invalidType": "Kies een afbeeldingsbestand.",
+      "tooLarge": "Afbeelding moet kleiner zijn dan 2MB.",
+      "saveError": "Kon je nieuwe foto niet opslaan. Probeer het opnieuw."
+    },
+    "readingHistory": {
+      "pageTitle": "Leesgeschiedenis",
+      "pageSubtitle": "Artikelen die je hebt geopend, meest recent eerst.",
+      "loading": "Je leesgeschiedenis wordt geladen...",
+      "loadError": "Kon je leesgeschiedenis niet laden.",
+      "emptyTitle": "Nog geen leesgeschiedenis.",
+      "emptySubtitle": "Artikelen die je opent, verschijnen hier zodat je ze makkelijk terugvindt.",
+      "lastViewed": "Laatst bekeken {date}",
+      "continueReading": "Verder lezen"
+    },
+    "dangerZone": {
+      "heading": "Gevarenzone",
+      "description": "Als je je account verwijdert, worden je opgeslagen artikelen, profiel en voorkeuren permanent van dit apparaat gewist.",
+      "confirmDelete": "Klik nogmaals om verwijderen te bevestigen",
+      "delete": "Account verwijderen"
+    }
+  },
+  "validation": {
+    "genericError": "Controleer de gemarkeerde velden en probeer het opnieuw.",
+    "profile": {
+      "fullNameRequired": "Volledige naam is verplicht.",
+      "fullNameMax": "Volledige naam mag maximaal 80 tekens bevatten.",
+      "usernameMax": "Gebruikersnaam mag maximaal 32 tekens bevatten.",
+      "usernameFormat": "Gebruikersnaam mag alleen letters, cijfers, punten en underscores bevatten.",
+      "bioMax": "Bio mag maximaal 500 tekens bevatten.",
+      "countryMax": "Landnaam mag maximaal 56 tekens bevatten."
     }
   },
   "bookmarks": {

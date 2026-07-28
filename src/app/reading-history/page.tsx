@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { ReadingHistoryList } from "@/components/profile/ReadingHistoryList";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 export const metadata: Metadata = {
   title: "Reading History | Virexa",
@@ -15,25 +16,24 @@ export const metadata: Metadata = {
  * former tab content) unchanged - same loading/error/empty states, same
  * per-user Supabase-backed data. Protected by `src/middleware.ts`.
  */
-export default function ReadingHistoryPage() {
+export default async function ReadingHistoryPage() {
+  const { t } = await getServerTranslations();
   return (
     <>
       <Header />
       <main className="bg-[#f8fafc] px-5 py-10 sm:px-8">
         <div className="mx-auto max-w-[900px]">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-500">
+          <nav aria-label={t("article.breadcrumb.ariaLabel")} className="flex items-center gap-1.5 text-xs text-slate-500">
             <Link href="/" className="transition-colors hover:text-[#2f67e8]">
-              Home
+              {t("common.home")}
             </Link>
             <span aria-hidden="true">/</span>
-            <span className="font-medium text-slate-700">Reading History</span>
+            <span className="font-medium text-slate-700">{t("profile.readingHistory.pageTitle")}</span>
           </nav>
 
-          <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Reading History</p>
-          <h1 className="mt-2 text-4xl font-bold tracking-tight text-slate-950">Reading History</h1>
-          <p className="mt-2 max-w-xl text-base leading-relaxed text-slate-500">
-            Articles you've opened, most recent first.
-          </p>
+          <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{t("profile.readingHistory.pageTitle")}</p>
+          <h1 className="mt-2 text-4xl font-bold tracking-tight text-slate-950">{t("profile.readingHistory.pageTitle")}</h1>
+          <p className="mt-2 max-w-xl text-base leading-relaxed text-slate-500">{t("profile.readingHistory.pageSubtitle")}</p>
 
           <div className="mt-8">
             <ReadingHistoryList />

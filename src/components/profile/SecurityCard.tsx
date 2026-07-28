@@ -7,6 +7,7 @@ import { isRequired, isStrongEnoughPassword } from "@/lib/validators";
 import { useAuth } from "@/hooks/useAuth";
 import { createClient } from "@/lib/supabase/client";
 import { getAuthErrorMessage } from "@/lib/supabase/errors";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 type SecurityErrors = {
   currentPassword?: string;
@@ -15,6 +16,7 @@ type SecurityErrors = {
 };
 
 export function SecurityCard() {
+  const t = useTranslations();
   const { user } = useAuth();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -33,23 +35,23 @@ export function SecurityCard() {
 
     const nextErrors: SecurityErrors = {};
     if (!isRequired(currentPassword)) {
-      nextErrors.currentPassword = "Current password is required.";
+      nextErrors.currentPassword = t("profile.security.errors.currentPasswordRequired");
     }
     if (!isRequired(newPassword)) {
-      nextErrors.newPassword = "New password is required.";
+      nextErrors.newPassword = t("profile.security.errors.newPasswordRequired");
     } else if (!isStrongEnoughPassword(newPassword)) {
-      nextErrors.newPassword = "Password must be at least 8 characters.";
+      nextErrors.newPassword = t("profile.security.errors.newPasswordTooShort");
     }
     if (!isRequired(confirmPassword)) {
-      nextErrors.confirmPassword = "Please confirm your new password.";
+      nextErrors.confirmPassword = t("profile.security.errors.confirmPasswordRequired");
     } else if (confirmPassword !== newPassword) {
-      nextErrors.confirmPassword = "Passwords do not match.";
+      nextErrors.confirmPassword = t("profile.security.errors.passwordsMismatch");
     }
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
     if (!user?.email) {
-      showToast("Your session looks signed out. Please sign in again.", "error", 4000);
+      showToast(t("profile.security.sessionExpiredToast"), "error", 4000);
       return;
     }
 
@@ -65,7 +67,7 @@ export function SecurityCard() {
         password: currentPassword,
       });
       if (reauthError) {
-        setErrors({ currentPassword: "Current password is incorrect." });
+        setErrors({ currentPassword: t("profile.security.errors.currentPasswordIncorrect") });
         return;
       }
 
@@ -78,9 +80,9 @@ export function SecurityCard() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      showToast("Password changed successfully!", "success");
+      showToast(t("profile.security.successToast"), "success");
     } catch {
-      showToast("Network error. Please check your connection and try again.", "error", 4000);
+      showToast(t("profile.security.networkErrorToast"), "error", 4000);
     } finally {
       setIsSubmitting(false);
     }
@@ -90,38 +92,38 @@ export function SecurityCard() {
     <form onSubmit={(event) => void handleSubmit(event)} className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm sm:p-8">
       {toast && <AuthToast message={toast.message} variant={toast.variant} />}
 
-      <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">Security</h2>
-      <p className="mt-1 text-base text-slate-500 dark:text-slate-400">Change your password to keep your account secure.</p>
+      <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">{t("profile.security.heading")}</h2>
+      <p className="mt-1 text-base text-slate-500 dark:text-slate-400">{t("profile.security.subtitle")}</p>
 
       <div className="mt-6 space-y-5">
         <PasswordInput
           id="security-current-password"
-          label="Current Password"
+          label={t("profile.security.currentPassword")}
           value={currentPassword}
           onChange={setCurrentPassword}
           error={errors.currentPassword}
           autoComplete="current-password"
-          placeholder="Enter current password"
+          placeholder={t("profile.security.currentPasswordPlaceholder")}
         />
         <PasswordInput
           id="security-new-password"
-          label="New Password"
+          label={t("profile.security.newPassword")}
           value={newPassword}
           onChange={setNewPassword}
           error={errors.newPassword}
           autoComplete="new-password"
-          placeholder="At least 8 characters"
-          helperText="At least 8 characters"
+          placeholder={t("profile.security.newPasswordPlaceholder")}
+          helperText={t("profile.security.newPasswordHelper")}
           showStrengthMeter
         />
         <PasswordInput
           id="security-confirm-password"
-          label="Confirm Password"
+          label={t("profile.security.confirmPassword")}
           value={confirmPassword}
           onChange={setConfirmPassword}
           error={errors.confirmPassword}
           autoComplete="new-password"
-          placeholder="Re-enter new password"
+          placeholder={t("profile.security.confirmPasswordPlaceholder")}
         />
       </div>
 
@@ -130,7 +132,7 @@ export function SecurityCard() {
         disabled={isSubmitting}
         className="mt-6 flex h-12 items-center justify-center rounded-xl bg-[#2f67e8] px-8 text-base font-semibold text-white transition-colors hover:bg-[#2556c9] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? "Changing..." : "Change Password"}
+        {isSubmitting ? t("profile.security.changing") : t("profile.security.change")}
       </button>
     </form>
   );

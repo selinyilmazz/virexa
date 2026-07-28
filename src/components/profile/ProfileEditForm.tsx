@@ -3,11 +3,13 @@
 import { useState, type FormEvent } from "react";
 import { AuthToast, type AuthToastVariant } from "@/components/auth/AuthToast";
 import { saveProfile, useProfile, type UserProfile } from "@/lib/profile";
-import { profileSchema } from "@/lib/validation/profile-schema";
+import { createProfileSchema } from "@/lib/validation/profile-schema";
 import { formatZodError } from "@/lib/validation/format-zod-error";
 import { countryOptions } from "@/data/countries";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 export function ProfileEditForm() {
+  const t = useTranslations();
   const profile = useProfile();
   const [draft, setDraft] = useState<UserProfile>(profile);
   const [syncedProfile, setSyncedProfile] = useState<UserProfile>(profile);
@@ -27,25 +29,25 @@ export function ProfileEditForm() {
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const result = profileSchema.safeParse({
+    const result = createProfileSchema(t).safeParse({
       fullName: draft.fullName,
       username: draft.username,
       bio: draft.bio,
       country: draft.country,
     });
     if (!result.success) {
-      showToast(formatZodError(result.error), "error", 4000);
+      showToast(formatZodError(result.error, t), "error", 4000);
       return;
     }
 
     setIsSaving(true);
     try {
       await saveProfile(result.data);
-      showToast("Profile updated successfully!", "success");
+      showToast(t("profile.editForm.successToast"), "success");
     } catch {
       // `saveProfile` already rolled the local cache back to the
       // previous value - just tell the user it didn't persist.
-      showToast("Couldn't save your profile. Please try again.", "error", 4000);
+      showToast(t("profile.editForm.errorToast"), "error", 4000);
     } finally {
       setIsSaving(false);
     }
@@ -55,13 +57,13 @@ export function ProfileEditForm() {
     <form onSubmit={(event) => void handleSave(event)} className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm sm:p-8">
       {toast && <AuthToast message={toast.message} variant={toast.variant} />}
 
-      <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">Edit Profile</h2>
-      <p className="mt-1 text-base text-slate-500 dark:text-slate-400">Update your personal information.</p>
+      <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">{t("profile.editForm.heading")}</h2>
+      <p className="mt-1 text-base text-slate-500 dark:text-slate-400">{t("profile.editForm.subtitle")}</p>
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
         <div>
           <label htmlFor="profile-name" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Full Name
+            {t("profile.editForm.fullName")}
           </label>
           <input
             id="profile-name"
@@ -73,7 +75,7 @@ export function ProfileEditForm() {
 
         <div>
           <label htmlFor="profile-username" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Username
+            {t("profile.editForm.username")}
           </label>
           <div className="relative mt-1.5">
             <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">@</span>
@@ -88,7 +90,7 @@ export function ProfileEditForm() {
 
         <div>
           <label htmlFor="profile-email" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Email
+            {t("profile.editForm.email")}
           </label>
           <input
             id="profile-email"
@@ -100,7 +102,7 @@ export function ProfileEditForm() {
 
         <div>
           <label htmlFor="profile-country" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Country
+            {t("profile.editForm.country")}
           </label>
           <select
             id="profile-country"
@@ -118,7 +120,7 @@ export function ProfileEditForm() {
 
         <div className="sm:col-span-2">
           <label htmlFor="profile-bio" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Bio
+            {t("profile.editForm.bio")}
           </label>
           <textarea
             id="profile-bio"
@@ -135,7 +137,7 @@ export function ProfileEditForm() {
         disabled={isSaving}
         className="mt-6 flex h-12 items-center justify-center rounded-xl bg-[#2f67e8] px-8 text-base font-semibold text-white transition-colors hover:bg-[#2556c9] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSaving ? "Saving..." : "Save Changes"}
+        {isSaving ? t("profile.editForm.saving") : t("profile.editForm.save")}
       </button>
     </form>
   );

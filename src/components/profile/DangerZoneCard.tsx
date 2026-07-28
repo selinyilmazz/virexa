@@ -6,8 +6,10 @@ import { createClient } from "@/lib/supabase/client";
 import { clearBookmarks } from "@/lib/bookmarks";
 import { resetProfile } from "@/lib/profile";
 import { resetSettings } from "@/lib/settings";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 export function DangerZoneCard() {
+  const t = useTranslations();
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
 
@@ -40,10 +42,8 @@ export function DangerZoneCard() {
 
   return (
     <div className="rounded-3xl border border-red-200 dark:border-red-900 bg-red-50/40 dark:bg-red-950/20 p-6 shadow-sm sm:p-8">
-      <h2 className="text-2xl font-bold tracking-tight text-red-600">Danger Zone</h2>
-      <p className="mt-1 text-base text-slate-500 dark:text-slate-400">
-        Deleting your account permanently clears your saved articles, profile and preferences from this device.
-      </p>
+      <h2 className="text-2xl font-bold tracking-tight text-red-600">{t("profile.dangerZone.heading")}</h2>
+      <p className="mt-1 text-base text-slate-500 dark:text-slate-400">{t("profile.dangerZone.description")}</p>
       <button
         type="button"
         onClick={() => void handleDelete()}
@@ -54,7 +54,7 @@ export function DangerZoneCard() {
             : "border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
         }`}
       >
-        {confirming ? "Click again to confirm delete" : "Delete Account"}
+        {confirming ? t("profile.dangerZone.confirmDelete") : t("profile.dangerZone.delete")}
       </button>
     </div>
   );

@@ -3,10 +3,12 @@
 import { useRef, useState, type ChangeEvent } from "react";
 import Image from "next/image";
 import { saveProfile, useProfile } from "@/lib/profile";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
 export function ProfileAvatarUpload() {
+  const t = useTranslations();
   const profile = useProfile();
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -17,11 +19,11 @@ export function ProfileAvatarUpload() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      setError("Please choose an image file.");
+      setError(t("profile.avatar.invalidType"));
       return;
     }
     if (file.size > MAX_FILE_SIZE) {
-      setError("Image must be smaller than 2MB.");
+      setError(t("profile.avatar.tooLarge"));
       return;
     }
 
@@ -35,7 +37,7 @@ export function ProfileAvatarUpload() {
       // in the background - see `src/lib/profile.ts`. If the write
       // fails, the cache (and this preview) rolls back automatically.
       saveProfile({ avatar: dataUrl }).catch(() => {
-        setError("Couldn't save your new photo. Please try again.");
+        setError(t("profile.avatar.saveError"));
       });
     };
     reader.readAsDataURL(file);
@@ -50,7 +52,7 @@ export function ProfileAvatarUpload() {
           onClick={() => inputRef.current?.click()}
           className="absolute inset-0 flex items-center justify-center bg-black/55 text-center text-xs font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
         >
-          Change Photo
+          {t("profile.avatar.changePhoto")}
         </button>
         <input
           ref={inputRef}
@@ -58,7 +60,7 @@ export function ProfileAvatarUpload() {
           accept="image/*"
           onChange={handleFileChange}
           className="sr-only"
-          aria-label="Upload profile photo"
+          aria-label={t("profile.avatar.uploadAria")}
         />
       </div>
       {error && <p className="mt-2 text-center text-xs text-red-600">{error}</p>}
