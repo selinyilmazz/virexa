@@ -1077,6 +1077,17 @@
     "title": "Birazdan döneceğiz",
     "description": "Virexa şu anda planlı bakımda. Lütfen kısa süre sonra tekrar kontrol edin."
   },
+  "newsletterUnsubscribe": {
+    "successTitle": "Abonelikten çıktınız",
+    "successDescription": "Artık Virexa'dan bülten e-postası almayacaksınız. İstediğiniz zaman ana sayfadan yeniden abone olabilirsiniz.",
+    "alreadyTitle": "Zaten abonelikten çıkılmış",
+    "alreadyDescription": "Bu adres Virexa bültenine abone değil - burada yapılacak başka bir şey yok.",
+    "invalidTitle": "Geçersiz abonelik iptal bağlantısı",
+    "invalidDescription": "Bu bağlantı eksik veya hatalı. Abonelikten çıkmak istiyorsanız en son Virexa bülten e-postasındaki bağlantıyı kullanın.",
+    "errorTitle": "Bir şeyler ters gitti",
+    "errorDescription": "Abonelikten çıkma isteğinizi şu anda işleyemedik. Lütfen kısa süre sonra tekrar deneyin.",
+    "backToHome": "Virexa'ya dön"
+  },
   "admin": {
     "common": {
       "admin": "Yönetici",

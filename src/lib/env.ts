@@ -96,6 +96,31 @@ export const env = {
     anthropicApiKey: process.env.ANTHROPIC_API_KEY,
     openRouterApiKey: process.env.OPENROUTER_API_KEY,
   },
+  /**
+   * Newsletter email sending (Phase 2 - see `src/services/email/`).
+   * Server-only, never NEXT_PUBLIC_-prefixed. Same "missing config is a
+   * normal, safe state" convention as `ai.*`/`news.*` above:
+   * `resend-client.ts` returns `null` without `resendApiKey`, and
+   * `email-service.ts` no-ops (logs a warning, never throws) when that
+   * happens - a subscribe request still succeeds with no welcome email
+   * sent rather than failing, exactly like the rest of this app degrades
+   * around missing optional config.
+   */
+  email: {
+    resendApiKey: process.env.RESEND_API_KEY,
+    /** `"Name <address@domain>"` or a bare address - passed straight through to Resend's `from` field. The domain must be a verified sending domain in the Resend dashboard (see the deployment checklist) or sends will fail. */
+    fromAddress: process.env.NEWSLETTER_FROM_EMAIL,
+    /**
+     * HMAC signing secret for one-click unsubscribe links/tokens (see
+     * `lib/email/unsubscribe-token.ts`). Falls back to
+     * `supabase.serviceRoleKey` when unset - still a strong, server-only
+     * secret never exposed to the browser, so unsubscribe links work out
+     * of the box in any environment that already has Supabase configured.
+     * Setting a dedicated secret is still recommended for production (see
+     * `.env.example`) so rotating one secret never affects the other.
+     */
+    unsubscribeSecret: process.env.NEWSLETTER_UNSUBSCRIBE_SECRET,
+  },
 } as const;
 
 export type Env = typeof env;

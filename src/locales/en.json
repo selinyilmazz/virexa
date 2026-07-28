@@ -1077,6 +1077,17 @@
     "title": "We'll be right back",
     "description": "Virexa is currently undergoing scheduled maintenance. Please check back shortly."
   },
+  "newsletterUnsubscribe": {
+    "successTitle": "You're unsubscribed",
+    "successDescription": "You won't receive any more newsletter emails from Virexa. You can resubscribe any time from the homepage.",
+    "alreadyTitle": "Already unsubscribed",
+    "alreadyDescription": "This address isn't subscribed to the Virexa newsletter - there's nothing more to do here.",
+    "invalidTitle": "Invalid unsubscribe link",
+    "invalidDescription": "This link is missing or malformed. If you're trying to unsubscribe, use the link from the most recent Virexa newsletter email.",
+    "errorTitle": "Something went wrong",
+    "errorDescription": "We couldn't process your unsubscribe request right now. Please try again shortly.",
+    "backToHome": "Back to Virexa"
+  },
   "admin": {
     "common": {
       "admin": "Admin",

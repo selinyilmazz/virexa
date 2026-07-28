@@ -1077,6 +1077,17 @@
     "title": "We zijn zo terug",
     "description": "Virexa ondergaat momenteel gepland onderhoud. Kom binnenkort terug."
   },
+  "newsletterUnsubscribe": {
+    "successTitle": "Je bent uitgeschreven",
+    "successDescription": "Je ontvangt geen nieuwsbrief-e-mails meer van Virexa. Je kunt je op elk moment opnieuw aanmelden via de homepage.",
+    "alreadyTitle": "Al uitgeschreven",
+    "alreadyDescription": "Dit adres is niet geabonneerd op de Virexa-nieuwsbrief - er is hier verder niets te doen.",
+    "invalidTitle": "Ongeldige afmeldlink",
+    "invalidDescription": "Deze link ontbreekt of is ongeldig. Gebruik de link uit de meest recente Virexa-nieuwsbrief-e-mail om je af te melden.",
+    "errorTitle": "Er ging iets mis",
+    "errorDescription": "We konden je afmeldverzoek nu niet verwerken. Probeer het binnenkort opnieuw.",
+    "backToHome": "Terug naar Virexa"
+  },
   "admin": {
     "common": {
       "admin": "Beheer",

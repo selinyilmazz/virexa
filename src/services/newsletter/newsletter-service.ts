@@ -1,16 +1,21 @@
 import { createServiceClient } from "@/lib/supabase/service-client";
 import { createNewsletterSubscriberRepository } from "@/repositories/newsletter-subscriber-repository";
+import { verifyUnsubscribeToken } from "@/lib/email/unsubscribe-token";
+import { sendNewsletterWelcomeEmail } from "@/services/email/newsletter-emails";
 
 /**
  * Business logic for the public "Stay updated with AI & Developer News"
- * signup (homepage `NewsletterSection`, `POST /api/newsletter/subscribe`).
+ * signup (homepage `NewsletterSection`, `POST /api/newsletter/subscribe`)
+ * and for unsubscribing (`/newsletter/unsubscribe` page,
+ * `POST /api/newsletter/unsubscribe`).
  *
- * MVP scope boundary (explicit, disclosed): this only manages the
- * `newsletter_subscribers` list. No email is ever sent from this file or
- * anywhere else in the app yet - see the `TODO(newsletter-phase-2)` marker
- * below for exactly where that plugs in later (weekly/daily digest, AI
- * summaries, Top Stories, Developer Releases, GitHub Trending), without
- * requiring any change to the schema, repository, or this subscribe flow.
+ * Phase 2 (email sending): a successful subscribe/resubscribe now sends a
+ * welcome email via `services/email/newsletter-emails.tsx` - see
+ * `sendWelcomeEmailSafely()` below for why that can never turn a
+ * successful database write into a reported failure. Still no *scheduled*
+ * sending (weekly/daily digest, AI summaries, Top Stories, Developer
+ * Releases, GitHub Trending) - see the `TODO(newsletter-phase-3)` marker
+ * at the bottom of this file for where that plugs in later.
  *
  * Always uses the service-role client, same convention as
  * `admin-audit-service.ts`: `newsletter_subscribers` has zero RLS policies
@@ -26,6 +31,30 @@ export type SubscribeToNewsletterResult =
   /** Storage isn't configured, or the insert itself failed - the API route turns this into one generic, friendly message. Never leaks the real Postgres error to the client. */
   | { status: "error" };
 
+/**
+ * Sends the welcome email and swallows any failure (requirement 6:
+ * "Newsletter subscription should still succeed even if the welcome
+ * email fails"). This is a SEPARATE try/catch from the one wrapping the
+ * database work in `subscribeToNewsletter()` below, deliberately - if
+ * this lived inside that same try block, a bug in the email path could
+ * incorrectly turn an already-successful database insert into a reported
+ * `{ status: "error" }`, which is exactly the failure mode this
+ * requirement rules out. `sendNewsletterWelcomeEmail()` (and `sendEmail()`
+ * underneath it) already never throw on their own, so this catch is
+ * belt-and-suspenders against a genuinely unexpected bug, not the
+ * primary safety mechanism.
+ */
+async function sendWelcomeEmailSafely(subscriberId: string, email: string): Promise<void> {
+  try {
+    const result = await sendNewsletterWelcomeEmail(subscriberId, email);
+    if (!result.ok) {
+      console.error("[newsletter-service] Welcome email not sent (subscription still succeeded):", { email, error: result.error });
+    }
+  } catch (error) {
+    console.error("[newsletter-service] Welcome email threw (subscription still succeeded):", { email, error });
+  }
+}
+
 export async function subscribeToNewsletter(email: string): Promise<SubscribeToNewsletterResult> {
   try {
     const supabase = createServiceClient();
@@ -39,22 +68,22 @@ export async function subscribeToNewsletter(email: string): Promise<SubscribeToN
 
     if (existing) {
       if (existing.is_active) {
+        // Already actively subscribed - no email (requirement 2: "Do NOT
+        // send another welcome email if the user is already subscribed").
         return { status: "already-subscribed" };
       }
       // A previously-unsubscribed address signing up again is a genuine
       // resubscribe, not a duplicate - reactivate the existing row instead
       // of leaving them permanently stuck as "already subscribed" with no
-      // way back in.
+      // way back in. This IS a fresh, successful subscribe event from the
+      // visitor's perspective, so it gets the welcome email too.
       await repository.updateFields(existing.id, { is_active: true });
+      await sendWelcomeEmailSafely(existing.id, existing.email);
       return { status: "subscribed" };
     }
 
-    await repository.subscribe(email);
-
-    // TODO(newsletter-phase-2): trigger a "welcome" transactional email
-    // here once an email-sending provider (Resend/SES/etc) is wired up.
-    // Nothing to plug into yet in this MVP phase - subscribe() above only
-    // persists the row.
+    const created = await repository.subscribe(email);
+    await sendWelcomeEmailSafely(created.id, created.email);
 
     return { status: "subscribed" };
   } catch (error) {
@@ -63,11 +92,59 @@ export async function subscribeToNewsletter(email: string): Promise<SubscribeToN
   }
 }
 
-// TODO(newsletter-phase-2): this is the intended home for the future
+export type UnsubscribeResult = { status: "unsubscribed" | "already-unsubscribed" } | { status: "invalid" } | { status: "error" };
+
+/**
+ * Verifies a signed unsubscribe token and deactivates the matching
+ * subscriber - the one function both the human-facing
+ * `/newsletter/unsubscribe` page and the RFC 8058 one-click
+ * `POST /api/newsletter/unsubscribe` route call through, so the actual
+ * unsubscribe logic exists exactly once. Deliberately the same
+ * `is_active: false` toggle the admin panel's Deactivate action uses
+ * (`AdminNewsletterRowActions.tsx`) - unsubscribing is not a delete, and
+ * an admin can already see/reactivate a self-unsubscribed row the same
+ * way as any other deactivated one.
+ */
+export async function unsubscribeSubscriber(subscriberId: string, token: string): Promise<UnsubscribeResult> {
+  if (!subscriberId || !token || !verifyUnsubscribeToken(subscriberId, token)) {
+    return { status: "invalid" };
+  }
+
+  try {
+    const supabase = createServiceClient();
+    if (!supabase) {
+      console.warn("[newsletter-service] Service role not configured - cannot unsubscribe:", subscriberId);
+      return { status: "error" };
+    }
+
+    const repository = createNewsletterSubscriberRepository(supabase);
+    const existing = await repository.getById(subscriberId);
+    if (!existing) {
+      // Token was valid but the row is gone (e.g. an admin already
+      // deleted it) - treat as already-unsubscribed rather than an error,
+      // since the end state the visitor wants (not receiving mail) is
+      // already true.
+      return { status: "already-unsubscribed" };
+    }
+
+    if (!existing.is_active) {
+      return { status: "already-unsubscribed" };
+    }
+
+    await repository.updateFields(subscriberId, { is_active: false });
+    return { status: "unsubscribed" };
+  } catch (error) {
+    console.error("[newsletter-service] unsubscribeSubscriber failed:", error);
+    return { status: "error" };
+  }
+}
+
+// TODO(newsletter-phase-3): this is the intended home for the future
 // scheduled digest jobs - e.g. `getWeeklyDigestRecipients()` /
 // `getDailyDigestRecipients()` (both would just call the repository's
 // `list()` filtered to `is_active: true`, same data this file already
 // reads), plus whatever composes each digest's content (AI summaries, Top
-// Stories, Developer Releases, GitHub Trending) and hands it to an actual
-// email-sending client. None of that exists yet - this MVP phase is
-// subscriber collection and management only.
+// Stories, Developer Releases, GitHub Trending) and hands it to
+// `services/email/email-service.ts`'s `sendEmail()` - the same
+// infrastructure the welcome email already uses. None of that exists yet;
+// this phase is welcome-email-on-subscribe plus unsubscribe only.
