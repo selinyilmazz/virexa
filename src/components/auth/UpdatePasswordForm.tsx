@@ -7,6 +7,7 @@ import { Spinner } from "@/components/auth/Spinner";
 import { AuthToast } from "@/components/auth/AuthToast";
 import { createClient } from "@/lib/supabase/client";
 import { getAuthErrorMessage } from "@/lib/supabase/errors";
+import { useTranslations } from "@/i18n/i18n-provider";
 
 type ToastState = { message: string; variant: "success" | "error" | "info" };
 
@@ -23,6 +24,7 @@ type ToastState = { message: string; variant: "success" | "error" | "info" };
  * explicit error instead of a form that would just fail silently.
  */
 export function UpdatePasswordForm() {
+  const t = useTranslations();
   const router = useRouter();
   const [checkingSession, setCheckingSession] = useState(true);
   const [hasSession, setHasSession] = useState(false);
@@ -50,11 +52,11 @@ export function UpdatePasswordForm() {
     setError(null);
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError(t("auth.errors.passwordTooShort"));
       return;
     }
     if (password !== confirmPassword) {
-      setError("Passwords don't match.");
+      setError(t("auth.errors.passwordsDoNotMatch"));
       return;
     }
 
@@ -68,27 +70,25 @@ export function UpdatePasswordForm() {
       return;
     }
 
-    showToast("Password updated. Redirecting to sign in…", "success");
+    showToast(t("auth.updatePassword.successToast"), "success");
     await supabase.auth.signOut();
     setTimeout(() => router.push("/signin"), 1200);
   }
 
   if (checkingSession) {
-    return <p className="text-sm text-slate-500">Checking your reset link…</p>;
+    return <p className="text-sm text-slate-500">{t("auth.updatePassword.checkingSession")}</p>;
   }
 
   if (!hasSession) {
     return (
       <div className="space-y-3">
-        <p className="text-sm text-slate-600">
-          This password reset link is invalid or has expired. Request a new one from the sign-in page.
-        </p>
+        <p className="text-sm text-slate-600">{t("auth.updatePassword.invalidLink")}</p>
         <button
           type="button"
           onClick={() => router.push("/forgot-password")}
           className="rounded-xl bg-[#2f67e8] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#2556c9]"
         >
-          Request a new link
+          {t("auth.updatePassword.requestNewLink")}
         </button>
       </div>
     );
@@ -101,19 +101,19 @@ export function UpdatePasswordForm() {
       <form onSubmit={(event) => void handleSubmit(event)} noValidate className="space-y-5">
         <PasswordInput
           id="update-password-new"
-          label="New password"
+          label={t("auth.updatePassword.newPasswordLabel")}
           value={password}
           onChange={setPassword}
           autoComplete="new-password"
-          placeholder="At least 8 characters"
+          placeholder={t("auth.updatePassword.newPasswordPlaceholder")}
         />
         <PasswordInput
           id="update-password-confirm"
-          label="Confirm new password"
+          label={t("auth.updatePassword.confirmPasswordLabel")}
           value={confirmPassword}
           onChange={setConfirmPassword}
           autoComplete="new-password"
-          placeholder="Re-enter your new password"
+          placeholder={t("auth.updatePassword.confirmPasswordPlaceholder")}
           error={error ?? undefined}
         />
 
@@ -123,7 +123,7 @@ export function UpdatePasswordForm() {
           className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2f67e8] text-base font-semibold text-white transition-colors hover:bg-[#2556c9] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isSubmitting && <Spinner className="size-5 text-white" />}
-          {isSubmitting ? "Updating…" : "Update password"}
+          {isSubmitting ? t("auth.updatePassword.updating") : t("auth.updatePassword.submit")}
         </button>
       </form>
     </>

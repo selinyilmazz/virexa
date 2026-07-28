@@ -3,6 +3,7 @@ import { Header } from "@/components/layout/Header";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { UpdatePasswordForm } from "@/components/auth/UpdatePasswordForm";
+import { getServerTranslations } from "@/i18n/get-server-translations";
 
 export const metadata: Metadata = {
   title: "Update Password | Virexa",
@@ -18,13 +19,14 @@ export const metadata: Metadata = {
  * /signup, /forgot-password) - this is reached only via a recovery
  * link, never linked to directly from the public nav.
  */
-export default function UpdatePasswordPage() {
+export default async function UpdatePasswordPage() {
+  const { t } = await getServerTranslations();
   return (
     <>
       <Header />
       <AuthLayout>
         <div className="hidden lg:block" />
-        <AuthCard title="Set a new password">
+        <AuthCard title={t("auth.updatePassword.cardTitle")}>
           <UpdatePasswordForm />
         </AuthCard>
       </AuthLayout>

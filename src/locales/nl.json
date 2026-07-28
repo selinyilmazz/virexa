@@ -731,7 +731,10 @@
       "footerLink": "Inloggen",
       "termsAction": "met registreren",
       "successToast": "Account succesvol aangemaakt! Je wordt doorgestuurd...",
-      "confirmEmailToast": "Account aangemaakt! Controleer je e-mail om je account te bevestigen."
+      "confirmEmailToast": "Account aangemaakt! Controleer je e-mail om je account te bevestigen.",
+      "registrationsClosedTitle": "Nieuwe registraties zijn momenteel gesloten.",
+      "registrationsClosedDescription": "Kom later terug, of log in als je al een account hebt.",
+      "goToSignIn": "Naar inloggen"
     },
     "forgotPassword": {
       "metaTitle": "Wachtwoord vergeten | Virexa",
@@ -777,6 +780,19 @@
       "confirmPasswordRequired": "Bevestig je wachtwoord.",
       "passwordsDoNotMatch": "Wachtwoorden komen niet overeen.",
       "mustAgreeToTerms": "Je moet akkoord gaan met de Gebruiksvoorwaarden en het Privacybeleid."
+    },
+    "updatePassword": {
+      "cardTitle": "Stel een nieuw wachtwoord in",
+      "newPasswordLabel": "Nieuw wachtwoord",
+      "confirmPasswordLabel": "Bevestig nieuw wachtwoord",
+      "newPasswordPlaceholder": "Minimaal 8 tekens",
+      "confirmPasswordPlaceholder": "Voer je nieuwe wachtwoord opnieuw in",
+      "checkingSession": "Je resetlink wordt gecontroleerd…",
+      "invalidLink": "Deze link om je wachtwoord opnieuw in te stellen is ongeldig of verlopen. Vraag een nieuwe aan via de inlogpagina.",
+      "requestNewLink": "Nieuwe link aanvragen",
+      "updating": "Bezig met bijwerken…",
+      "submit": "Wachtwoord bijwerken",
+      "successToast": "Wachtwoord bijgewerkt. Je wordt doorgestuurd naar inloggen…"
     }
   },
   "settings": {

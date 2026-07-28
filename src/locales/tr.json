@@ -731,7 +731,10 @@
       "footerLink": "Giriş Yap",
       "termsAction": "kayıt olarak",
       "successToast": "Hesap başarıyla oluşturuldu! Yönlendiriliyorsunuz...",
-      "confirmEmailToast": "Hesap oluşturuldu! Hesabını onaylamak için lütfen e-postanı kontrol et."
+      "confirmEmailToast": "Hesap oluşturuldu! Hesabını onaylamak için lütfen e-postanı kontrol et.",
+      "registrationsClosedTitle": "Yeni kayıtlar şu anda kapalı.",
+      "registrationsClosedDescription": "Daha sonra tekrar kontrol edin veya zaten bir hesabınız varsa giriş yapın.",
+      "goToSignIn": "Giriş Yap'a Git"
     },
     "forgotPassword": {
       "metaTitle": "Şifremi Unuttum | Virexa",
@@ -777,6 +780,19 @@
       "confirmPasswordRequired": "Lütfen şifreni onayla.",
       "passwordsDoNotMatch": "Şifreler eşleşmiyor.",
       "mustAgreeToTerms": "Kullanım Şartları ve Gizlilik Politikası'nı kabul etmelisin."
+    },
+    "updatePassword": {
+      "cardTitle": "Yeni bir şifre belirle",
+      "newPasswordLabel": "Yeni şifre",
+      "confirmPasswordLabel": "Yeni şifreyi onayla",
+      "newPasswordPlaceholder": "En az 8 karakter",
+      "confirmPasswordPlaceholder": "Yeni şifrenizi tekrar girin",
+      "checkingSession": "Sıfırlama bağlantınız kontrol ediliyor…",
+      "invalidLink": "Bu şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş. Giriş sayfasından yeni bir bağlantı isteyin.",
+      "requestNewLink": "Yeni bağlantı iste",
+      "updating": "Güncelleniyor…",
+      "submit": "Şifreyi güncelle",
+      "successToast": "Şifre güncellendi. Girişe yönlendiriliyorsunuz…"
     }
   },
   "settings": {

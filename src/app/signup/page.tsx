@@ -38,13 +38,13 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
             <SignUpForm redirectTo={redirect} />
           ) : (
             <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
-              <p className="text-sm font-medium text-slate-950">New sign-ups are currently closed.</p>
-              <p className="mt-1 text-sm text-slate-500">Please check back later, or sign in if you already have an account.</p>
+              <p className="text-sm font-medium text-slate-950">{t("auth.signUp.registrationsClosedTitle")}</p>
+              <p className="mt-1 text-sm text-slate-500">{t("auth.signUp.registrationsClosedDescription")}</p>
               <Link
                 href="/signin"
                 className="mt-4 inline-flex items-center justify-center rounded-xl bg-[#2f67e8] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2556c9]"
               >
-                Go to Sign In
+                {t("auth.signUp.goToSignIn")}
               </Link>
             </div>
           )}

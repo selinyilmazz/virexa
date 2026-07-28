@@ -731,7 +731,10 @@
       "footerLink": "Sign In",
       "termsAction": "signing up",
       "successToast": "Account created successfully! Redirecting...",
-      "confirmEmailToast": "Account created! Please check your email to confirm your account."
+      "confirmEmailToast": "Account created! Please check your email to confirm your account.",
+      "registrationsClosedTitle": "New sign-ups are currently closed.",
+      "registrationsClosedDescription": "Please check back later, or sign in if you already have an account.",
+      "goToSignIn": "Go to Sign In"
     },
     "forgotPassword": {
       "metaTitle": "Forgot Password | Virexa",
@@ -777,6 +780,19 @@
       "confirmPasswordRequired": "Please confirm your password.",
       "passwordsDoNotMatch": "Passwords do not match.",
       "mustAgreeToTerms": "You must agree to the Terms of Service and Privacy Policy."
+    },
+    "updatePassword": {
+      "cardTitle": "Set a new password",
+      "newPasswordLabel": "New password",
+      "confirmPasswordLabel": "Confirm new password",
+      "newPasswordPlaceholder": "At least 8 characters",
+      "confirmPasswordPlaceholder": "Re-enter your new password",
+      "checkingSession": "Checking your reset link…",
+      "invalidLink": "This password reset link is invalid or has expired. Request a new one from the sign-in page.",
+      "requestNewLink": "Request a new link",
+      "updating": "Updating…",
+      "submit": "Update password",
+      "successToast": "Password updated. Redirecting to sign in…"
     }
   },
   "settings": {
