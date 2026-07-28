@@ -101,7 +101,12 @@ export function NewsletterSection() {
         showToast(t("home.newsletter.successToast"), "success");
       }
       setEmail("");
-    } catch {
+    } catch (error) {
+      // Logged so a real failure (network error, CSP block, an extension
+      // intercepting the request, etc.) is visible in the console instead
+      // of only ever surfacing as this one generic toast - see the
+      // handler's investigation notes above.
+      console.error("[NewsletterSection] subscribe request failed:", error);
       showToast(t("home.newsletter.errorToast"), "error");
     } finally {
       submittingRef.current = false;
