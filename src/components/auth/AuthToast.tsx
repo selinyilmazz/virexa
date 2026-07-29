@@ -12,7 +12,13 @@ const VARIANT_STYLES: Record<AuthToastVariant, { badgeClass: string; icon: strin
 };
 
 export function AuthToast({ message, variant = "success" }: AuthToastProps) {
-  const { badgeClass, icon } = VARIANT_STYLES[variant];
+  // Defensive fallback: guarantees this can never throw during render even
+  // if `variant` is ever something other than the three known values (e.g.
+  // a future caller passes something unexpected) - previously an invalid
+  // `variant` would destructure `undefined` and throw mid-render, which
+  // React (with no `error.tsx` in this app - see NewsletterSection audit)
+  // would surface as a generic/blank error page rather than a toast.
+  const { badgeClass, icon } = VARIANT_STYLES[variant] ?? VARIANT_STYLES.success;
 
   return (
     <div

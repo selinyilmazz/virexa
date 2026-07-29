@@ -58,9 +58,17 @@ export function NewsletterSection() {
   }, []);
 
   function showToast(message: string, variant: AuthToastVariant) {
+    // TEMPORARY DEBUG LOGGING - remove once the missing-toast/mobile-crash issue is confirmed fixed.
+    console.error("[DEBUG][NewsletterSection] showToast() called", { message, variant });
     if (dismissTimer.current) clearTimeout(dismissTimer.current);
     setToast({ message, variant });
-    dismissTimer.current = setTimeout(() => setToast(null), TOAST_AUTO_DISMISS_MS);
+    dismissTimer.current = setTimeout(() => {
+      // TEMPORARY DEBUG LOGGING - this callback runs in its OWN task, outside
+      // handleSubmit's try/catch, so it's the one place a throw here would
+      // NOT be caught by that block - logged separately for that reason.
+      console.error("[DEBUG][NewsletterSection] auto-dismiss timer fired, clearing toast");
+      setToast(null);
+    }, TOAST_AUTO_DISMISS_MS);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -78,37 +86,71 @@ export function NewsletterSection() {
     submittingRef.current = true;
     setIsSubmitting(true);
     try {
+      // TEMPORARY DEBUG LOGGING - remove once the missing-toast/mobile-crash issue is confirmed fixed.
+      console.error("[DEBUG][NewsletterSection] step 1: calling fetch()", { email: parsed.data.email });
+
       const response = await fetch("/api/newsletter/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: parsed.data.email }),
       });
-      const json = (await response.json().catch(() => ({}))) as SubscribeApiResponse;
+
+      // TEMPORARY DEBUG LOGGING
+      console.error("[DEBUG][NewsletterSection] step 2: fetch() resolved", { status: response.status, ok: response.ok });
+
+      let json: SubscribeApiResponse;
+      try {
+        json = (await response.json()) as SubscribeApiResponse;
+        // TEMPORARY DEBUG LOGGING
+        console.error("[DEBUG][NewsletterSection] step 3: response.json() parsed", json);
+      } catch (parseError) {
+        // TEMPORARY DEBUG LOGGING - same fallback behavior as before
+        // (`.json().catch(() => ({}))`), just now observable.
+        console.error("[DEBUG][NewsletterSection] step 3 FAILED: response.json() threw", parseError);
+        json = {} as SubscribeApiResponse;
+      }
 
       if (response.status === 429) {
+        // TEMPORARY DEBUG LOGGING
+        console.error("[DEBUG][NewsletterSection] step 4: rate-limited (429) branch");
         showToast(t("home.newsletter.rateLimitedToast"), "error");
         return;
       }
 
       if (!response.ok || !json.ok) {
+        // TEMPORARY DEBUG LOGGING
+        console.error("[DEBUG][NewsletterSection] step 4: !response.ok || !json.ok branch", { responseOk: response.ok, jsonOk: json.ok, json });
         showToast(t("home.newsletter.errorToast"), "error");
         return;
       }
+
+      // TEMPORARY DEBUG LOGGING
+      console.error("[DEBUG][NewsletterSection] step 4: success branch, json.status =", json.status);
 
       if (json.status === "already-subscribed") {
         showToast(t("home.newsletter.alreadySubscribedToast"), "info");
       } else {
         showToast(t("home.newsletter.successToast"), "success");
       }
+
+      // TEMPORARY DEBUG LOGGING
+      console.error("[DEBUG][NewsletterSection] step 5: showToast() returned, about to setEmail('')");
       setEmail("");
+      // TEMPORARY DEBUG LOGGING
+      console.error("[DEBUG][NewsletterSection] step 6: setEmail('') done - handleSubmit success path complete");
     } catch (error) {
       // Logged so a real failure (network error, CSP block, an extension
       // intercepting the request, etc.) is visible in the console instead
       // of only ever surfacing as this one generic toast - see the
       // handler's investigation notes above.
       console.error("[NewsletterSection] subscribe request failed:", error);
+      // TEMPORARY DEBUG LOGGING - if this fires, whatever's inside `error`
+      // is the exact exception (and line, via its stack) breaking the flow.
+      console.error("[DEBUG][NewsletterSection] CAUGHT exception in handleSubmit:", error);
       showToast(t("home.newsletter.errorToast"), "error");
     } finally {
+      // TEMPORARY DEBUG LOGGING
+      console.error("[DEBUG][NewsletterSection] finally: resetting submittingRef/isSubmitting");
       submittingRef.current = false;
       setIsSubmitting(false);
     }
