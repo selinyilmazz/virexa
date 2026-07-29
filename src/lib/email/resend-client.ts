@@ -20,7 +20,14 @@ import { env } from "@/lib/env";
 let cachedClient: Resend | null | undefined;
 
 export function getResendClient(): Resend | null {
-  if (cachedClient !== undefined) return cachedClient;
+  if (cachedClient !== undefined) {
+    // TEMPORARY DEBUG LOGGING - remove once the Resend delivery issue is confirmed fixed.
+    console.log("[DEBUG][resend-client] getResendClient() returning CACHED value", { cachedClientIsNull: cachedClient === null });
+    return cachedClient;
+  }
+
+  // TEMPORARY DEBUG LOGGING
+  console.log("[DEBUG][resend-client] getResendClient() first call this instance - env.email.resendApiKey present?", { present: Boolean(env.email.resendApiKey), length: env.email.resendApiKey?.length ?? 0 });
 
   if (!env.email.resendApiKey) {
     cachedClient = null;
@@ -28,5 +35,7 @@ export function getResendClient(): Resend | null {
   }
 
   cachedClient = new Resend(env.email.resendApiKey);
+  // TEMPORARY DEBUG LOGGING
+  console.log("[DEBUG][resend-client] Resend client constructed successfully");
   return cachedClient;
 }

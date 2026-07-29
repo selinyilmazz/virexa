@@ -116,68 +116,104 @@ export function NewsletterSection() {
 
   const privacyTemplate = t("home.newsletter.privacyNotice");
   const [beforePrivacyLink, afterPrivacyLink] = privacyTemplate.split("{privacy}");
+  const featureBadges = [t("home.newsletter.featureDigest"), t("home.newsletter.featureSummaries"), t("home.newsletter.featureNoSpam")];
 
   return (
     <section
       aria-labelledby="newsletter-section-title"
-      className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-blue-50 via-white to-white p-8 text-center shadow-sm sm:p-12"
+      className="relative isolate overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-[#eef3ff] via-[#f8faff] to-white p-8 shadow-[0_10px_40px_-16px_rgba(47,103,232,0.28)] sm:p-12 lg:p-14"
     >
       {toast && <AuthToast message={toast.message} variant={toast.variant} />}
 
-      <span aria-hidden="true" className="mx-auto flex size-14 items-center justify-center rounded-full bg-white text-2xl shadow-sm">
-        📬
-      </span>
+      {/* Subtle decorative glow - purely cosmetic, contained by the card's
+          own overflow-hidden, no motion/animation (perf + "no flashy
+          effects" requirement). */}
+      <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-[#2f67e8]/10 blur-3xl" />
+      <div aria-hidden="true" className="pointer-events-none absolute -bottom-28 -left-16 size-72 rounded-full bg-[#2f67e8]/5 blur-3xl" />
 
-      <h2 id="newsletter-section-title" className="mt-5 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
-        {t("home.newsletter.heading")}
-      </h2>
-      <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-600 sm:text-base">
-        {t("home.newsletter.description")}
-      </p>
+      <div className="relative grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-14">
+        {/* Left: badge, heading, supporting copy, feature pills */}
+        <div className="text-center lg:text-left">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#2f67e8]/20 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#2f67e8]">
+            {t("home.newsletter.badge")}
+          </span>
 
-      <form onSubmit={handleSubmit} noValidate className="mx-auto mt-7 max-w-md">
-        <div className="flex flex-col gap-2.5 sm:flex-row">
-          <label htmlFor="newsletter-email" className="sr-only">
-            {t("home.newsletter.emailLabel")}
-          </label>
-          <input
-            id="newsletter-email"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder={t("home.newsletter.emailPlaceholder")}
-            disabled={isSubmitting}
-            aria-invalid={Boolean(fieldError)}
-            aria-describedby={fieldError ? "newsletter-email-error" : undefined}
-            className="h-12 w-full flex-1 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 placeholder:text-slate-400 focus:border-[#2f67e8] focus:outline-none focus:ring-2 focus:ring-[#2f67e8]/20 disabled:opacity-60"
-          />
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#2f67e8] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#2556c9] disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isSubmitting && <Spinner className="size-4 text-white" />}
-            {isSubmitting ? t("home.newsletter.submitting") : t("home.newsletter.submit")}
-          </button>
-        </div>
-        {fieldError && (
-          <p id="newsletter-email-error" role="alert" className="mt-2 text-left text-xs font-medium text-red-600">
-            {fieldError}
+          <h2 id="newsletter-section-title" className="mt-4 text-3xl font-bold leading-tight tracking-tight text-slate-950 sm:text-4xl">
+            {t("home.newsletter.heading")}
+          </h2>
+          <p className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-slate-600 lg:mx-0">
+            {t("home.newsletter.description")}
           </p>
-        )}
 
-        <p className="mt-3 text-xs text-slate-500">
-          {beforePrivacyLink}
-          <Link href="/privacy" className="font-medium text-[#2f67e8] hover:text-[#2556c9]">
-            {t("auth.privacyPolicy")}
-          </Link>
-          {afterPrivacyLink}
-        </p>
-      </form>
+          <ul className="mt-6 flex flex-wrap justify-center gap-2 lg:justify-start">
+            {featureBadges.map((feature) => (
+              <li
+                key={feature}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm"
+              >
+                <span aria-hidden="true" className="text-[#2f67e8]">
+                  ✓
+                </span>
+                {feature}
+              </li>
+            ))}
+          </ul>
+        </div>
 
-      <p className="mt-5 text-xs text-slate-500">{t("home.newsletter.disclaimer")}</p>
+        {/* Right: email form */}
+        <div className="mx-auto w-full max-w-md lg:mx-0">
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <label htmlFor="newsletter-email" className="sr-only">
+                {t("home.newsletter.emailLabel")}
+              </label>
+              <input
+                id="newsletter-email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder={t("home.newsletter.emailPlaceholder")}
+                disabled={isSubmitting}
+                aria-invalid={Boolean(fieldError)}
+                aria-describedby={fieldError ? "newsletter-email-error" : undefined}
+                className="h-14 w-full flex-1 rounded-2xl border border-slate-200 bg-white px-5 text-sm text-slate-950 shadow-sm placeholder:text-slate-400 focus:border-[#2f67e8] focus:outline-none focus:ring-4 focus:ring-[#2f67e8]/15 disabled:opacity-60"
+              />
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                aria-label={t("home.newsletter.submit")}
+                className="group flex h-14 shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#2f67e8] px-7 text-sm font-semibold text-white shadow-md shadow-[#2f67e8]/25 transition-all duration-200 hover:bg-[#2556c9] hover:shadow-lg hover:shadow-[#2f67e8]/30 disabled:cursor-not-allowed disabled:opacity-70 disabled:shadow-none"
+              >
+                {isSubmitting && <Spinner className="size-4 text-white" />}
+                {isSubmitting ? t("home.newsletter.submitting") : t("home.newsletter.submit")}
+                {!isSubmitting && (
+                  <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-1">
+                    →
+                  </span>
+                )}
+              </button>
+            </div>
+            {fieldError && (
+              <p id="newsletter-email-error" role="alert" className="mt-2 text-left text-xs font-medium text-red-600">
+                {fieldError}
+              </p>
+            )}
+          </form>
+
+          <div className="mt-4 flex flex-col items-center gap-1.5 text-center text-xs text-slate-500 lg:items-start lg:text-left">
+            <p>
+              {beforePrivacyLink}
+              <Link href="/privacy" className="font-medium text-[#2f67e8] hover:text-[#2556c9]">
+                {t("auth.privacyPolicy")}
+              </Link>
+              {afterPrivacyLink}
+            </p>
+            <p>{t("home.newsletter.disclaimer")}</p>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }

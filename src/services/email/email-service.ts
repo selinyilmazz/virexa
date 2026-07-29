@@ -41,8 +41,13 @@ export type SendEmailInput = {
 export type SendEmailResult = { ok: true; id: string } | { ok: false; error: string };
 
 export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
+  // TEMPORARY DEBUG LOGGING - remove once the Resend delivery issue is confirmed fixed.
+  console.log("[DEBUG][email-service] sendEmail() entered", { to: input.to, subject: input.subject });
+
   try {
     const client = getResendClient();
+    // TEMPORARY DEBUG LOGGING
+    console.log("[DEBUG][email-service] getResendClient() returned", { clientIsNull: client === null });
     if (!client) {
       console.warn("[email-service] RESEND_API_KEY not configured - skipping send to:", input.to);
       return { ok: false, error: "not-configured" };
@@ -53,6 +58,9 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
       return { ok: false, error: "not-configured" };
     }
 
+    // TEMPORARY DEBUG LOGGING - immediately before resend.emails.send()
+    console.log("[DEBUG][email-service] calling client.emails.send()", { from: env.email.fromAddress, to: input.to, subject: input.subject, hasReact: Boolean(input.react), hasHeaders: Boolean(input.headers) });
+
     const { data, error } = await client.emails.send({
       from: env.email.fromAddress,
       to: input.to,
@@ -61,6 +69,9 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
       text: input.text,
       headers: input.headers,
     });
+
+    // TEMPORARY DEBUG LOGGING - immediately after resend.emails.send()
+    console.log("[DEBUG][email-service] client.emails.send() returned", { data, error });
 
     if (error) {
       console.error("[email-service] Resend rejected the send:", { to: input.to, subject: input.subject, error });

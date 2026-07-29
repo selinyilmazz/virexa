@@ -41,8 +41,12 @@
       "viewAll": "View All"
     },
     "newsletter": {
-      "heading": "📬 Stay updated with AI & Developer News",
-      "description": "Get the most important AI, programming, cloud, security and developer news delivered to your inbox.",
+      "badge": "Newsletter",
+      "heading": "Never Miss the Biggest AI & Tech Stories",
+      "description": "Get the week's most important AI, programming, cloud, security and developer news delivered in one concise email.",
+      "featureDigest": "Weekly Digest",
+      "featureSummaries": "AI Summaries",
+      "featureNoSpam": "No Spam",
       "emailLabel": "Email address",
       "emailPlaceholder": "Email address",
       "submit": "Subscribe",

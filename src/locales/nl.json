@@ -41,8 +41,12 @@
       "viewAll": "Alles bekijken"
     },
     "newsletter": {
-      "heading": "📬 Blijf op de hoogte van AI- en ontwikkelaarsnieuws",
-      "description": "Ontvang het belangrijkste AI-, programmeer-, cloud-, beveiligings- en ontwikkelaarsnieuws in je inbox.",
+      "badge": "Nieuwsbrief",
+      "heading": "Mis Nooit de Grootste AI- en Techverhalen",
+      "description": "Ontvang het belangrijkste AI-, programmeer-, cloud-, beveiligings- en ontwikkelaarsnieuws van de week in één beknopte e-mail.",
+      "featureDigest": "Wekelijkse Samenvatting",
+      "featureSummaries": "AI-samenvattingen",
+      "featureNoSpam": "Geen Spam",
       "emailLabel": "E-mailadres",
       "emailPlaceholder": "E-mailadres",
       "submit": "Abonneren",

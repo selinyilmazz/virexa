@@ -41,8 +41,12 @@
       "viewAll": "Tümünü Gör"
     },
     "newsletter": {
-      "heading": "📬 Yapay Zeka ve Geliştirici Haberlerinden Haberdar Olun",
-      "description": "En önemli yapay zeka, yazılım, bulut, güvenlik ve geliştirici haberlerini gelen kutunuza alın.",
+      "badge": "Bülten",
+      "heading": "En Büyük Yapay Zeka ve Teknoloji Haberlerini Kaçırmayın",
+      "description": "Haftanın en önemli yapay zeka, yazılım, bulut, güvenlik ve geliştirici haberlerini tek ve özet bir e-postada alın.",
+      "featureDigest": "Haftalık Özet",
+      "featureSummaries": "Yapay Zeka Özetleri",
+      "featureNoSpam": "Spam Yok",
       "emailLabel": "E-posta adresi",
       "emailPlaceholder": "E-posta adresi",
       "submit": "Abone Ol",

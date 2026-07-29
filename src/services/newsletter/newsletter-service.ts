@@ -45,8 +45,12 @@ export type SubscribeToNewsletterResult =
  * primary safety mechanism.
  */
 async function sendWelcomeEmailSafely(subscriberId: string, email: string): Promise<void> {
+  // TEMPORARY DEBUG LOGGING - remove once the Resend delivery issue is confirmed fixed.
+  console.log("[DEBUG][newsletter-service] sendWelcomeEmailSafely() called - about to call sendNewsletterWelcomeEmail()", { subscriberId, email });
   try {
     const result = await sendNewsletterWelcomeEmail(subscriberId, email);
+    // TEMPORARY DEBUG LOGGING
+    console.log("[DEBUG][newsletter-service] sendNewsletterWelcomeEmail() returned", { email, result });
     if (!result.ok) {
       console.error("[newsletter-service] Welcome email not sent (subscription still succeeded):", { email, error: result.error });
     }
@@ -66,10 +70,15 @@ export async function subscribeToNewsletter(email: string): Promise<SubscribeToN
     const repository = createNewsletterSubscriberRepository(supabase);
     const existing = await repository.findByEmail(email);
 
+    // TEMPORARY DEBUG LOGGING - remove once the Resend delivery issue is confirmed fixed.
+    console.log("[DEBUG][newsletter-service] findByEmail() result", { email, existing: existing ? { id: existing.id, is_active: existing.is_active } : null });
+
     if (existing) {
       if (existing.is_active) {
         // Already actively subscribed - no email (requirement 2: "Do NOT
         // send another welcome email if the user is already subscribed").
+        // TEMPORARY DEBUG LOGGING
+        console.log("[DEBUG][newsletter-service] EARLY RETURN: already-subscribed - sendWelcomeEmailSafely() will NOT be called", { email, subscriberId: existing.id });
         return { status: "already-subscribed" };
       }
       // A previously-unsubscribed address signing up again is a genuine
@@ -78,11 +87,15 @@ export async function subscribeToNewsletter(email: string): Promise<SubscribeToN
       // way back in. This IS a fresh, successful subscribe event from the
       // visitor's perspective, so it gets the welcome email too.
       await repository.updateFields(existing.id, { is_active: true });
+      // TEMPORARY DEBUG LOGGING
+      console.log("[DEBUG][newsletter-service] resubscribe path - about to call sendWelcomeEmailSafely()", { email, subscriberId: existing.id });
       await sendWelcomeEmailSafely(existing.id, existing.email);
       return { status: "subscribed" };
     }
 
     const created = await repository.subscribe(email);
+    // TEMPORARY DEBUG LOGGING
+    console.log("[DEBUG][newsletter-service] fresh subscribe path - about to call sendWelcomeEmailSafely()", { email, subscriberId: created.id });
     await sendWelcomeEmailSafely(created.id, created.email);
 
     return { status: "subscribed" };
