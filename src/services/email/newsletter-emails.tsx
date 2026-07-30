@@ -35,12 +35,7 @@ function buildListUnsubscribeHeaders(apiUnsubscribeUrl: string): Record<string, 
  * function inherits that guarantee for free.
  */
 export async function sendNewsletterWelcomeEmail(subscriberId: string, email: string): Promise<SendEmailResult> {
-  // TEMPORARY DEBUG LOGGING - remove once the Resend delivery issue is confirmed fixed.
-  console.log("[DEBUG][newsletter-emails] sendNewsletterWelcomeEmail() entered", { subscriberId, email });
-
   const token = createUnsubscribeToken(subscriberId);
-  // TEMPORARY DEBUG LOGGING
-  console.log("[DEBUG][newsletter-emails] createUnsubscribeToken() result", { subscriberId, tokenPresent: Boolean(token) });
   if (!token) {
     console.error("[newsletter-emails] Cannot build an unsubscribe link - no signing secret configured (set NEWSLETTER_UNSUBSCRIBE_SECRET or SUPABASE_SERVICE_ROLE_KEY). Skipping welcome email for:", email);
     return { ok: false, error: "not-configured" };
@@ -49,9 +44,6 @@ export async function sendNewsletterWelcomeEmail(subscriberId: string, email: st
   const params = new URLSearchParams({ id: subscriberId, token });
   const pageUnsubscribeUrl = `${env.site.url}/newsletter/unsubscribe?${params.toString()}`;
   const apiUnsubscribeUrl = `${env.site.url}/api/newsletter/unsubscribe?${params.toString()}`;
-
-  // TEMPORARY DEBUG LOGGING
-  console.log("[DEBUG][newsletter-emails] about to call sendEmail()", { to: email, siteUrl: env.site.url, pageUnsubscribeUrl, apiUnsubscribeUrl });
 
   return sendEmail({
     to: email,

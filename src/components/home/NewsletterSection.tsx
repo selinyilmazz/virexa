@@ -3,14 +3,19 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { Spinner } from "@/components/auth/Spinner";
-import { AuthToast, type AuthToastVariant } from "@/components/auth/AuthToast";
-import { ToastRenderBoundary } from "@/components/home/ToastRenderBoundary";
 import { createNewsletterSubscribeSchema } from "@/lib/validation/newsletter-schema";
 import { useTranslations } from "@/i18n/i18n-provider";
 
-const TOAST_AUTO_DISMISS_MS = 4500;
+const FEEDBACK_AUTO_DISMISS_MS = 5000;
 
 type SubscribeApiResponse = { ok: boolean; status?: "subscribed" | "already-subscribed"; error?: string };
+type FeedbackVariant = "success" | "error" | "info";
+
+const FEEDBACK_STYLES: Record<FeedbackVariant, { container: string; badge: string; icon: string }> = {
+  success: { container: "border-emerald-200 bg-emerald-50 text-emerald-700", badge: "bg-emerald-100 text-emerald-600", icon: "✓" },
+  error: { container: "border-red-200 bg-red-50 text-red-700", badge: "bg-red-100 text-red-600", icon: "!" },
+  info: { container: "border-[#2f67e8]/20 bg-blue-50 text-[#2f67e8]", badge: "bg-blue-100 text-[#2f67e8]", icon: "i" },
+};
 
 /**
  * Homepage newsletter signup - "Newsletter MVP" phase, requirement 1.
@@ -28,12 +33,9 @@ type SubscribeApiResponse = { ok: boolean; status?: "subscribed" | "already-subs
  * own zod schema mirrors, so an invalid address is caught instantly
  * without a round trip in the common case.
  *
- * No toast *provider* here (that's admin-only, mounted in
- * `src/app/admin/layout.tsx`) - follows the same local-state +
- * `AuthToast` pattern every public-facing form uses (see
- * `ForgotPasswordForm.tsx`, `CatalogBookmarkButton.tsx`), with its own
- * auto-dismiss timer since, unlike those flows, the visitor stays on this
- * page afterward.
+ * Post-submit feedback is a plain, in-flow message below the form (not a
+ * fixed-position toast) - simplest possible rendering path, auto-dismisses
+ * after `FEEDBACK_AUTO_DISMISS_MS`.
  *
  * Double-submit guard (production readiness audit): `isSubmitting` state
  * alone isn't quite enough to rule out a genuine double-click - React
@@ -48,7 +50,8 @@ export function NewsletterSection() {
   const [email, setEmail] = useState("");
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [toast, setToast] = useState<{ message: string; variant: AuthToastVariant } | null>(null);
+  const [feedback, setFeedback] = useState<{ message: string; variant: FeedbackVariant } | null>(null);
+  const [feedbackVisible, setFeedbackVisible] = useState(false);
   const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const submittingRef = useRef(false);
 
@@ -58,27 +61,29 @@ export function NewsletterSection() {
     };
   }, []);
 
-  // TEMPORARY DEBUG LOGGING - remove once the missing-toast issue is
-  // confirmed fixed. Unlike every earlier round's logging (all inside
-  // `handleSubmit`, an event handler), this watches `toast` state itself
-  // across renders/commits - the only way to see whether React ever
-  // actually receives the update, and whether anything resets it before
-  // paint.
+  // Drives the fade-in: the message mounts at `opacity-0`, then flips to
+  // `opacity-100` on the next frame so `transition-opacity` has an actual
+  // change to animate between (a class already present at first paint
+  // doesn't transition). The "start hidden" reset lives in `showFeedback`
+  // below, not here - `feedback` becoming null unmounts this block
+  // entirely (see the `{feedback && ...}` guard in the JSX), so there's
+  // nothing to reset when it clears, and only scheduling `setFeedbackVisible`
+  // inside the `requestAnimationFrame` callback (not synchronously in the
+  // effect body) satisfies `react-hooks/set-state-in-effect`.
   useEffect(() => {
-    console.log("[DEBUG][NewsletterSection] toast state changed:", toast);
-  }, [toast]);
-  console.log("[DEBUG][NewsletterSection] render, current toast value:", toast);
+    if (!feedback) return;
+    const frame = requestAnimationFrame(() => setFeedbackVisible(true));
+    return () => cancelAnimationFrame(frame);
+  }, [feedback]);
 
-  function showToast(message: string, variant: AuthToastVariant) {
-    // TEMPORARY DEBUG LOGGING
-    console.log("[DEBUG][NewsletterSection] showToast() called with:", { message, variant });
+  function showFeedback(message: string, variant: FeedbackVariant) {
     if (dismissTimer.current) clearTimeout(dismissTimer.current);
-    setToast({ message, variant });
-    dismissTimer.current = setTimeout(() => {
-      // TEMPORARY DEBUG LOGGING
-      console.log("[DEBUG][NewsletterSection] auto-dismiss timer fired (4.5s elapsed) - clearing toast");
-      setToast(null);
-    }, TOAST_AUTO_DISMISS_MS);
+    // Reset to hidden before setting the new message so the fade-in effect
+    // above always has a true false->true transition to animate, even if
+    // a message is already showing when a second one comes in.
+    setFeedbackVisible(false);
+    setFeedback({ message, variant });
+    dismissTimer.current = setTimeout(() => setFeedback(null), FEEDBACK_AUTO_DISMISS_MS);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -104,27 +109,27 @@ export function NewsletterSection() {
       const json = (await response.json().catch(() => ({}))) as SubscribeApiResponse;
 
       if (response.status === 429) {
-        showToast(t("home.newsletter.rateLimitedToast"), "error");
+        showFeedback(t("home.newsletter.rateLimitedToast"), "error");
         return;
       }
 
       if (!response.ok || !json.ok) {
-        showToast(t("home.newsletter.errorToast"), "error");
+        showFeedback(t("home.newsletter.errorToast"), "error");
         return;
       }
 
       if (json.status === "already-subscribed") {
-        showToast(t("home.newsletter.alreadySubscribedToast"), "info");
+        showFeedback(t("home.newsletter.alreadySubscribedToast"), "info");
       } else {
-        showToast(t("home.newsletter.successToast"), "success");
+        showFeedback(t("home.newsletter.successToast"), "success");
       }
       setEmail("");
     } catch (error) {
       // Logged so a real failure (network error, CSP block, an extension
       // intercepting the request, etc.) is visible in the console instead
-      // of only ever surfacing as this one generic toast.
+      // of only ever surfacing as this one generic message.
       console.error("[NewsletterSection] subscribe request failed:", error);
-      showToast(t("home.newsletter.errorToast"), "error");
+      showFeedback(t("home.newsletter.errorToast"), "error");
     } finally {
       submittingRef.current = false;
       setIsSubmitting(false);
@@ -134,18 +139,13 @@ export function NewsletterSection() {
   const privacyTemplate = t("home.newsletter.privacyNotice");
   const [beforePrivacyLink, afterPrivacyLink] = privacyTemplate.split("{privacy}");
   const featureBadges = [t("home.newsletter.featureDigest"), t("home.newsletter.featureSummaries"), t("home.newsletter.featureNoSpam")];
+  const feedbackStyle = feedback ? FEEDBACK_STYLES[feedback.variant] : null;
 
   return (
     <section
       aria-labelledby="newsletter-section-title"
       className="relative isolate overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-[#eef3ff] via-[#f8faff] to-white p-8 shadow-[0_10px_40px_-16px_rgba(47,103,232,0.28)] sm:p-12 lg:p-14"
     >
-      {toast && (
-        <ToastRenderBoundary fallbackMessage={toast.message}>
-          <AuthToast message={toast.message} variant={toast.variant} />
-        </ToastRenderBoundary>
-      )}
-
       {/* Subtle decorative glow - purely cosmetic, contained by the card's
           own overflow-hidden, no motion/animation (perf + "no flashy
           effects" requirement). */}
@@ -221,36 +221,22 @@ export function NewsletterSection() {
                 {fieldError}
               </p>
             )}
-
-            {/* TEMPORARY DIAGNOSTIC (round 6) - plain, always-in-flow inline
-                message, rendered from the exact same `toast` state as the
-                fixed-position AuthToast above. No fixed positioning, no
-                separate component/error boundary, no z-index or CSS
-                containing-block dependency - it uses the identical plain
-                JSX pattern as the heading/description text on this same
-                page, which is already provably rendering correctly. If
-                THIS shows up after a successful subscribe but the AuthToast
-                card at the top of the viewport does not, the problem is
-                conclusively inside AuthToast's rendering/positioning, not
-                in this component's state management - settling that
-                question with a real, observable comparison instead of
-                another round of static-code theorizing. Remove this block
-                (and decide whether to keep AuthToast or keep this instead)
-                once that's confirmed. */}
-            {toast && (
-              <p
-                role="status"
-                aria-live="polite"
-                className={`mt-3 flex items-center gap-2 text-sm font-semibold ${
-                  toast.variant === "error" ? "text-red-600" : toast.variant === "info" ? "text-[#2f67e8]" : "text-emerald-600"
-                }`}
-              >
-                <span aria-hidden="true">{toast.variant === "error" ? "⚠" : "✔"}</span>
-                {toast.message}
-                <span className="text-xs font-normal text-slate-400">(inline diagnostic)</span>
-              </p>
-            )}
           </form>
+
+          {feedback && feedbackStyle && (
+            <div
+              role="status"
+              aria-live="polite"
+              className={`mt-3 flex items-center gap-2.5 rounded-xl border px-4 py-3 text-sm font-medium transition-all duration-300 ease-out ${feedbackStyle.container} ${
+                feedbackVisible ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-0"
+              }`}
+            >
+              <span aria-hidden="true" className={`flex size-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${feedbackStyle.badge}`}>
+                {feedbackStyle.icon}
+              </span>
+              {feedback.message}
+            </div>
+          )}
 
           <div className="mt-4 flex flex-col items-center gap-1.5 text-center text-xs text-slate-500 lg:items-start lg:text-left">
             <p>
