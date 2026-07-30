@@ -24,7 +24,7 @@ export default function GlobalPageError({ error, reset }: { error: Error & { dig
   const t = useTranslations();
 
   useEffect(() => {
-    console.error("[app] page error:", error);
+    console.error("[app] page error:", error.message, { digest: error.digest, stack: error.stack });
   }, [error]);
 
   return (

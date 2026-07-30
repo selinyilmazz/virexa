@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, type MouseEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/admin/ToastProvider";
 import { useTranslations } from "@/i18n/i18n-provider";
@@ -94,7 +94,24 @@ export function AdminActionButton({
     }
   }
 
-  function handleClick() {
+  function handleClick(event: MouseEvent<HTMLButtonElement>) {
+    // Root cause of "Delete does nothing" (Newsletter admin audit): this
+    // button is normally rendered inside `AdminRowActionsMenu`'s dropdown,
+    // which closes (and unmounts its children, including this component
+    // and its `confirmOpen` state) on ANY click inside it -
+    // `AdminRowActionsMenu`'s `role="menu"` wrapper has an unconditional
+    // `onClick={() => setOpen(false)}` for exactly that reason (so a
+    // one-step action like Deactivate/Reactivate closes the menu right
+    // after firing). For a confirm-first action like Delete, that same
+    // click bubbles up on the FIRST click - the one that's only supposed
+    // to open the confirmation dialog - and the menu closing unmounts
+    // this component before the dialog ever gets to render, so the
+    // second, real click never happens: `run()` (the actual DELETE
+    // fetch) is never called. `stopPropagation()` here (and on the
+    // dialog's own Cancel/Confirm buttons below) keeps every click in
+    // this two-step flow local to this component, regardless of what
+    // it's rendered inside.
+    event.stopPropagation();
     if (confirmTitle && !confirmOpen) {
       setConfirmOpen(true);
       return;
@@ -121,7 +138,10 @@ export function AdminActionButton({
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setConfirmOpen(false)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setConfirmOpen(false);
+                }}
                 disabled={pending}
                 className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
               >
@@ -129,7 +149,10 @@ export function AdminActionButton({
               </button>
               <button
                 type="button"
-                onClick={() => void run()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void run();
+                }}
                 disabled={pending}
                 className="rounded-xl bg-[#2f67e8] px-4 py-2 text-sm font-semibold text-white hover:bg-[#2556c9] disabled:opacity-50"
               >
