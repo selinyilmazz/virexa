@@ -40,14 +40,25 @@ export type SendEmailInput = {
 
 export type SendEmailResult = { ok: true; id: string } | { ok: false; error: string };
 
-export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
-  // TEMPORARY DEBUG LOGGING - remove once the Resend delivery issue is confirmed fixed.
-  console.log("[DEBUG][email-service] sendEmail() entered", { to: input.to, subject: input.subject });
+/**
+ * Resend `error.name` values that map to HTTP 403 and specifically mean
+ * "no verified sending domain" (confirmed root cause of the "other
+ * users get no welcome email" report: Resend Dashboard -> Domains shows
+ * "No domains yet", so `NEWSLETTER_FROM_EMAIL` is unverified - either
+ * still the `onboarding@resend.dev` test sender or an unverified custom
+ * domain). Resend's documented restriction: an unverified sender may
+ * only send to the account's OWN verified email address - every other
+ * recipient gets rejected with one of these codes. That's why the
+ * account owner's own test subscriptions succeed while every other
+ * subscriber's welcome email 403s. See the Resend SDK's own
+ * `RESEND_ERROR_CODES_BY_KEY` (node_modules/resend/dist/index.d.ts) for
+ * the full status-code mapping this list is drawn from.
+ */
+const DOMAIN_VERIFICATION_ERROR_NAMES = new Set(["validation_error", "invalid_from_address", "invalid_api_Key"]);
 
+export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
   try {
     const client = getResendClient();
-    // TEMPORARY DEBUG LOGGING
-    console.log("[DEBUG][email-service] getResendClient() returned", { clientIsNull: client === null });
     if (!client) {
       console.warn("[email-service] RESEND_API_KEY not configured - skipping send to:", input.to);
       return { ok: false, error: "not-configured" };
@@ -58,9 +69,6 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
       return { ok: false, error: "not-configured" };
     }
 
-    // TEMPORARY DEBUG LOGGING - immediately before resend.emails.send()
-    console.log("[DEBUG][email-service] calling client.emails.send()", { from: env.email.fromAddress, to: input.to, subject: input.subject, hasReact: Boolean(input.react), hasHeaders: Boolean(input.headers) });
-
     const { data, error } = await client.emails.send({
       from: env.email.fromAddress,
       to: input.to,
@@ -70,12 +78,25 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
       headers: input.headers,
     });
 
-    // TEMPORARY DEBUG LOGGING - immediately after resend.emails.send()
-    console.log("[DEBUG][email-service] client.emails.send() returned", { data, error });
-
     if (error) {
-      console.error("[email-service] Resend rejected the send:", { to: input.to, subject: input.subject, error });
-      return { ok: false, error: error.message || "send-failed" };
+      // Full Resend error surfaced here - `error.name` is the SDK's error
+      // code (e.g. "validation_error"), `error.message` is Resend's own
+      // human-readable explanation (typically states outright that the
+      // recipient isn't the account's verified test address). Logging the
+      // whole object, not just `.message`, so nothing is lost if Resend's
+      // wording changes.
+      if (DOMAIN_VERIFICATION_ERROR_NAMES.has(error.name)) {
+        console.error(
+          "[email-service] Resend rejected the send - no verified sending domain (Resend Dashboard shows \"No domains yet\"). " +
+            "An unverified sender can only deliver to the account's own verified email - this is expected for every " +
+            "OTHER recipient until a domain is verified in the Resend dashboard and NEWSLETTER_FROM_EMAIL points at it. " +
+            "Subscription still succeeded; only the welcome email was skipped.",
+          { to: input.to, from: env.email.fromAddress, errorName: error.name, errorMessage: error.message }
+        );
+      } else {
+        console.error("[email-service] Resend rejected the send:", { to: input.to, subject: input.subject, errorName: error.name, errorMessage: error.message });
+      }
+      return { ok: false, error: error.message || error.name || "send-failed" };
     }
 
     return { ok: true, id: data?.id ?? "" };
