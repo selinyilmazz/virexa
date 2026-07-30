@@ -221,6 +221,35 @@ export function NewsletterSection() {
                 {fieldError}
               </p>
             )}
+
+            {/* TEMPORARY DIAGNOSTIC (round 6) - plain, always-in-flow inline
+                message, rendered from the exact same `toast` state as the
+                fixed-position AuthToast above. No fixed positioning, no
+                separate component/error boundary, no z-index or CSS
+                containing-block dependency - it uses the identical plain
+                JSX pattern as the heading/description text on this same
+                page, which is already provably rendering correctly. If
+                THIS shows up after a successful subscribe but the AuthToast
+                card at the top of the viewport does not, the problem is
+                conclusively inside AuthToast's rendering/positioning, not
+                in this component's state management - settling that
+                question with a real, observable comparison instead of
+                another round of static-code theorizing. Remove this block
+                (and decide whether to keep AuthToast or keep this instead)
+                once that's confirmed. */}
+            {toast && (
+              <p
+                role="status"
+                aria-live="polite"
+                className={`mt-3 flex items-center gap-2 text-sm font-semibold ${
+                  toast.variant === "error" ? "text-red-600" : toast.variant === "info" ? "text-[#2f67e8]" : "text-emerald-600"
+                }`}
+              >
+                <span aria-hidden="true">{toast.variant === "error" ? "⚠" : "✔"}</span>
+                {toast.message}
+                <span className="text-xs font-normal text-slate-400">(inline diagnostic)</span>
+              </p>
+            )}
           </form>
 
           <div className="mt-4 flex flex-col items-center gap-1.5 text-center text-xs text-slate-500 lg:items-start lg:text-left">
