@@ -10,6 +10,25 @@ import type { NewsProvider } from "@/services/news/providers/news-provider.inter
 const FEED_TIMEOUT_MS = 8000;
 
 /**
+ * Sent with every feed request (Vercel production log fix, "IGN -> HTTP
+ * 403 Unavailable" / "Unity Discussions Forum -> HTTP 403 Forbidden").
+ * Some publishers' WAFs/CDNs (Cloudflare and similar) block requests
+ * that have no `User-Agent` at all or one that identifies as a generic
+ * server/HTTP client (Node's default `fetch` sends neither a browser-
+ * like UA nor an `Accept-Language`) - this is a very common, low-risk
+ * cause of a feed returning 403 for every request while the exact same
+ * URL loads fine in a browser. A realistic desktop-browser UA (and a
+ * matching `Accept-Language`) is the standard fix and costs nothing for
+ * feeds that never cared about the UA in the first place.
+ */
+const FEED_REQUEST_HEADERS = {
+  Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "Accept-Language": "en-US,en;q=0.9",
+} as const;
+
+/**
  * Shared budget for how many items per feed get an OpenGraph image
  * lookup (`resolveBestImages` below) - each lookup is its own HTTP
  * request to the article's own page, so this bounds a single feed's
@@ -94,11 +113,7 @@ async function resolveBestImages(items: ParsedFeedItem[]): Promise<Map<string, s
 
 async function fetchFeed(config: FeedSourceConfig): Promise<ProviderNewsItem[]> {
   try {
-    const response = await fetchWithTimeout(
-      config.url,
-      { headers: { Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml" } },
-      FEED_TIMEOUT_MS
-    );
+    const response = await fetchWithTimeout(config.url, { headers: FEED_REQUEST_HEADERS }, FEED_TIMEOUT_MS);
 
     if (!response.ok) {
       const kind = classifyHttpStatus(response.status);

@@ -209,12 +209,22 @@ export function createArticleRepository(supabase: SupabaseClient<Database>) {
       return rows;
     },
 
-    /** Top articles by `trending_score`, most-trending first - the candidate pool the read-side UI service (`services/articles/article-read-service.ts`) builds Home's Featured/Most-Read/Trending-Topics widgets from. */
-    async listTopByTrending(limit: number): Promise<ArticleRow[]> {
-      const { data, error } = await supabase
-        .from("articles")
-        .select("*")
+    /**
+     * Top articles by `trending_score`, most-trending first - the candidate pool the read-side UI service (`services/articles/article-read-service.ts`) builds Home's Featured/Most-Read/Trending-Topics widgets from.
+     *
+     * `trending_score` is computed once at ingestion time (`calculateTrendingScore`, see `lib/news/trending-score.ts`) and never recalculated afterward, so an old article that hit a high/capped score can otherwise
+     * outrank every newer article forever. Two defenses against that, both safe no-ops for existing callers that don't opt in:
+     *  - `options.publishedAfter` restricts the candidate pool to a recency window (ISO timestamp, inclusive) - callers that want "never show something stale" (the homepage Hero) pass this.
+     *  - `published_at DESC` is always applied as a secondary sort key, so exact/capped trending-score ties resolve to the newer article instead of arbitrary row order - this is a pure improvement for every caller, not just an opt-in.
+     */
+    async listTopByTrending(limit: number, options?: { publishedAfter?: string }): Promise<ArticleRow[]> {
+      let query = supabase.from("articles").select("*");
+      if (options?.publishedAfter) {
+        query = query.gte("published_at", options.publishedAfter);
+      }
+      const { data, error } = await query
         .order("trending_score", { ascending: false })
+        .order("published_at", { ascending: false })
         .limit(limit);
       if (error) throw error;
       return data ?? [];

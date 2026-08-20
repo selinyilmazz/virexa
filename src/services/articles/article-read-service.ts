@@ -19,6 +19,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createArticleAIRepository } from "@/repositories/article-ai-repository";
 import { createArticleMetricsRepository } from "@/repositories/article-metrics-repository";
 import { createArticleRepository } from "@/repositories/article-repository";
+import type { ArticleRepository } from "@/repositories/article-repository";
 import { createSourceRepository } from "@/repositories/source-repository";
 import type { FullTextSearchParams } from "@/lib/validation/article-storage-schema";
 import type {
@@ -221,10 +222,43 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | undefined>
  * single request-scoped call instead of tripling this query per
  * homepage render.
  */
+/**
+ * How far back the homepage Hero/Featured pool looks for a candidate
+ * before falling back to the unrestricted top-trending pool.
+ *
+ * Root-cause fix (Ağustos 2026 - "ana sayfada eski (6 Ağustos) haberler
+ * görünüyor" bug): `trending_score` is computed once at ingestion time
+ * with a decay formula evaluated against that moment, then stored
+ * statically (see `lib/news/trending-score.ts`) - it is never
+ * recalculated afterward. A single old article that hit a high/capped
+ * score could therefore outrank every newer article forever, since
+ * `listTopByTrending` had no recency awareness at all. This restricts
+ * the Hero's candidate pool to articles published within the last
+ * `FEATURED_RECENCY_WINDOW_DAYS` days, so a frozen high score can only
+ * ever win among genuinely recent articles - never indefinitely.
+ */
+const FEATURED_RECENCY_WINDOW_DAYS = 14;
+
+/**
+ * Wraps `listTopByTrending` with the recency window above, falling back
+ * to the unrestricted pool only when the recent window is genuinely
+ * empty (e.g. ingestion has been down for weeks) - showing a stale
+ * article is still better than showing nothing.
+ */
+async function getRecentTrendingPool(articles: ArticleRepository, limit: number): Promise<ArticleRow[]> {
+  const publishedAfter = new Date(Date.now() - FEATURED_RECENCY_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const recent = await articles.listTopByTrending(limit, { publishedAfter });
+  if (recent.length > 0) return recent;
+  console.warn(
+    `[article-read-service] getRecentTrendingPool: no articles published in the last ${FEATURED_RECENCY_WINDOW_DAYS} days - falling back to unrestricted trending pool.`
+  );
+  return articles.listTopByTrending(limit);
+}
+
 export const getFeaturedArticle = cache(async (): Promise<FeaturedArticle | null> => {
   try {
     const { articles, ai } = await getRepositories();
-    const [top] = await articles.listTopByTrending(1);
+    const [top] = await getRecentTrendingPool(articles, 1);
     if (!top) return null;
     const insight = await ai.getLatest(top.id);
 
@@ -262,7 +296,7 @@ export const getFeaturedArticle = cache(async (): Promise<FeaturedArticle | null
 export const getFeaturedArticles = cache(async (limit = 4): Promise<FeaturedArticle[]> => {
   try {
     const { articles, ai } = await getRepositories();
-    const top = await articles.listTopByTrending(limit);
+    const top = await getRecentTrendingPool(articles, limit);
     if (top.length === 0) return [];
 
     const insights = await Promise.all(top.map((row) => ai.getLatest(row.id)));
@@ -805,7 +839,15 @@ export type TopSourceStat = {
 export async function getTopSourcesForCategory(categoryName: string, limit = 5): Promise<TopSourceStat[]> {
   try {
     const { articles } = await getRepositories();
-    const result = await articles.search({ category: categoryName, page: 1, pageSize: 300 });
+    // Vercel production log fix (Ağustos 2026): `pageSize` was 300, but
+    // `articleSearchParamsSchema` caps it at 100 - `search()` parses
+    // params through that schema, so every call here threw a ZodError
+    // ("Too big: expected number to be <=100"), silently caught below,
+    // meaning the category page's "Top Sources" widget has been
+    // rendering empty on every request. Clamped to the schema's actual
+    // ceiling instead of raising the schema's cap, since that cap is a
+    // deliberate anti-abuse limit shared by every other `search()` caller.
+    const result = await articles.search({ category: categoryName, page: 1, pageSize: 100 });
 
     const counts = new Map<string, number>();
     for (const row of result.items) {

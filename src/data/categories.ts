@@ -1,6 +1,3 @@
-import { toCategoryNewsItem } from "@/lib/news";
-import { getLiveArticlesSync } from "@/services/news";
-
 export type CategoryNewsItem = {
   slug: string;
   image: string;
@@ -526,29 +523,28 @@ export const categories: Category[] = [
   },
 ];
 
+/**
+ * (Vercel production log fix, Ağustos 2026 - "her /category/[slug]
+ * isteğinde IGN/Unity Discussions 403 logları basılıyor") Used to merge
+ * in live (RSS/API-sourced) articles via `getLiveArticlesSync()`, which
+ * on a cold/stale in-memory cache synchronously kicks off a background
+ * RSS refresh (see `services/news/live-articles.ts`) - including the
+ * two feeds that reliably 403 (IGN, Unity Discussions Forum), logging
+ * that failure on every single category-page request.
+ *
+ * That merge is dead weight: the only live caller,
+ * `app/category/[slug]/page.tsx`, only ever reads `.name`/`.slug`/
+ * `.description` off this function's return value - the real article
+ * grid for that page comes entirely from the DB-backed
+ * `searchCategoryArticles`/`getRecentArticlesForCategory` in
+ * `article-read-service.ts`, never from `category.news` here. (The one
+ * other caller, `data/latestNews.ts`, has zero importers anywhere in
+ * the app - confirmed dead file, not reachable in production.) So this
+ * function now just returns the static mock category directly - same
+ * data every real caller was already effectively getting, minus an
+ * unnecessary network round-trip (and its 403 log noise) on every
+ * category page view.
+ */
 export function getCategoryBySlug(slug: string): Category | undefined {
-  const category = categories.find((candidate) => candidate.slug === slug.toLowerCase());
-  if (!category) {
-    return undefined;
-  }
-
-  // Merge in live (RSS/API-sourced) articles for this category, if any
-  // are cached. Never mutates the static `categories` array - this
-  // builds a fresh object per call so repeated lookups stay stable.
-  // getLiveArticlesSync() is a synchronous, always-safe read (see
-  // src/services/news/live-articles.ts): on a cold cache or any
-  // provider failure it simply returns [], and this function falls
-  // straight back to the existing mock-only behavior.
-  const liveItems = getLiveArticlesSync()
-    .filter((article) => article.category.toLowerCase() === category.name.toLowerCase())
-    .map(toCategoryNewsItem);
-
-  if (liveItems.length === 0) {
-    return category;
-  }
-
-  const existingSlugs = new Set(category.news.map((item) => item.slug));
-  const newLiveItems = liveItems.filter((item) => !existingSlugs.has(item.slug));
-
-  return { ...category, news: [...category.news, ...newLiveItems] };
+  return categories.find((candidate) => candidate.slug === slug.toLowerCase());
 }
