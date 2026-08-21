@@ -24,5 +24,10 @@ export function ConditionalFooter({ children }: { children: React.ReactNode }) {
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     return null;
   }
+  // `/portfolio` has its own isolated shell (`PortfolioFooter`, see
+  // `src/app/portfolio/layout.tsx`) - same reasoning as `/admin` above.
+  if (pathname === "/portfolio" || pathname.startsWith("/portfolio/")) {
+    return null;
+  }
   return <>{children}</>;
 }

@@ -1,0 +1,50 @@
+/**
+ * Color tokens scoped to `.portfolio-scope` (see `PortfolioThemeScope.tsx`)
+ * - deliberately NOT touching `src/app/globals.css`'s `:root` tokens
+ * (`--background`/`--foreground`), so this route can never affect the
+ * rest of the site's styling. `dark:` utilities inside this subtree are
+ * driven by `globals.css`'s existing global
+ * `@custom-variant dark (&:where(.dark, .dark *))` - this file only
+ * supplies the palette, not the variant mechanism itself.
+ *
+ * Redesign pass: this is Selin Yılmaz's personal portfolio, not a
+ * Virexa page - the accent is now violet, deliberately NOT Virexa's
+ * brand blue (`#2f67e8`), and carries no visual tie to Virexa's
+ * identity. `--portfolio-accent-soft` is a second stop used only for
+ * the small gradient-text treatment on headings (`.portfolio-gradient-
+ * text` below) - not a structural color, kept minimal on purpose.
+ */
+.portfolio-scope {
+  --portfolio-bg: #ffffff;
+  --portfolio-surface: #f7f5fb;
+  --portfolio-border: #e5e1ee;
+  --portfolio-text: #18181f;
+  --portfolio-muted: #6b6678;
+  --portfolio-accent: #7c3aed;
+  --portfolio-accent-soft: #a78bfa;
+  --portfolio-accent-contrast: #ffffff;
+
+  background: var(--portfolio-bg);
+  color: var(--portfolio-text);
+  min-height: 100vh;
+}
+
+.portfolio-scope.dark {
+  --portfolio-bg: #09090f;
+  --portfolio-surface: #131320;
+  --portfolio-border: #242432;
+  --portfolio-text: #f5f4f8;
+  --portfolio-muted: #9c98ab;
+  --portfolio-accent: #8b5cf6;
+  --portfolio-accent-soft: #d8b4fe;
+  --portfolio-accent-contrast: #ffffff;
+}
+
+/* Small, deliberately sparing gradient-text treatment - used on one
+   highlighted word in the Hero heading, not whole sentences. */
+.portfolio-gradient-text {
+  background: linear-gradient(135deg, var(--portfolio-accent), var(--portfolio-accent-soft));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
