@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Geist_Mono, Inter } from "next/font/google";
 import { ConditionalFooter } from "@/components/layout/ConditionalFooter";
 import { Footer } from "@/components/layout/Footer";
@@ -6,6 +7,7 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ThemeScope } from "@/components/providers/ThemeScope";
 import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
+import { isPortfolioHost } from "@/lib/portfolio-domain";
 import { I18nProvider } from "@/i18n/i18n-provider";
 import { resolveServerLocale } from "@/i18n/resolve-locale.server";
 import "./globals.css";
@@ -91,6 +93,22 @@ export default async function RootLayout({
   // already in the right locale.
   const locale = await resolveServerLocale();
 
+  // Personal portfolio domain (see PORTFOLIO_DOMAIN in env.ts,
+  // middleware.ts's `/` -> `/portfolio` rewrite): `/portfolio` already
+  // renders its own complete, isolated footer (`PortfolioFooter`, via
+  // `src/app/portfolio/layout.tsx`). `ConditionalFooter`'s client-side
+  // `usePathname()` check normally hides Virexa's global `Footer` on
+  // that route, but verified empirically that on a *rewritten* request
+  // `usePathname()` reports the original browser-visible path (`/`),
+  // not the rewrite destination (`/portfolio`) - so that check alone
+  // would let Virexa's footer render underneath the portfolio's own on
+  // the personal domain. Checking the `Host` header here, server-side,
+  // is the reliable signal instead: skip mounting Virexa's footer
+  // entirely (not just hide it) whenever this request is for the
+  // personal domain, regardless of what path ends up matching.
+  const requestHeaders = await headers();
+  const isPortfolioRequest = isPortfolioHost(requestHeaders.get("host"));
+
   return (
     <html
       lang={locale}
@@ -101,9 +119,11 @@ export default async function RootLayout({
           <AuthProvider initialSession={session}>
             <ThemeScope>
               {children}
-              <ConditionalFooter>
-                <Footer />
-              </ConditionalFooter>
+              {!isPortfolioRequest && (
+                <ConditionalFooter>
+                  <Footer />
+                </ConditionalFooter>
+              )}
             </ThemeScope>
           </AuthProvider>
         </I18nProvider>

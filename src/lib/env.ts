@@ -62,6 +62,22 @@ export const env = {
   site: {
     url: resolveSiteUrl(),
   },
+  /**
+   * Selin's personal portfolio domain (apex, no protocol/`www.`) - e.g.
+   * "selinyilmaz.dev". When set, `middleware.ts` rewrites root-path
+   * requests to that host (and its `www.` subdomain) to `/portfolio`,
+   * and `src/app/portfolio/page.tsx` uses it to set an absolute
+   * canonical URL pointing at the personal domain instead of
+   * `/portfolio` under `site.url`. Not `NEXT_PUBLIC_`-prefixed - only
+   * ever read server-side (middleware, a Server Component's metadata
+   * export), never needed in browser code. Optional - unset means
+   * `/portfolio` is only reachable under `site.url`, exactly as before
+   * this feature (a safe no-op default, same "missing config is a
+   * normal, safe state" convention as `news.*`/`ai.*` below).
+   */
+  portfolio: {
+    domain: process.env.PORTFOLIO_DOMAIN?.trim().toLowerCase() || undefined,
+  },
   news: {
     newsApiKey: process.env.NEWS_API_KEY,
     gNewsApiKey: process.env.GNEWS_API_KEY,

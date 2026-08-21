@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { personalInfo } from "@/data/portfolio";
+import { env } from "@/lib/env";
 import { HeroSection } from "@/components/portfolio/HeroSection";
 import { SkillsSection } from "@/components/portfolio/SkillsSection";
 import { ProjectsSection } from "@/components/portfolio/ProjectsSection";
@@ -8,13 +9,24 @@ import { CertificationsSection } from "@/components/portfolio/CertificationsSect
 import { AboutSection } from "@/components/portfolio/AboutSection";
 import { ContactSection } from "@/components/portfolio/ContactSection";
 
+// The portfolio's one true canonical identity - regardless of whether
+// it was reached via the personal-domain rewrite (see middleware.ts)
+// or directly at `<NEXT_PUBLIC_SITE_URL>/portfolio`, both should point
+// search engines/social previews at the same URL to avoid duplicate-
+// content SEO issues. `undefined` when PORTFOLIO_DOMAIN isn't
+// configured - falls back to the implicit `.../portfolio` URL, exactly
+// as before this feature.
+const portfolioUrl = env.portfolio.domain ? `https://${env.portfolio.domain}` : undefined;
+
 export const metadata: Metadata = {
   title: `${personalInfo.name} — ${personalInfo.title}`,
   description: personalInfo.tagline,
+  ...(portfolioUrl ? { alternates: { canonical: portfolioUrl } } : {}),
   openGraph: {
     title: `${personalInfo.name} — ${personalInfo.title}`,
     description: personalInfo.tagline,
     type: "profile",
+    ...(portfolioUrl ? { url: portfolioUrl } : {}),
   },
   // Metadata merges shallowly per top-level key with the root layout's,
   // so without this the root's "Virexa" twitter card would show here

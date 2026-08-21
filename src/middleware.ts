@@ -3,6 +3,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 import { isAdminUser } from "@/lib/admin/is-admin";
 import { isSeoCrawlerUserAgent } from "@/lib/bots/is-bot-request";
 import { checkRateLimit, getClientIdentifier } from "@/lib/rate-limit";
+import { isPortfolioHost } from "@/lib/portfolio-domain";
 
 /** Routes that require a signed-in user (see task: Protected Routes). `/reading-history` is a standalone route now (Navigation/Profile/Settings UX update - was `/profile?tab=history`, gated the same way `/profile` already was). `/developer-releases` is intentionally NOT here - it's a public release catalog (same content as `/developer-hub/releases`), not personal data. */
 const PROTECTED_PATHS = ["/bookmarks", "/profile", "/settings", "/reading-history"];
@@ -77,8 +78,25 @@ export async function middleware(request: NextRequest) {
   const throttled = throttleSeoCrawler(request);
   if (throttled) return throttled;
 
+  const { pathname } = request.nextUrl;
+
+  /**
+   * Personal portfolio domain root - rewritten straight to `/portfolio`
+   * before any Virexa-specific logic runs (session refresh, maintenance
+   * mode, protected/admin routing). URL bar stays selinyilmaz.dev/
+   * (rewrite, not redirect) - only the exact root path is affected, so
+   * every other path on this domain (there currently are none) falls
+   * through to normal Virexa routing unchanged. The portfolio is
+   * intentionally decoupled from the news app's state: it must stay
+   * reachable even when Virexa is in Maintenance Mode, and never needs
+   * a Supabase session, so this returns before `updateSession()` runs.
+   */
+  if (pathname === "/" && isPortfolioHost(request.headers.get("host"))) {
+    return NextResponse.rewrite(new URL("/portfolio", request.url));
+  }
+
   const { response, user, supabase } = await updateSession(request);
-  const { pathname, search } = request.nextUrl;
+  const { search } = request.nextUrl;
 
   if (matchesPath(pathname, ADMIN_PATHS)) {
     if (!user) {
