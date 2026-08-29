@@ -1,165 +1,151 @@
-import { certifications, languages, personalInfo, projects, skills } from "@/data/portfolio";
-import { AwardIcon, DownloadIcon, FolderCodeIcon, GithubIcon, GlobeIcon, LayersIcon, LinkedinIcon, MapPinIcon } from "./PortfolioIcons";
+import { education, personalInfo, skills } from "@/data/portfolio";
+import { PortfolioPortrait } from "./PortfolioPortrait";
+import { PortfolioReveal } from "./PortfolioReveal";
+import { ArrowUpRightIcon, DownloadIcon, GithubIcon, LinkedinIcon, MailIcon } from "./PortfolioIcons";
 
 /**
- * No headshot (see the plan for this redesign pass - no real photo of
- * Selin was available, and a stock/AI-generated one would misrepresent
- * her). In its place: a small "developer object" code-block widget -
- * every field in it is read straight from `personalInfo`/`skills`, not
- * hand-typed marketing copy, so it can't drift out of sync with the
- * real data. The stat strip below is the same principle: every number
- * is `.length` on an already-verified array, never a hardcoded claim.
+ * Editorial redesign: the CV's identity line ("Computer Engineering
+ * Student | Aspiring Software Developer") splits into an eyebrow label
+ * + a smaller serif-italic subtitle - same two facts the old single
+ * line carried, just given the visual hierarchy a magazine masthead
+ * gives its byline. Falls back to the whole string as the eyebrow if
+ * the "|" separator is ever removed from the data file.
  */
-const codeFields: { key: string; value: string }[] = [
-  { key: "name", value: personalInfo.name },
-  { key: "role", value: personalInfo.title },
-  { key: "location", value: personalInfo.location },
-];
-const focusAreas = skills.map((category) => category.category);
+const [eyebrow, subtitle] = personalInfo.title.includes("|")
+  ? personalInfo.title.split("|").map((part) => part.trim())
+  : [personalInfo.title, undefined];
 
-const stats = [
-  { icon: <FolderCodeIcon className="size-5" />, value: projects.length, label: "Projects" },
-  { icon: <AwardIcon className="size-5" />, value: certifications.length, label: "Certifications" },
-  { icon: <LayersIcon className="size-5" />, value: skills.length, label: "Skill Areas" },
-  { icon: <GlobeIcon className="size-5" />, value: languages.length, label: "Languages" },
-];
+const nameParts = personalInfo.name.split(" ");
+const initials = nameParts.map((part) => part[0]).join("");
+
+// Real, already-verified facts only - no invented "available for work"
+// status line. `education[0]` is Kahramanmaraş Sütçü İmam University,
+// the CV's current/ongoing entry (see `src/data/portfolio.ts`).
+const currentStatus = education[0]?.status;
+const focusAreas = skills.slice(0, 3).map((category) => category.category);
 
 export function HeroSection() {
   return (
-    <section id="hero" className="relative overflow-hidden">
-      <div className="mx-auto grid max-w-[1200px] items-center gap-12 px-5 pt-16 pb-16 sm:px-8 sm:pt-24 sm:pb-20 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
-        <div>
-          {/* Was a tiny `uppercase` eyebrow tag - fit "Software Engineer"
-              (17 chars) fine, but the CV's real, longer identity line
-              ("Computer Engineering Student | Aspiring Software
-              Developer", 61 chars) turned into an all-caps wall of text
-              at that size. Same content, presented as a normal-case
-              subtitle instead - `max-w-xl` keeps line length controlled
-              on every viewport. */}
-          <p className="max-w-xl text-base font-semibold text-[var(--portfolio-accent)] sm:text-lg">
-            {personalInfo.title}
-          </p>
+    <section id="hero" className="relative border-b border-[var(--portfolio-border)]">
+      <div className="mx-auto grid max-w-[1240px] gap-14 px-6 pt-14 pb-16 sm:px-10 sm:pt-20 sm:pb-24 lg:grid-cols-[1.15fr_0.85fr] lg:gap-20 lg:pt-24">
+        <div className="flex flex-col">
+          <PortfolioReveal>
+            <p className="text-xs font-semibold tracking-[0.22em] text-[var(--portfolio-accent)] uppercase">
+              {eyebrow}
+            </p>
+          </PortfolioReveal>
 
-          <h1 className="mt-4 max-w-xl text-5xl font-bold tracking-tight text-[var(--portfolio-text)] sm:text-6xl">
-            {personalInfo.name.split(" ").map((part, index) => (
-              <span key={part} className={index > 0 ? "portfolio-gradient-text block" : "block"}>
-                {part}
+          <PortfolioReveal delayMs={80}>
+            <h1 className="portfolio-serif mt-5 text-[15vw] leading-[0.92] font-medium tracking-tight text-[var(--portfolio-text)] sm:text-7xl lg:text-[5.5rem]">
+              {nameParts.map((part) => (
+                <span key={part} className="block">
+                  {part}
+                </span>
+              ))}
+            </h1>
+          </PortfolioReveal>
+
+          {subtitle && (
+            <PortfolioReveal delayMs={140}>
+              <p className="portfolio-serif mt-4 text-2xl text-[var(--portfolio-accent)] italic sm:text-3xl">
+                {subtitle}
+              </p>
+            </PortfolioReveal>
+          )}
+
+          <PortfolioReveal delayMs={200}>
+            <p className="mt-7 max-w-lg text-base leading-relaxed text-[var(--portfolio-muted)] sm:text-lg">
+              {personalInfo.tagline}
+            </p>
+          </PortfolioReveal>
+
+          <PortfolioReveal delayMs={260}>
+            <div className="mt-10 flex flex-wrap items-center gap-5">
+              <a
+                href="#projects"
+                className="inline-flex items-center gap-2 border border-[var(--portfolio-text)] bg-[var(--portfolio-text)] px-7 py-3 text-sm font-semibold tracking-wide text-[var(--portfolio-bg)] transition-opacity hover:opacity-85"
+              >
+                View Projects
+                <ArrowUpRightIcon className="size-4" />
+              </a>
+              <a
+                href={personalInfo.cvUrl}
+                download
+                className="inline-flex items-center gap-2 border border-[var(--portfolio-border)] px-7 py-3 text-sm font-semibold tracking-wide text-[var(--portfolio-text)] transition-colors hover:border-[var(--portfolio-accent)] hover:text-[var(--portfolio-accent)]"
+              >
+                <DownloadIcon className="size-4" />
+                Download CV
+              </a>
+            </div>
+          </PortfolioReveal>
+
+          <PortfolioReveal delayMs={320}>
+            <div className="mt-14 flex items-center gap-5">
+              <span className="text-xs font-semibold tracking-[0.2em] text-[var(--portfolio-muted)] uppercase">
+                Let&apos;s connect
               </span>
-            ))}
-          </h1>
-
-          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-[var(--portfolio-muted)] sm:text-xl">
-            {personalInfo.tagline}
-          </p>
-
-          <div className="mt-6 flex items-center gap-2 text-sm text-[var(--portfolio-muted)]">
-            <MapPinIcon className="size-4" />
-            {personalInfo.location}
-          </div>
-
-          <div className="mt-10 flex flex-wrap items-center gap-4">
-            <a
-              href={`mailto:${personalInfo.email}`}
-              className="inline-flex items-center gap-2 rounded-full bg-[var(--portfolio-accent)] px-6 py-3 text-sm font-semibold text-[var(--portfolio-accent-contrast)] transition-opacity hover:opacity-90"
-            >
-              Get in touch
-            </a>
-            <a
-              href={personalInfo.cvUrl}
-              download
-              className="inline-flex items-center gap-2 rounded-full border border-[var(--portfolio-border)] px-6 py-3 text-sm font-semibold text-[var(--portfolio-text)] transition-colors hover:border-[var(--portfolio-accent)]"
-            >
-              <DownloadIcon className="size-4" />
-              Download CV
-            </a>
-            <a
-              href={personalInfo.githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="GitHub"
-              className="flex size-11 items-center justify-center rounded-full border border-[var(--portfolio-border)] text-[var(--portfolio-muted)] transition-colors hover:border-[var(--portfolio-accent)] hover:text-[var(--portfolio-text)]"
-            >
-              <GithubIcon className="size-5" />
-            </a>
-            <a
-              href={personalInfo.linkedinUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="LinkedIn"
-              className="flex size-11 items-center justify-center rounded-full border border-[var(--portfolio-border)] text-[var(--portfolio-muted)] transition-colors hover:border-[var(--portfolio-accent)] hover:text-[var(--portfolio-text)]"
-            >
-              <LinkedinIcon className="size-5" />
-            </a>
-          </div>
+              <span className="h-px w-10 bg-[var(--portfolio-border)]" />
+              <a
+                href={personalInfo.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GitHub"
+                className="text-[var(--portfolio-muted)] transition-colors hover:text-[var(--portfolio-accent)]"
+              >
+                <GithubIcon className="size-5" />
+              </a>
+              <a
+                href={personalInfo.linkedinUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="LinkedIn"
+                className="text-[var(--portfolio-muted)] transition-colors hover:text-[var(--portfolio-accent)]"
+              >
+                <LinkedinIcon className="size-5" />
+              </a>
+              <a
+                href={`mailto:${personalInfo.email}`}
+                aria-label="Email"
+                className="text-[var(--portfolio-muted)] transition-colors hover:text-[var(--portfolio-accent)]"
+              >
+                <MailIcon className="size-5" />
+              </a>
+            </div>
+          </PortfolioReveal>
         </div>
 
-        {/* Decorative only - CSS blur, no image asset. `overflow-hidden`
-            on the section above keeps these from ever causing a
-            horizontal scrollbar. */}
-        <div className="relative mx-auto w-full max-w-md lg:mx-0 lg:max-w-none">
-          <div className="pointer-events-none absolute -top-12 -right-8 size-56 rounded-full bg-[var(--portfolio-accent)] opacity-20 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-10 -left-8 size-48 rounded-full bg-[var(--portfolio-accent-soft)] opacity-20 blur-3xl" />
+        <PortfolioReveal delayMs={180} className="flex flex-col gap-8">
+          <PortfolioPortrait src={personalInfo.portraitUrl} alt={personalInfo.name} initials={initials} />
 
-          <div className="relative rounded-2xl border border-[var(--portfolio-border)] bg-[var(--portfolio-surface)] p-6 shadow-2xl">
-            <div className="flex items-center gap-1.5 pb-4">
-              <span className="size-2.5 rounded-full bg-[var(--portfolio-muted)]/40" />
-              <span className="size-2.5 rounded-full bg-[var(--portfolio-muted)]/40" />
-              <span className="size-2.5 rounded-full bg-[var(--portfolio-muted)]/40" />
+          <dl className="grid grid-cols-1 gap-6 border-t border-[var(--portfolio-border)] pt-6 sm:grid-cols-3 lg:grid-cols-1">
+            <div>
+              <dt className="text-[11px] font-semibold tracking-[0.2em] text-[var(--portfolio-muted)] uppercase">
+                Based in
+              </dt>
+              <dd className="portfolio-serif mt-1.5 text-lg text-[var(--portfolio-text)]">{personalInfo.location}</dd>
             </div>
-
-            <pre className="overflow-x-auto font-mono text-[13px] leading-relaxed sm:text-sm">
-              <code>
-                <span className="text-[var(--portfolio-accent)]">const</span>
-                <span className="text-[var(--portfolio-text)]"> developer</span>
-                <span className="text-[var(--portfolio-muted)]"> = {"{"}</span>
-                {"\n"}
-                {codeFields.map((field) => (
-                  <span key={field.key}>
-                    {"  "}
-                    <span className="text-[var(--portfolio-text)]">{field.key}</span>
-                    <span className="text-[var(--portfolio-muted)]">: </span>
-                    <span className="text-[var(--portfolio-accent)]">&apos;{field.value}&apos;</span>
-                    <span className="text-[var(--portfolio-muted)]">,</span>
-                    {"\n"}
-                  </span>
-                ))}
-                {"  "}
-                <span className="text-[var(--portfolio-text)]">focus</span>
-                <span className="text-[var(--portfolio-muted)]">: [</span>
-                {"\n"}
+            <div>
+              <dt className="text-[11px] font-semibold tracking-[0.2em] text-[var(--portfolio-muted)] uppercase">
+                Focus
+              </dt>
+              <dd className="mt-1.5 flex flex-col gap-0.5">
                 {focusAreas.map((area) => (
-                  <span key={area}>
-                    {"    "}
-                    <span className="text-[var(--portfolio-accent)]">&apos;{area}&apos;</span>
-                    <span className="text-[var(--portfolio-muted)]">,</span>
-                    {"\n"}
+                  <span key={area} className="text-sm text-[var(--portfolio-text)]">
+                    {area}
                   </span>
                 ))}
-                {"  "}
-                <span className="text-[var(--portfolio-muted)]">],</span>
-                {"\n"}
-                <span className="text-[var(--portfolio-muted)]">{"};"}</span>
-              </code>
-            </pre>
-          </div>
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-[1200px] px-5 pb-20 sm:px-8 sm:pb-28">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {stats.map((stat) => (
-            <div
-              key={stat.label}
-              className="rounded-2xl border border-[var(--portfolio-border)] bg-[var(--portfolio-surface)] p-5"
-            >
-              <span className="flex size-9 items-center justify-center rounded-lg bg-[var(--portfolio-accent)]/10 text-[var(--portfolio-accent)]">
-                {stat.icon}
-              </span>
-              <p className="mt-3 text-2xl font-bold text-[var(--portfolio-text)]">{stat.value}</p>
-              <p className="text-sm text-[var(--portfolio-muted)]">{stat.label}</p>
+              </dd>
             </div>
-          ))}
-        </div>
+            {currentStatus && (
+              <div>
+                <dt className="text-[11px] font-semibold tracking-[0.2em] text-[var(--portfolio-muted)] uppercase">
+                  Currently
+                </dt>
+                <dd className="portfolio-serif mt-1.5 text-lg text-[var(--portfolio-text)]">{currentStatus}</dd>
+              </div>
+            )}
+          </dl>
+        </PortfolioReveal>
       </div>
     </section>
   );

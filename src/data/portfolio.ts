@@ -59,6 +59,14 @@ export type PersonalInfo = {
   linkedinUrl: string;
   /** Public path under `public/`, e.g. "/documents/cv.pdf". */
   cvUrl: string;
+  /**
+   * Public path under `public/` for the Hero portrait. Drop a real photo
+   * at `public/images/portfolio/portrait.jpg` (same filename - just
+   * overwrite it) and it appears automatically; `PortfolioPortrait.tsx`
+   * renders a tasteful placeholder frame instead of a broken image until
+   * that file exists.
+   */
+  portraitUrl: string;
 };
 
 export type SkillCategory = {
@@ -135,6 +143,7 @@ export const personalInfo: PersonalInfo = {
   githubUrl: "https://github.com/selinyilmazz",
   linkedinUrl: "https://www.linkedin.com/in/selin-yılmaz-589461209",
   cvUrl: "/documents/cv.pdf",
+  portraitUrl: "/images/portfolio/portrait.jpg",
 };
 
 // Verbatim from the CV's "PROFESSIONAL PROFILE" paragraph.

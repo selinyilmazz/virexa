@@ -7,44 +7,163 @@
  * `@custom-variant dark (&:where(.dark, .dark *))` - this file only
  * supplies the palette, not the variant mechanism itself.
  *
- * Redesign pass: this is Selin Yılmaz's personal portfolio, not a
- * Virexa page - the accent is now violet, deliberately NOT Virexa's
- * brand blue (`#2f67e8`), and carries no visual tie to Virexa's
- * identity. `--portfolio-accent-soft` is a second stop used only for
- * the small gradient-text treatment on headings (`.portfolio-gradient-
- * text` below) - not a structural color, kept minimal on purpose.
+ * Editorial redesign pass (Ağustos 2026): "editorial luxury" identity -
+ * near-black / warm ivory paper, cream/bone type, a single deep burgundy
+ * accent (no relation to Virexa's brand blue, no relation to the prior
+ * violet pass). Dark is the primary, default identity (matches the
+ * reference); light is a genuine second mode (warm paper, not just an
+ * inverted dark palette) so the existing light/dark toggle keeps working
+ * instead of being removed.
  */
 .portfolio-scope {
-  --portfolio-bg: #ffffff;
-  --portfolio-surface: #f7f5fb;
-  --portfolio-border: #e5e1ee;
-  --portfolio-text: #18181f;
-  --portfolio-muted: #6b6678;
-  --portfolio-accent: #7c3aed;
-  --portfolio-accent-soft: #a78bfa;
-  --portfolio-accent-contrast: #ffffff;
+  /* Light = warm paper, not a generic white. */
+  --portfolio-bg: #f3ede2;
+  --portfolio-surface: #eae2d3;
+  --portfolio-border: rgba(26, 20, 16, 0.14);
+  --portfolio-text: #1a1611;
+  --portfolio-muted: #6b6053;
+  --portfolio-accent: #7a1f2b;
+  --portfolio-accent-soft: #9c3a44;
+  --portfolio-accent-contrast: #f3ede2;
+  --portfolio-line: rgba(26, 20, 16, 0.14);
 
-  background: var(--portfolio-bg);
+  /* Fixed "insert page" palette for `.portfolio-band-light` (see below) -
+     deliberately declared once here, on the base selector, so `.dark`
+     below (which only redeclares the `--portfolio-*` names it needs)
+     never touches these.
+
+     Bug fix: this used to equal this light theme's own `--portfolio-bg`
+     (#f3ede2) exactly - looked right in dark mode (band vs. near-black
+     photo), but in LIGHT mode the "band" was then literally the same
+     color as every ordinary section around it, so the wave dividers
+     had nothing to reveal - only their thin accent stroke showed, with
+     no actual transition. `--portfolio-band-bg` is now a slightly
+     brighter paper tone than the light theme's own #f3ede2 - still the
+     same warm-ivory family (not a new hue, not stark white), close
+     enough to read as "the same palette" but distinct enough that the
+     wave transition is visible against BOTH the light theme's own
+     paper and the dark theme's near-black/photo background. */
+  --portfolio-band-bg: #faf6ec;
+  --portfolio-band-text: #1a1611;
+  --portfolio-band-muted: #6b6053;
+  --portfolio-band-border: rgba(26, 20, 16, 0.12);
+  --portfolio-band-accent: #7a1f2b;
+  --portfolio-band-accent-soft: #9c3a44;
+
+  background-color: var(--portfolio-bg);
   color: var(--portfolio-text);
   min-height: 100vh;
+  font-family: var(--font-sans);
 }
 
 .portfolio-scope.dark {
-  --portfolio-bg: #09090f;
-  --portfolio-surface: #131320;
-  --portfolio-border: #242432;
-  --portfolio-text: #f5f4f8;
-  --portfolio-muted: #9c98ab;
-  --portfolio-accent: #8b5cf6;
-  --portfolio-accent-soft: #d8b4fe;
-  --portfolio-accent-contrast: #ffffff;
+  --portfolio-bg: #0c0a09;
+  --portfolio-surface: #16130f;
+  --portfolio-border: rgba(243, 237, 226, 0.12);
+  --portfolio-text: #f3ead9;
+  --portfolio-muted: #9a9186;
+  --portfolio-accent: #9c2f3a;
+  --portfolio-accent-soft: #c1525b;
+  --portfolio-accent-contrast: #f3ead9;
+  --portfolio-line: rgba(243, 237, 226, 0.12);
+
+  /* Atmospheric background photo (dark theme only - a photo this dark
+     and moody would fight the warm-paper light theme, so light mode
+     stays plain ivory). A dark scrim gradient rides on top of the same
+     `background-image` stack so every section's text keeps the same
+     contrast it had against the flat color - the photo reads as a
+     quiet backdrop, not something to read text over directly.
+     `background-attachment: fixed` gives a subtle parallax feel as the
+     page scrolls over it; browsers that don't support fixed
+     backgrounds (some mobile browsers) just fall back to it scrolling
+     normally with the page - a harmless degradation, not a bug. */
+  background-image: linear-gradient(180deg, rgba(12, 10, 9, 0.55) 0%, rgba(12, 10, 9, 0.82) 45%, rgba(12, 10, 9, 0.97) 100%),
+    url("/images/portfolio/atmosphere.jpg");
+  background-size: cover;
+  background-position: center 30%;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
-/* Small, deliberately sparing gradient-text treatment - used on one
-   highlighted word in the Hero heading, not whole sentences. */
-.portfolio-gradient-text {
-  background: linear-gradient(135deg, var(--portfolio-accent), var(--portfolio-accent-soft));
-  background-clip: text;
-  -webkit-background-clip: text;
+/* Editorial display serif, applied deliberately (not globally) - see
+   `layout.tsx` for the `next/font/google` Playfair Display load, which
+   sets the `--font-portfolio-serif` variable on this subtree's wrapper
+   element via `playfairDisplay.variable`. */
+.portfolio-serif {
+  font-family: var(--font-portfolio-serif), Georgia, "Times New Roman", serif;
+}
+
+/* Thin horizontal rule used between magazine-style list rows (projects,
+   certifications, skills index) instead of boxed cards. */
+.portfolio-rule {
+  border-top: 1px solid var(--portfolio-line);
+}
+
+/* Numbered-index style large faint digits (project rows, section
+   eyebrows) - outlined rather than filled so they read as typographic
+   ornament, not a decorative icon/illustration. */
+.portfolio-index-num {
+  -webkit-text-stroke: 1px var(--portfolio-line);
   color: transparent;
+}
+
+/* Underline-on-hover link treatment used throughout instead of pill
+   buttons/boxed chips - background-size trick keeps it a single
+   lightweight transition, no layout shift. */
+.portfolio-link {
+  background-image: linear-gradient(var(--portfolio-accent), var(--portfolio-accent));
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0% 1px;
+  transition: background-size 0.35s ease;
+}
+.portfolio-link:hover,
+.portfolio-link:focus-visible {
+  background-size: 100% 1px;
+}
+
+/* "Insert page" section band - an alternating cream panel between wave
+   dividers (see `PortfolioWaveDivider.tsx`), styled like a printed page
+   dropped into the dark editorial spread. Overrides the ambient tokens
+   for everything inside it with the fixed `--portfolio-band-*` palette
+   above, so any section rendered inside (About, Education) needs zero
+   changes of its own - it already reads `var(--portfolio-text)` etc.
+   and just picks up these values instead. Deliberately theme-invariant
+   (same in light and dark mode) - it's meant to read as a fixed
+   design element, not something the dark/light toggle affects. */
+.portfolio-band-light {
+  --portfolio-bg: var(--portfolio-band-bg);
+  --portfolio-surface: var(--portfolio-band-bg);
+  --portfolio-text: var(--portfolio-band-text);
+  --portfolio-muted: var(--portfolio-band-muted);
+  --portfolio-border: var(--portfolio-band-border);
+  --portfolio-line: var(--portfolio-band-border);
+  --portfolio-accent: var(--portfolio-band-accent);
+  --portfolio-accent-soft: var(--portfolio-band-accent-soft);
+  --portfolio-accent-contrast: var(--portfolio-band-bg);
+
+  position: relative;
+  background-color: var(--portfolio-bg);
+}
+
+/* Scroll-reveal primitive - see `PortfolioReveal.tsx`. Respects
+   prefers-reduced-motion by staying fully visible with no transition. */
+.portfolio-reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.portfolio-reveal.portfolio-reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }

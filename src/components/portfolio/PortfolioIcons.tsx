@@ -173,3 +173,21 @@ export function PulseIcon({ className = "size-5" }: IconProps) {
     </svg>
   );
 }
+
+export function BriefcaseIcon({ className = "size-5" }: IconProps) {
+  return (
+    <svg {...ICON_PROPS} className={className}>
+      <rect x="3" y="7.5" width="18" height="12" rx="1.6" />
+      <path d="M8.5 7.5V5.8c0-.72.58-1.3 1.3-1.3h4.4c.72 0 1.3.58 1.3 1.3V7.5" />
+      <path d="M3 12.5h18" />
+    </svg>
+  );
+}
+
+export function ArrowUpRightIcon({ className = "size-5" }: IconProps) {
+  return (
+    <svg {...ICON_PROPS} className={className}>
+      <path d="M7 17 17 7M9 7h8v8" />
+    </svg>
+  );
+}

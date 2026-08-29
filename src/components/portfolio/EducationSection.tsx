@@ -1,67 +1,57 @@
 import { education } from "@/data/portfolio";
-import { GraduationCapIcon } from "./PortfolioIcons";
+import { PortfolioReveal } from "./PortfolioReveal";
 
 /**
- * Vertical timeline ("journey" pattern from the redesign reference) -
- * used here for Education specifically because it's the only section
- * with real, dated milestones on the CV. There is no Work/Internship
- * Experience timeline (see `EducationItem`'s doc comment in
- * `src/data/portfolio.ts`) - do not add one. Every field below is
- * still optional and renders only when the CV actually stated it, same
- * as before this restyle - only the layout changed.
+ * Numbered-row layout, matching `SkillsSection`/`ProjectsSection`'s
+ * index-number pattern instead of the previous icon-timeline. Every
+ * field is still fully optional and renders only when the CV actually
+ * stated it (see `EducationItem`'s doc comment in
+ * `src/data/portfolio.ts`) - only the layout changed.
  */
 export function EducationSection() {
   return (
     <section
       id="education"
-      className="mx-auto max-w-[1200px] border-t border-[var(--portfolio-border)] px-5 py-20 sm:px-8 sm:py-28"
+      className="mx-auto max-w-[1240px] border-t border-[var(--portfolio-border)] px-6 py-20 sm:px-10 sm:py-28"
     >
-      <p className="text-sm font-medium tracking-wide text-[var(--portfolio-accent)] uppercase">Education</p>
-      <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--portfolio-text)] sm:text-4xl">Education</h2>
+      <PortfolioReveal>
+        <p className="text-xs font-semibold tracking-[0.22em] text-[var(--portfolio-accent)] uppercase">Education</p>
+        <h2 className="portfolio-serif mt-3 text-4xl text-[var(--portfolio-text)] sm:text-5xl">Education</h2>
+      </PortfolioReveal>
 
-      <div className="mt-12 flex flex-col">
+      <div className="mt-14 flex flex-col">
         {education.map((item, index) => {
           const dateRange =
-            item.startDate && item.endDate
-              ? `${item.startDate} – ${item.endDate}`
-              : (item.startDate ?? item.endDate);
-          const isLast = index === education.length - 1;
+            item.startDate && item.endDate ? `${item.startDate} – ${item.endDate}` : (item.startDate ?? item.endDate);
 
           return (
-            <div key={item.institution} className="flex gap-5">
-              <div className="flex flex-col items-center">
-                <span className="flex size-11 flex-none items-center justify-center rounded-full border border-[var(--portfolio-border)] bg-[var(--portfolio-surface)] text-[var(--portfolio-accent)]">
-                  <GraduationCapIcon className="size-5" />
-                </span>
-                {!isLast && <span className="w-px flex-1 bg-[var(--portfolio-border)]" />}
-              </div>
+            <PortfolioReveal
+              key={item.institution}
+              delayMs={index * 60}
+              className="portfolio-rule grid grid-cols-1 gap-4 py-10 first:border-t-0 first:pt-0 sm:grid-cols-[80px_1fr] sm:gap-8"
+            >
+              <span className="portfolio-serif portfolio-index-num text-3xl">{String(index + 1).padStart(2, "0")}</span>
 
-              <div className={isLast ? "pb-2" : "pb-10"}>
-                <h3 className="pt-1.5 text-lg font-bold text-[var(--portfolio-text)]">{item.institution}</h3>
-                <p className="mt-1 text-sm text-[var(--portfolio-muted)]">{item.field}</p>
-                {item.degree && <p className="mt-1 text-sm text-[var(--portfolio-muted)]">{item.degree}</p>}
+              <div>
+                <h3 className="portfolio-serif text-2xl text-[var(--portfolio-text)]">{item.institution}</h3>
+                <p className="mt-1.5 text-sm text-[var(--portfolio-muted)]">{item.field}</p>
+                {item.degree && <p className="mt-0.5 text-sm text-[var(--portfolio-muted)]">{item.degree}</p>}
 
                 {(item.status || dateRange || item.location) && (
-                  <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-                    {item.status && (
-                      <span className="inline-flex items-center rounded-full border border-[var(--portfolio-border)] bg-[var(--portfolio-bg)] px-3 py-1 text-xs font-medium text-[var(--portfolio-text)]">
-                        {item.status}
-                      </span>
-                    )}
-                    {dateRange && <span className="text-sm text-[var(--portfolio-muted)]">{dateRange}</span>}
-                    {item.location && (
-                      <span className="text-sm text-[var(--portfolio-muted)]">{item.location}</span>
-                    )}
+                  <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+                    {item.status && <span className="font-medium text-[var(--portfolio-accent)]">{item.status}</span>}
+                    {dateRange && <span className="text-[var(--portfolio-muted)]">{dateRange}</span>}
+                    {item.location && <span className="text-[var(--portfolio-muted)]">{item.location}</span>}
                   </div>
                 )}
 
                 {item.gpa && (
                   <p className="mt-4 text-sm text-[var(--portfolio-text)]">
-                    <span className="font-semibold">GPA:</span> {item.gpa}
+                    <span className="font-semibold">GPA</span> · {item.gpa}
                   </p>
                 )}
               </div>
-            </div>
+            </PortfolioReveal>
           );
         })}
       </div>

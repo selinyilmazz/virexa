@@ -1,123 +1,101 @@
 import { projects } from "@/data/portfolio";
-import { BarChartIcon, ExternalLinkIcon, GithubIcon, GlobeIcon, PulseIcon } from "./PortfolioIcons";
+import { PortfolioReveal } from "./PortfolioReveal";
+import { ArrowUpRightIcon, GithubIcon } from "./PortfolioIcons";
 
 /**
- * Purely decorative per-project header art - a gradient block with a
- * loosely-themed icon, NOT a product screenshot. No real screenshot
- * exists for any of these projects, and faking one would misrepresent
- * what they actually look like; this is honest, abstract decoration
- * instead. Keyed by `slug` (from `src/data/portfolio.ts`), not stored
- * as data - purely a presentation choice.
- */
-const DECORATIVE_ICON: Record<string, React.ReactNode> = {
-  "market-price-comparison": <BarChartIcon className="size-10" />,
-  "lichfield-heart-disease-prediction": <PulseIcon className="size-10" />,
-  "virexa-ai-news": <GlobeIcon className="size-10" />,
-};
-
-/**
- * Case-study style cards (Problem / Solution + verified feature list),
- * not a dense template grid - large, single-column blocks read more
- * "senior engineer" than a 3-up card grid for a set this small. No
- * stars/percentages/metrics: only what's traceable to each project's
- * actual files (see `src/data/portfolio.ts`'s doc comment).
+ * Magazine-index layout - large outlined row numbers + a hairline rule
+ * between entries, not a card grid. No decorative gradient artwork
+ * (removed from the prior pass) - nothing here claims to be a product
+ * screenshot that doesn't exist; the typographic index number is
+ * ornament, not a stand-in for one. Problem/Solution + verified feature
+ * list are unchanged in substance from the previous pass, just restyled.
  */
 export function ProjectsSection() {
   return (
-    <section
-      id="projects"
-      className="mx-auto max-w-[1200px] border-t border-[var(--portfolio-border)] px-5 py-20 sm:px-8 sm:py-28"
-    >
-      <p className="text-sm font-medium tracking-wide text-[var(--portfolio-accent)] uppercase">Projects</p>
-      <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--portfolio-text)] sm:text-4xl">
-        Featured Projects
-      </h2>
+    <section id="projects" className="mx-auto max-w-[1240px] px-6 py-20 sm:px-10 sm:py-28">
+      <PortfolioReveal className="flex items-end justify-between gap-6 border-b border-[var(--portfolio-border)] pb-6">
+        <div>
+          <p className="text-xs font-semibold tracking-[0.22em] text-[var(--portfolio-accent)] uppercase">
+            Selected Work
+          </p>
+          <h2 className="portfolio-serif mt-3 text-4xl text-[var(--portfolio-text)] sm:text-5xl">Projects</h2>
+        </div>
+        <p className="hidden text-sm text-[var(--portfolio-muted)] sm:block">
+          {String(projects.length).padStart(2, "0")} projects
+        </p>
+      </PortfolioReveal>
 
-      <div className="mt-12 flex flex-col gap-8">
-        {projects.map((project) => (
-          <article
-            key={project.slug}
-            className="overflow-hidden rounded-2xl border border-[var(--portfolio-border)] bg-[var(--portfolio-surface)]"
-          >
-            <div
-              className="flex h-28 items-center justify-center sm:h-32"
-              style={{
-                background:
-                  "linear-gradient(135deg, color-mix(in srgb, var(--portfolio-accent) 22%, transparent), color-mix(in srgb, var(--portfolio-accent-soft) 22%, transparent))",
-              }}
-            >
-              <span className="text-[var(--portfolio-accent)] opacity-70">{DECORATIVE_ICON[project.slug]}</span>
-            </div>
+      <div className="flex flex-col">
+        {projects.map((project, index) => (
+          <PortfolioReveal key={project.slug} delayMs={index * 60} className="portfolio-rule py-12 first:pt-14 sm:py-16">
+            <article className="grid gap-8 lg:grid-cols-[auto_1fr] lg:gap-14">
+              <span className="portfolio-serif portfolio-index-num text-6xl leading-none sm:text-7xl">
+                {String(index + 1).padStart(2, "0")}
+              </span>
 
-            <div className="p-6 sm:p-8">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <h3 className="text-xl font-bold text-[var(--portfolio-text)] sm:text-2xl">{project.name}</h3>
-                {project.githubUrl && (
-                  <a
-                    href={project.githubUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex flex-none items-center gap-2 rounded-full border border-[var(--portfolio-border)] px-4 py-2 text-sm font-medium text-[var(--portfolio-text)] transition-colors hover:border-[var(--portfolio-accent)]"
-                  >
-                    <GithubIcon className="size-4" />
-                    View on GitHub
-                    <ExternalLinkIcon className="size-3.5" />
-                  </a>
-                )}
-              </div>
-
-              <p className="mt-3 max-w-3xl text-base leading-relaxed text-[var(--portfolio-muted)]">
-                {project.description}
-              </p>
-
-              {(project.problem || project.solution) && (
-                <div className="mt-6 grid gap-6 border-t border-[var(--portfolio-border)] pt-6 sm:grid-cols-2">
-                  {project.problem && (
-                    <div>
-                      <h4 className="text-xs font-semibold tracking-wide text-[var(--portfolio-accent)] uppercase">
-                        Problem
-                      </h4>
-                      <p className="mt-2 text-sm leading-relaxed text-[var(--portfolio-muted)]">
-                        {project.problem}
-                      </p>
-                    </div>
-                  )}
-                  {project.solution && (
-                    <div>
-                      <h4 className="text-xs font-semibold tracking-wide text-[var(--portfolio-accent)] uppercase">
-                        Solution
-                      </h4>
-                      <p className="mt-2 text-sm leading-relaxed text-[var(--portfolio-muted)]">
-                        {project.solution}
-                      </p>
-                    </div>
+              <div>
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <h3 className="portfolio-serif text-2xl text-[var(--portfolio-text)] sm:text-3xl">{project.name}</h3>
+                  {project.githubUrl && (
+                    <a
+                      href={project.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="portfolio-link inline-flex flex-none items-center gap-1.5 text-sm font-medium text-[var(--portfolio-text)]"
+                    >
+                      <GithubIcon className="size-4" />
+                      View on GitHub
+                      <ArrowUpRightIcon className="size-3.5" />
+                    </a>
                   )}
                 </div>
-              )}
 
-              {project.features && project.features.length > 0 && (
-                <ul className="mt-6 grid gap-2 sm:grid-cols-2">
-                  {project.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2.5 text-sm text-[var(--portfolio-text)]">
-                      <span className="mt-1.5 size-1.5 flex-none rounded-full bg-[var(--portfolio-accent)]" />
-                      {feature}
-                    </li>
+                <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-[var(--portfolio-muted)]">
+                  {project.description}
+                </p>
+
+                {(project.problem || project.solution) && (
+                  <div className="mt-8 grid gap-8 sm:grid-cols-2">
+                    {project.problem && (
+                      <div>
+                        <h4 className="text-[11px] font-semibold tracking-[0.2em] text-[var(--portfolio-accent)] uppercase">
+                          Problem
+                        </h4>
+                        <p className="mt-2 text-sm leading-relaxed text-[var(--portfolio-muted)]">{project.problem}</p>
+                      </div>
+                    )}
+                    {project.solution && (
+                      <div>
+                        <h4 className="text-[11px] font-semibold tracking-[0.2em] text-[var(--portfolio-accent)] uppercase">
+                          Solution
+                        </h4>
+                        <p className="mt-2 text-sm leading-relaxed text-[var(--portfolio-muted)]">{project.solution}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {project.features && project.features.length > 0 && (
+                  <ul className="mt-8 grid gap-2.5 sm:grid-cols-2">
+                    {project.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-2.5 text-sm text-[var(--portfolio-text)]">
+                        <span className="mt-1.5 size-1 flex-none bg-[var(--portfolio-accent)]" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <div className="mt-8 flex flex-wrap gap-x-5 gap-y-2">
+                  {project.techStack.map((tech) => (
+                    <span key={tech} className="text-xs font-medium tracking-wide text-[var(--portfolio-muted)] uppercase">
+                      {tech}
+                    </span>
                   ))}
-                </ul>
-              )}
-
-              <div className="mt-6 flex flex-wrap gap-2">
-                {project.techStack.map((tech) => (
-                  <span
-                    key={tech}
-                    className="rounded-lg border border-[var(--portfolio-border)] bg-[var(--portfolio-bg)] px-3 py-1.5 text-sm text-[var(--portfolio-text)]"
-                  >
-                    {tech}
-                  </span>
-                ))}
+                </div>
               </div>
-            </div>
-          </article>
+            </article>
+          </PortfolioReveal>
         ))}
       </div>
     </section>

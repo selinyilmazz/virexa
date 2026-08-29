@@ -1,48 +1,55 @@
 import { aboutText, interests, languages } from "@/data/portfolio";
+import { PortfolioReveal } from "./PortfolioReveal";
 
 /**
- * Narrative paragraph (verbatim from the CV's Professional Profile) +
- * a compact Languages list. Interests render as a single muted line,
- * not their own subsection - a personal-color detail, not a headline.
- * `UAV Pilot License` is deliberately not shown here (see
- * `src/data/portfolio.ts`'s doc comment) - it doesn't reinforce the
- * developer narrative and would just add clutter.
+ * Editorial pull-quote layout: the CV's Professional Profile paragraph
+ * (verbatim, unchanged) set large as a lede, with Languages/Interests as
+ * a quiet sidebar list rather than boxed cards. `UAV Pilot License`
+ * stays deliberately excluded (see `src/data/portfolio.ts`).
  */
 export function AboutSection() {
   return (
-    <section
-      id="about"
-      className="mx-auto max-w-[1200px] border-t border-[var(--portfolio-border)] px-5 py-20 sm:px-8 sm:py-28"
-    >
-      <p className="text-sm font-medium tracking-wide text-[var(--portfolio-accent)] uppercase">About</p>
-      <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--portfolio-text)] sm:text-4xl">About Me</h2>
+    <section id="about" className="mx-auto max-w-[1240px] border-t border-[var(--portfolio-border)] px-6 py-20 sm:px-10 sm:py-28">
+      <div className="grid gap-12 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:gap-20">
+        <div>
+          <PortfolioReveal>
+            <p className="text-xs font-semibold tracking-[0.22em] text-[var(--portfolio-accent)] uppercase">About</p>
+            <h2 className="portfolio-serif mt-3 text-4xl text-[var(--portfolio-text)] sm:text-5xl">Who I am</h2>
+          </PortfolioReveal>
 
-      <div className="mt-10 grid gap-10 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <p className="text-lg leading-relaxed text-[var(--portfolio-muted)]">{aboutText}</p>
+          <PortfolioReveal delayMs={100}>
+            <p className="portfolio-serif mt-9 max-w-2xl text-2xl leading-snug text-[var(--portfolio-text)] sm:text-[1.85rem]">
+              {aboutText}
+            </p>
+          </PortfolioReveal>
 
           {interests.length > 0 && (
-            <p className="mt-6 text-sm text-[var(--portfolio-muted)]">
-              <span className="font-semibold text-[var(--portfolio-text)]">Beyond code: </span>
-              {interests.join(", ")}
-            </p>
+            <PortfolioReveal delayMs={180}>
+              <p className="mt-9 max-w-xl text-sm leading-relaxed text-[var(--portfolio-muted)]">
+                <span className="font-semibold text-[var(--portfolio-text)]">Beyond code — </span>
+                {interests.join(" · ")}
+              </p>
+            </PortfolioReveal>
           )}
         </div>
 
         {languages.length > 0 && (
-          <div className="rounded-2xl border border-[var(--portfolio-border)] bg-[var(--portfolio-surface)] p-6 sm:p-8">
-            <h3 className="text-sm font-semibold tracking-wide text-[var(--portfolio-muted)] uppercase">
+          <PortfolioReveal delayMs={140}>
+            <h3 className="text-[11px] font-semibold tracking-[0.2em] text-[var(--portfolio-muted)] uppercase">
               Languages
             </h3>
-            <ul className="mt-4 flex flex-col gap-3">
+            <ul className="mt-5 flex flex-col">
               {languages.map((language) => (
-                <li key={language.name} className="flex items-center justify-between text-sm">
-                  <span className="text-[var(--portfolio-text)]">{language.name}</span>
-                  <span className="text-[var(--portfolio-muted)]">{language.level}</span>
+                <li
+                  key={language.name}
+                  className="portfolio-rule flex items-baseline justify-between py-3 first:border-t-0 first:pt-0"
+                >
+                  <span className="portfolio-serif text-lg text-[var(--portfolio-text)]">{language.name}</span>
+                  <span className="text-sm text-[var(--portfolio-muted)]">{language.level}</span>
                 </li>
               ))}
             </ul>
-          </div>
+          </PortfolioReveal>
         )}
       </div>
     </section>

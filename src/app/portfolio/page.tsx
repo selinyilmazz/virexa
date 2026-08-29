@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import { personalInfo } from "@/data/portfolio";
 import { env } from "@/lib/env";
 import { HeroSection } from "@/components/portfolio/HeroSection";
-import { SkillsSection } from "@/components/portfolio/SkillsSection";
 import { ProjectsSection } from "@/components/portfolio/ProjectsSection";
+import { AboutSection } from "@/components/portfolio/AboutSection";
+import { SkillsSection } from "@/components/portfolio/SkillsSection";
+import { ExperienceSection } from "@/components/portfolio/ExperienceSection";
 import { EducationSection } from "@/components/portfolio/EducationSection";
 import { CertificationsSection } from "@/components/portfolio/CertificationsSection";
-import { AboutSection } from "@/components/portfolio/AboutSection";
 import { ContactSection } from "@/components/portfolio/ContactSection";
+import { PortfolioWaveDivider } from "@/components/portfolio/PortfolioWaveDivider";
 
 // The portfolio's one true canonical identity - regardless of whether
 // it was reached via the personal-domain rewrite (see middleware.ts)
@@ -49,20 +51,43 @@ export const metadata: Metadata = {
 };
 
 /**
- * Faz 3 complete: Hero + Skills + Projects + Education +
- * Certifications + About + Contact. Experience is intentionally
- * skipped - the CV has no Work/Internship Experience section (see
- * `src/data/portfolio.ts`'s doc comment).
+ * Editorial redesign pass (Ağustos 2026): section order per spec - Hero,
+ * Selected Projects, About, Technical Skills, Experience, Education,
+ * Certifications, Contact. `ExperienceSection` is new (previously
+ * skipped entirely since `experience` is empty) - it now renders an
+ * honest "not yet" state instead of being omitted; see that
+ * component's doc comment.
+ *
+ * Wave-transition pass: About and Education are wrapped in a
+ * `.portfolio-band-light` cream "insert page", entered/exited through
+ * `PortfolioWaveDivider` - the alternating-band-with-wave-boundary
+ * style the user asked for, reusing this page's own existing palette
+ * (no new colors, no content changes to either section). See
+ * `PortfolioWaveDivider.tsx` and `portfolio.css`'s `.portfolio-band-
+ * light` rule for how the color hand-off works.
  */
 export default function PortfolioPage() {
   return (
     <main>
       <HeroSection />
-      <SkillsSection />
       <ProjectsSection />
-      <EducationSection />
+
+      <PortfolioWaveDivider fill="var(--portfolio-band-bg)" />
+      <div className="portfolio-band-light">
+        <AboutSection />
+      </div>
+      <PortfolioWaveDivider fill="var(--portfolio-bg)" flip />
+
+      <SkillsSection />
+      <ExperienceSection />
+
+      <PortfolioWaveDivider fill="var(--portfolio-band-bg)" />
+      <div className="portfolio-band-light">
+        <EducationSection />
+      </div>
+      <PortfolioWaveDivider fill="var(--portfolio-bg)" flip />
+
       <CertificationsSection />
-      <AboutSection />
       <ContactSection />
     </main>
   );

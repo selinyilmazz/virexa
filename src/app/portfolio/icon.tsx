@@ -12,11 +12,11 @@ export const contentType = "image/png";
  * of the site.
  *
  * Same "SY." wordmark as `PortfolioNav.tsx`, rendered as a standalone
- * monogram - dark background, the portfolio's own violet accent
- * (`--portfolio-accent`'s dark-mode value, hardcoded here since
- * `ImageResponse` renders in an isolated context with no access to CSS
- * custom properties). No shape, color, or layout borrowed from Virexa's
- * own icon.
+ * monogram - editorial redesign pass: dark near-black background, the
+ * portfolio's own burgundy accent (`--portfolio-accent`'s dark-mode
+ * value, hardcoded here since `ImageResponse` renders in an isolated
+ * context with no access to CSS custom properties). No shape, color, or
+ * layout borrowed from Virexa's own icon.
  */
 export default function Icon() {
   return new ImageResponse(
@@ -28,10 +28,9 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#09090f",
-          borderRadius: 7,
-          color: "#8b5cf6",
-          fontFamily: "sans-serif",
+          background: "#0c0a09",
+          color: "#c1525b",
+          fontFamily: "serif",
           fontSize: 17,
           fontWeight: 700,
           letterSpacing: -0.5,
