@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getAdminUserOrNull } from "@/lib/admin/authorization";
 import { createServiceClient } from "@/lib/supabase/service-client";
 import { recordAuditEvent } from "@/services/admin/admin-audit-service";
-import { env } from "@/lib/env";
 
 /**
  * Admin "Reset Password" action. Reuses the exact same Supabase Auth
@@ -14,7 +13,7 @@ import { env } from "@/lib/env";
  * comment for the full round trip) - not a fabricated "email sent"
  * message with no real effect.
  */
-export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const admin = await getAdminUserOrNull();
   if (!admin) {
     return NextResponse.json({ ok: false, error: "Unauthorized." }, { status: 403 });
@@ -34,8 +33,15 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     }
     const targetEmail = existingResponse.user.email;
 
+    // Derived from the incoming request's own origin - not
+    // NEXT_PUBLIC_SITE_URL, which is a single build-time constant that
+    // can't distinguish between the app's multiple live hostnames (see
+    // src/lib/supabase/oauth.ts for the full reasoning; this route runs
+    // server-side so it uses the request's origin instead of
+    // window.location.origin).
+    const { origin } = new URL(request.url);
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(targetEmail, {
-      redirectTo: `${env.site.url}/auth/callback?next=/update-password`,
+      redirectTo: `${origin}/auth/callback?next=/update-password`,
     });
     if (resetError) throw resetError;
 

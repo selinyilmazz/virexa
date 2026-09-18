@@ -3,7 +3,6 @@
 import type { Provider } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { getAuthErrorMessage } from "@/lib/supabase/errors";
-import { env } from "@/lib/env";
 
 /**
  * Every OAuth provider this app supports, mapped to Supabase's own
@@ -48,7 +47,14 @@ function toSafeInternalPath(path: string | undefined): string {
 export async function signInWithOAuthProvider(provider: OAuthProviderId, redirectAfterSignIn?: string): Promise<OAuthSignInResult> {
   const supabase = createClient();
 
-  const callbackUrl = new URL("/auth/callback", env.site.url);
+  // Built from the browser's OWN current origin, never a build-time
+  // constant: `NEXT_PUBLIC_SITE_URL` (env.site.url) is inlined into the
+  // client bundle at build time, so a single deployment serving multiple
+  // live hostnames (news.selinyilmaz.dev, www.selinyilmaz.dev) would
+  // otherwise send EVERY visitor back to the one hardcoded origin
+  // regardless of which domain they actually started on - this was the
+  // root cause of Google sign-in landing on the portfolio domain.
+  const callbackUrl = new URL("/auth/callback", window.location.origin);
   callbackUrl.searchParams.set("next", toSafeInternalPath(redirectAfterSignIn));
 
   const { error } = await supabase.auth.signInWithOAuth({

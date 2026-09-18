@@ -9,7 +9,6 @@ import { AuthToast } from "@/components/auth/AuthToast";
 import { isRequired, isValidEmail } from "@/lib/validators";
 import { createClient } from "@/lib/supabase/client";
 import { getAuthErrorMessage } from "@/lib/supabase/errors";
-import { env } from "@/lib/env";
 import { useTranslations } from "@/i18n/i18n-provider";
 
 type FormErrors = {
@@ -53,7 +52,11 @@ export function ForgotPasswordForm() {
     setIsSubmitting(true);
     const supabase = createClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${env.site.url}/auth/callback?next=/update-password`,
+      // Browser's own current origin, not the build-time NEXT_PUBLIC_SITE_URL
+      // constant - see oauth.ts's signInWithOAuthProvider for the full
+      // reasoning (same class of bug: a single deployment serves multiple
+      // live hostnames, and NEXT_PUBLIC_* values are baked in at build time).
+      redirectTo: `${window.location.origin}/auth/callback?next=/update-password`,
     });
     setIsSubmitting(false);
 
