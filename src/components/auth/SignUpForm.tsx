@@ -118,7 +118,17 @@ export function SignUpForm({ redirectTo }: SignUpFormProps) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: name } },
+      options: {
+        data: { full_name: name },
+        // Explicit, browser-origin-based redirect for the signup
+        // confirmation email - without this, Supabase falls back to the
+        // project's Dashboard-level "Site URL" default for every signup,
+        // regardless of which of this app's live domains the visitor
+        // actually signed up from. Must also be present in the Supabase
+        // Dashboard's Redirect URLs allow list or Supabase will silently
+        // ignore it and use the Site URL default anyway.
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
     setIsSubmitting(false);
 

@@ -186,7 +186,7 @@ declare module "@supabase/supabase-js" {
       signUp(credentials: {
         email: string;
         password: string;
-        options?: { data?: Record<string, unknown> };
+        options?: { data?: Record<string, unknown>; emailRedirectTo?: string };
       }): Promise<AuthResponse>;
       signOut(): Promise<{ error: AuthError | null }>;
       updateUser(attributes: { email?: string; password?: string; data?: Record<string, unknown> }): Promise<AuthResponse>;
